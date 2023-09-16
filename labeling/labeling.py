@@ -2,11 +2,13 @@ import cv2
 import pandas as pd
 import numpy as np
 import os
+import ffmpeg
 
 class VideoAnnotation:
-    def __init__(self, video_path, csv_name, num_points=8):
-        self.video_path = os.path.join(os.path.dirname(__file__), "..", video_path).replace('\\', '/')  
-        self.csv_name = os.path.join(os.path.dirname(__file__), csv_name).replace('\\', '/')  
+    def __init__(self, video_path, num_points=8):
+        self.video_id = video_path.split("-")[0]
+        self.video_path = os.path.join(os.path.dirname(__file__), "../videos", video_path).replace('\\', '/')  
+        self.csv_name = os.path.join(os.path.dirname(__file__), f"csv_files/{self.video_id}.csv").replace('\\', '/')  
         self.num_points = num_points
         self.clicked_points = []
         self.current_frame = 0
@@ -54,14 +56,7 @@ class VideoAnnotation:
             if self.frame is None:
                 break
 
-            # Display previously clicked points
-            if (self.df_points["Frame_ID"] == self.current_frame).any():
-                points = self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame]
-                for i in range(self.num_points):
-                    cv2.circle(self.frame, (points[f"Point_{i+1}_X"].item(), points[f"Point_{i+1}_Y"].item()), 5, self.hsv_to_bgr((i*20, 255, 255)), -1)
-
             self.show_cur_points()
-
             key = cv2.waitKey(0) & 0xFF
             if key == ord('q'):
                 break
@@ -74,7 +69,8 @@ class VideoAnnotation:
                         point_dict[f"Point_{i+1}_Y"] = y
 
                     if (self.df_points["Frame_ID"] == self.current_frame).any():
-                        self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame] = pd.DataFrame([point_dict])
+                        existing_index = self.df_points.index[self.df_points["Frame_ID"] == self.current_frame].tolist()[0]
+                        self.df_points.loc[existing_index] = point_dict
                     else:
                         self.df_points = pd.concat([self.df_points, pd.DataFrame([point_dict])], ignore_index=True)
 
@@ -89,20 +85,35 @@ class VideoAnnotation:
 
             elif key == ord('d'): 
                 self.current_frame += 1
-                self.clicked_points = []
+                if (self.df_points["Frame_ID"] == self.current_frame).any():
+                    self.clicked_points =list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,1:].astype(int), (-1, 2))))
+                else:
+                    self.clicked_points = []
+
             elif key == ord('a'):
                 self.current_frame -= 1
-                self.clicked_points = []
+                if (self.df_points["Frame_ID"] == self.current_frame).any():
+                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,1:].astype(int), (-1, 2))))
+                else:
+                    self.clicked_points = []
 
             if key == ord('b'):
                 if self.clicked_points:
                     self.clicked_points.pop()
+                    self.show_cur_points()
         self.cap.release()
 
 if __name__ == "__main__":
-    video_path = "videos/out_kompressed.mp4"
+    video_path = "018757-2023-06-08 08-53-33.mp4"
     csv_name = "csv_files/out.csv"
     num_points = 8
 
-    annotator = VideoAnnotation(video_path, csv_name, num_points)
+    # input_file = 'mouse.mkv'
+    # output_file = 'python_out.mp4'
+
+    # input_stream = ffmpeg.input(input_file)
+    # output_stream = ffmpeg.output(input_stream, output_file, vf='mpdecimate')
+
+    # ffmpeg.run(output_stream)
+    annotator = VideoAnnotation(video_path, num_points)
     annotator.annotate_video()
