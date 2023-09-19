@@ -106,7 +106,7 @@ class VideoAnnotation:
 if __name__ == "__main__":
     video_path = "018757-2023-06-08 08-53-33.mp4"
     csv_name = "csv_files/out.csv"
-    num_points = 8
+    num_points = 11
 
     # input_file = 'mouse.mkv'
     # output_file = 'python_out.mp4'
