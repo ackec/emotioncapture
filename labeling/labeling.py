@@ -124,8 +124,7 @@ class VideoAnnotation:
             if key == ord('s'):
                 # Save the clicked points to the CSV file
                 if len(self.clicked_points) == self.num_points:
-                    img_path = f"{self.img_path}/{self.video_id}_frame{self.current_frame}.jpg"
-                    point_dict = {"Img_Path": img_path,
+                    point_dict = {"Img_Path": f"{self.video_id}_frame{self.current_frame}.jpg",
                                   "Frame_ID": self.current_frame}
                     for i, (x, y) in enumerate(self.clicked_points):
                         point_dict[f"Point_{i+1}_X"] = x
@@ -141,6 +140,7 @@ class VideoAnnotation:
                     print(f"{self.num_points} points saved to DataFrame.")
                     self.df_points.to_csv(self.csv_name, index=False)
                     self.clicked_points = []
+                    img_path = f"{self.img_path}/{self.video_id}_frame{self.current_frame}.jpg"
                     if not os.path.isfile(img_path):
                         cv2.imwrite(img_path, self.frame)
                     self.current_frame += 1
