@@ -2,9 +2,9 @@ import cv2
 import pandas as pd
 import numpy as np
 import os
-import ffmpeg
 
 class VideoAnnotation:
+
     def __init__(self, video_path, num_points=8):
         self.video_id = video_path.split("-")[0]
         self.video_path = os.path.join(os.path.dirname(__file__), "../videos", video_path).replace('\\', '/')  
@@ -12,6 +12,9 @@ class VideoAnnotation:
         self.num_points = num_points
         self.clicked_points = []
         self.current_frame = 0
+        self.dragging = False
+        self.line_start = None
+        self.line_end = None
 
         self.cap = cv2.VideoCapture(self.video_path)
 
@@ -35,7 +38,11 @@ class VideoAnnotation:
 
     def show_cur_points(self):
         for i, (x, y) in enumerate(self.clicked_points):
-            cv2.circle(self.frame, (x, y), 5, self.hsv_to_bgr((i*20, 255, 255)), -1)  
+            cv2.circle(self.frame, (x, y), 5, self.hsv_to_bgr((i*20, 255, 255)), -1)
+
+        if self.line_start and self.line_end:
+            cv2.line(self.frame, self.line_start, self.line_end, (0, 255, 0), 2)
+
         cv2.imshow("Video Frame", self.frame)
 
     def get_frame(self):
@@ -47,7 +54,15 @@ class VideoAnnotation:
 
     def mouse_callback(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            self.clicked_points.append((x, y))
+            self.dragging = True
+            self.line_start = (x, y)
+
+        elif event == cv2.EVENT_LBUTTONUP:
+            self.dragging = False
+            self.line_end = (x, y)
+            self.clicked_points.append(self.line_start)
+            if (self.line_start[0] - self.line_end[0])**2 + (self.line_start[1] - self.line_end[1])**2 > 25: 
+                self.clicked_points.append(self.line_end)
             self.show_cur_points()
 
     def annotate_video(self):
@@ -61,6 +76,7 @@ class VideoAnnotation:
             if key == ord('q'):
                 break
             if key == ord('s'):
+                # print(len(self.clicked_points) )
                 # Save the clicked points to the CSV file
                 if len(self.clicked_points) == self.num_points:
                     point_dict = {"Frame_ID": self.current_frame}
@@ -86,7 +102,7 @@ class VideoAnnotation:
             elif key == ord('d'): 
                 self.current_frame += 1
                 if (self.df_points["Frame_ID"] == self.current_frame).any():
-                    self.clicked_points =list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,1:].astype(int), (-1, 2))))
+                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,1:].astype(int), (-1, 2))))
                 else:
                     self.clicked_points = []
 
@@ -104,16 +120,10 @@ class VideoAnnotation:
         self.cap.release()
 
 if __name__ == "__main__":
+    # video_path = "path/to/your/video.mp4"
     video_path = "018757-2023-06-08 08-53-33.mp4"
     csv_name = "csv_files/out.csv"
-    num_points = 8
+    num_points = 11
 
-    # input_file = 'mouse.mkv'
-    # output_file = 'python_out.mp4'
-
-    # input_stream = ffmpeg.input(input_file)
-    # output_stream = ffmpeg.output(input_stream, output_file, vf='mpdecimate')
-
-    # ffmpeg.run(output_stream)
     annotator = VideoAnnotation(video_path, num_points)
     annotator.annotate_video()
