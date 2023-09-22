@@ -4,11 +4,13 @@ import numpy as np
 import os
 
 class VideoAnnotation:
-
     def __init__(self, video_path, num_points=8):
         self.video_id = video_path.split("-")[0]
-        self.video_path = os.path.join(os.path.dirname(__file__), "../videos", video_path).replace('\\', '/')  
-        self.csv_name = os.path.join(os.path.dirname(__file__), f"csv_files/{self.video_id}.csv").replace('\\', '/')  
+        self.video_path = os.path.join(os.path.dirname(__file__), "../videos", video_path).replace('\\', '/')
+        self.csv_name = os.path.join(os.path.dirname(__file__), f"csv_files/{self.video_id}.csv").replace('\\', '/')
+        self.img_path = os.path.join(os.path.dirname(__file__), f"images").replace('\\', '/')
+        if not os.path.exists(self.img_path):
+            os.makedirs(self.img_path)
         self.num_points = num_points
         self.clicked_points = []
         self.current_frame = 0
@@ -29,7 +31,7 @@ class VideoAnnotation:
             if np.isnan(self.current_frame):
                 self.current_frame = 0
         except:
-            self.df_points = pd.DataFrame(columns=["Frame_ID"] + [f"Point_{i+1}_{axis}" for i in range(self.num_points) for axis in ["X", "Y"]])
+            self.df_points = pd.DataFrame(columns=["Img_Path", "Frame_ID"] + [f"Point_{i+1}_{axis}" for i in range(self.num_points) for axis in ["X", "Y"]])
 
         cv2.namedWindow("Video Frame")
         cv2.setMouseCallback("Video Frame", self.mouse_callback)
@@ -122,7 +124,9 @@ class VideoAnnotation:
             if key == ord('s'):
                 # Save the clicked points to the CSV file
                 if len(self.clicked_points) == self.num_points:
-                    point_dict = {"Frame_ID": self.current_frame}
+                    img_path = f"{self.img_path}/{self.video_id}_frame{self.current_frame}.jpg"
+                    point_dict = {"Img_Path": img_path,
+                                  "Frame_ID": self.current_frame}
                     for i, (x, y) in enumerate(self.clicked_points):
                         point_dict[f"Point_{i+1}_X"] = x
                         point_dict[f"Point_{i+1}_Y"] = y
@@ -137,22 +141,24 @@ class VideoAnnotation:
                     print(f"{self.num_points} points saved to DataFrame.")
                     self.df_points.to_csv(self.csv_name, index=False)
                     self.clicked_points = []
+                    if not os.path.isfile(img_path):
+                        cv2.imwrite(img_path, self.frame)
                     self.current_frame += 1
 
                 else:
-                    print(f"Please click on {self.num_points} points.")
+                    print(f"Please click on {self.num_points} points, you have clicked {len(self.clicked_points)}.")
 
             elif key == ord('d'): 
                 self.current_frame += 1
                 if (self.df_points["Frame_ID"] == self.current_frame).any():
-                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,1:].astype(int), (-1, 2))))
+                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,2:].astype(int), (-1, 2))))
                 else:
                     self.clicked_points = []
 
             elif key == ord('a'):
                 self.current_frame -= 1
                 if (self.df_points["Frame_ID"] == self.current_frame).any():
-                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,1:].astype(int), (-1, 2))))
+                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,2:].astype(int), (-1, 2))))
                 else:
                     self.clicked_points = []
 
@@ -164,7 +170,6 @@ class VideoAnnotation:
 
 if __name__ == "__main__":
     video_path = "018757-2023-06-08 08-53-33.mp4"
-    csv_name = "csv_files/out.csv"
     num_points = 11
 
     annotator = VideoAnnotation(video_path, num_points)
