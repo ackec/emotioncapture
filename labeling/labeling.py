@@ -31,7 +31,8 @@ class VideoAnnotation:
             if np.isnan(self.current_frame):
                 self.current_frame = 0
         except:
-            self.df_points = pd.DataFrame(columns=["Img_Path", "Frame_ID"] + [f"Point_{i+1}_{axis}" for i in range(self.num_points) for axis in ["X", "Y"]])
+            self.df_points = pd.DataFrame(columns=["Img_Path","Frame_ID"] + body_parts )
+            
 
         cv2.namedWindow("Video Frame")
         cv2.setMouseCallback("Video Frame", self.mouse_callback)
@@ -74,6 +75,13 @@ class VideoAnnotation:
 
         elif event == cv2.EVENT_LBUTTONUP:
             self.line_end = self.get_zoomed_coords(x, y)
+            for idx, point in enumerate(self.clicked_points):
+                if (self.line_start[0] - point[0])**2 + (self.line_start[1] - point[1])**2 < 25:
+                    # move existing point
+                    self.clicked_points[idx] = self.line_end
+                    self.show_cur_points()
+                    return
+
             self.clicked_points.append(self.line_start)
             if (self.line_start[0] - self.line_end[0])**2 + (self.line_start[1] - self.line_end[1])**2 > 25: 
                 self.clicked_points.append(self.line_end)
@@ -126,9 +134,8 @@ class VideoAnnotation:
                 if len(self.clicked_points) == self.num_points:
                     point_dict = {"Img_Path": f"{self.video_id}_frame{self.current_frame}.jpg",
                                   "Frame_ID": self.current_frame}
-                    for i, (x, y) in enumerate(self.clicked_points):
-                        point_dict[f"Point_{i+1}_X"] = x
-                        point_dict[f"Point_{i+1}_Y"] = y
+                    for coord, part in zip(list(sum(self.clicked_points, ())) , body_parts):
+                        point_dict[part] = coord
 
                     if (self.df_points["Frame_ID"] == self.current_frame).any():
                         existing_index = self.df_points.index[self.df_points["Frame_ID"] == self.current_frame].tolist()[0]
@@ -155,6 +162,14 @@ class VideoAnnotation:
                 else:
                     self.clicked_points = []
 
+            elif key == ord('f'): 
+                self.current_frame += 10
+                if (self.df_points["Frame_ID"] == self.current_frame).any():
+                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0,2:].astype(int), (-1, 2))))
+                else:
+                    self.clicked_points = []
+
+
             elif key == ord('a'):
                 self.current_frame -= 1
                 if (self.df_points["Frame_ID"] == self.current_frame).any():
@@ -170,7 +185,8 @@ class VideoAnnotation:
 
 if __name__ == "__main__":
     video_path = "018757-2023-06-08 08-53-33.mp4"
-    num_points = 11
+    body_parts=["Ear_back_x","Ear_back_y","Ear_front_x","Ear_front_y","Ear_botten_x","Ear_botten_y","Ear_top_x","Ear_top_y","Eye_back_x","Eye_back_y","Eye_front_x","Eye_front_y","Eye_botten_x","Eye_botten_y","Eye_top_x","Eye_top_y","Nose_top_x","Nose_top_y","Nose_botten_x","Nose_botten_y","Mounth_x","Mounth_y"]
+    num_points = len(body_parts)//2
 
     annotator = VideoAnnotation(video_path, num_points)
     annotator.annotate_video()
