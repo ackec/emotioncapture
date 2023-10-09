@@ -1,5 +1,12 @@
-/videos/*
-*.mp4
+*/images/*
+__pycache__
+videos/*
+train_images
 *.jpg
 *.png
-__pycache__
+*.mkv
+*.mp4
+*.h5
+*.index
+*.meta
+*.data*
