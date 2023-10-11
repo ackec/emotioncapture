@@ -10,3 +10,4 @@ train_images
 *.index
 *.meta
 *.data*
+*.pth

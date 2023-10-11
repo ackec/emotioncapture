@@ -8,7 +8,10 @@ from dataset import CustomDataset  # Replace with your dataset class
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from train import train_model
+from torch.utils.data.sampler import SubsetRandomSampler
 
+from torch.utils.data import DataLoader, random_split
+from test_model import test
 
 def extract_frames(video_path):
     video_id = video_path.split("-")[0]
@@ -29,13 +32,6 @@ def extract_frames(video_path):
         frame_count += 1
     cap.release()
 
-# Define a transformation sequence
-data_transform = transforms.Compose([
-    transforms.ToPILImage(),  # Convert to PIL Image
-    transforms.Resize((224, 224)),  # Resize to the desired size
-    transforms.ToTensor(),  # Convert to a PyTorch tensor
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize pixel values
-])
 
 
 # Preprocess the image (resize, normalize, etc.)
@@ -53,18 +49,24 @@ if __name__ == "__main__":
 
 
     # extract_frames("torch_model/videos/018757-2023-06-08 08-53-33.mp4")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    data = pd.read_csv('labeling/csv_files/018757.csv')
+    image_dir = "labeling/images"
 
-    data = pd.read_csv('torch_model/csv_files/018757.csv')
-    image_dir = "torch_model/train_images"
-    dataset = CustomDataset(data, image_dir, transform=data_transform)
 
+    train_split=0.7
+    dataset = CustomDataset(data, image_dir, device=device)
+    train_dataset, test_dataset = random_split(dataset,[int(dataset.data.shape[0]*train_split), int(dataset.data.shape[0]*(1-train_split)+1)])
     # Hyperparameters
-    batch_size = 32
+    batch_size = 18
     lr = 0.001
-    num_epochs = 10
+    num_epochs = 1000
 
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_data = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
-    train_model(dataloader, lr, num_epochs)
+    model = train_model(train_data, test_data, lr, num_epochs)
+
+    test(model, test_dataset)
 
     # Initialize the model

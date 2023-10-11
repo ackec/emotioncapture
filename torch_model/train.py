@@ -7,9 +7,40 @@ import torch.optim as optim
 # Load your modified ResNet-50 model
 from model import CustomResNet50Model  # Replace with your model class
 
-def train_model(dataloader, lr, num_epochs):
+
+def train_epoch(model, dataloader, optimizer, criterion):
+    model.train()  # Set the model to training mode
+
+    running_loss = 0.0
+
+    for batch_data in dataloader:
+        images, target_points = batch_data
+
+        # Zero the parameter gradients
+        optimizer.zero_grad()
+
+        # Forward pass
+        outputs = model(images)
+
+        # Calculate the loss
+        loss = criterion(outputs, target_points)
+
+        # Backpropagation and optimization
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()
+
+    return running_loss / len(dataloader)
+    # Calculate and print average loss for this epoch
+    average_loss = running_loss / len(dataloader)
+
+
+
+
+def train_model(trainloader, testloader, lr, num_epochs):
     model = CustomResNet50Model(num_points=11)
-    
+    model.to("cuda")
 
 
     # Loss function for regression (e.g., Smooth L1 Loss)
@@ -20,31 +51,23 @@ def train_model(dataloader, lr, num_epochs):
 
     # Training loop
     for epoch in range(num_epochs):
-        model.train()  # Set the model to training mode
+        loss = train_epoch(model, trainloader, optimizer, criterion)
+        print(f"Epoch [{epoch+1}/{num_epochs}] Loss: {loss:.4f}")
 
         running_loss = 0.0
-
-        for batch_data in dataloader:
+        for batch_data in testloader:
             images, target_points = batch_data
-
-            # Zero the parameter gradients
-            optimizer.zero_grad()
-
-            # Forward pass
             outputs = model(images)
 
-            # Calculate the loss
+            images, target_points = batch_data
             loss = criterion(outputs, target_points)
-
-            # Backpropagation and optimization
-            loss.backward()
-            optimizer.step()
-
             running_loss += loss.item()
+        print(f"val_loss :{running_loss}")
 
-        # Calculate and print average loss for this epoch
-        average_loss = running_loss / len(dataloader)
-        print(f"Epoch [{epoch+1}/{num_epochs}] Loss: {average_loss:.4f}")
+
+        #test_acc = test(model, testloader)
+
 
     # Save the trained model
     torch.save(model.state_dict(), 'point_detection_model.pth')
+    return model

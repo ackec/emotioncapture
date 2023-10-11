@@ -16,6 +16,7 @@ class CustomResNet50Model(nn.Module):
             nn.ReLU(),
             nn.Linear(512, num_points * 2)  # 2 coordinates (x, y) for each point
         )
+        self.resnet50.to("cuda")
 
     def forward(self, x):
         return self.resnet50(x)
