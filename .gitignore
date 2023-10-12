@@ -3,3 +3,11 @@
 __pycache__
 videos/
 train_images
+*.jpg
+*.png
+*.mkv
+*.mp4
+*.h5
+*.index
+*.meta
+*.data*
