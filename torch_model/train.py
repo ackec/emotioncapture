@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torchvision.models.detection import keypointrcnn_resnet50_fpn
+from torchvision.models.detection.rpn import AnchorGenerator
 
 # Define your custom dataset class for loading images and point coordinates
 
 # Load your modified ResNet-50 model
 from model import CustomResNet50Model  # Replace with your model class
-
 
 def train_epoch(model, dataloader, optimizer, criterion):
     model.train()  # Set the model to training mode
@@ -40,7 +41,16 @@ def train_epoch(model, dataloader, optimizer, criterion):
 
 def train_model(trainloader, testloader, lr, num_epochs):
     model = CustomResNet50Model(num_points=11)
+    anchor_generator = AnchorGenerator(sizes=(32, 64, 128, 256, 512), aspect_ratios=(0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 4.0))
+
+    model = keypointrcnn_resnet50_fpn(pretrained=False,
+                                        pretrained_backbone=True,
+                                        num_keypoints=11,
+                                        num_classes = 2, # Background is the first class, object is the second class
+                                        rpn_anchor_generator=anchor_generator)
     model.to("cuda")
+
+    
 
 
     # Loss function for regression (e.g., Smooth L1 Loss)
