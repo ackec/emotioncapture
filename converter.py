@@ -1,6 +1,7 @@
 import os
 import csv
 import numpy as np
+import deeplabcut
 
 class Converter:
     
@@ -39,7 +40,7 @@ class Converter:
                 writer.writerow(row)
             writer.writerow(add)
             
-    def convert_to_dlc_format(self,in_path,out_path):
+    def convert_to_dlc_csv_format(self,in_path,out_path):
         scorer_row = ["scorer","",""] + [self.scorer]*len(self.bodyparts)*2
         body_row = ["bodyparts","",""] + list(np.repeat(self.bodyparts,2))
         coord_row = ["coords","",""] + ["x","y"] * len(self.bodyparts)
@@ -51,9 +52,21 @@ class Converter:
             writer.writerow(scorer_row)
             writer.writerow(body_row)
             writer.writerow(coord_row)
+            next(reader) #Skip our header
+            
             for row in reader:
-                writer.writerow(row)
-                    
+                
+                info = row[0:2]
+                coords = row[2:]
+                
+                image_name = info[0].split("_")[0]
+                info = ["labeled-data"] + [image_name] + [info[0]]
+                writer.writerow(info + coords)
+    
+    def convert_csv_to_h5(self,config_path):
+        deeplabcut.convertcsv2h5(config_path)
+    
+      
 if __name__ == "__main__":
     csv_path = "labeling/csv_files/018757.csv"
     out_path = "out.csv"
