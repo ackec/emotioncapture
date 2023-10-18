@@ -61,6 +61,10 @@ class VideoAnnotation:
         cv2.namedWindow("Video Frame")
         cv2.setMouseCallback("Video Frame", self.mouse_callback)
 
+        # Show first frame
+        self.update_cur_frame()
+        cv2.imshow("Video Frame", self.frame)
+
     def hsv_to_bgr(self, hsv_color):
         return tuple(int(x) for x in cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2BGR)[0][0])
     
@@ -189,15 +193,10 @@ class VideoAnnotation:
 
 
     def annotate_video(self):
-        #self.frame = self.get_frame()
-        self.update_cur_frame()
-        cv2.imshow("Video Frame", self.frame)
         while True:
             if self.frame is None:
                 break
-            print("loop")
 
-            # self.show_cur_points()
             key = cv2.waitKey(0) & 0xFF
             if key == ord('q') or cv2.getWindowProperty('Video Frame', cv2.WND_PROP_VISIBLE) < 1:
                 break
@@ -219,18 +218,15 @@ class VideoAnnotation:
                 self.show_cur_points()
                 print(f"Saved rejected frame {self.current_frame}.")
 
-
             elif key == ord('d'):
                 # Next frame
                 self.current_frame += 1
                 self.show_new_frame()
 
-
             elif key == ord('f'):
                 # Skip ahead 10 frames
                 self.current_frame += 10
                 self.show_new_frame()
-
 
             elif key == ord('p'):
                 # Skip ahead 100 frames
