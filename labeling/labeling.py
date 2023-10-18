@@ -26,7 +26,7 @@ class VideoAnnotation:
 
         self.bad_image_output_path = output_dir / 'bad_images'
         if not self.bad_image_output_path.exists():
-            os.makedirs(self.bad_image_output_pathd)
+            os.makedirs(self.bad_image_output_path)
 
         csv_output_path = output_dir / 'csv_files'
         if not csv_output_path.exists():
