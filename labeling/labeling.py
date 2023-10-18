@@ -24,6 +24,10 @@ class VideoAnnotation:
         if not self.image_output_path.exists():
             os.makedirs(self.image_output_path)
 
+        self.bad_image_output_path = output_dir / 'bad_images'
+        if not self.bad_image_output_path.exists():
+            os.makedirs(self.bad_image_output_pathd)
+
         csv_output_path = output_dir / 'csv_files'
         if not csv_output_path.exists():
             os.makedirs(csv_output_path)
@@ -59,10 +63,16 @@ class VideoAnnotation:
 
     def hsv_to_bgr(self, hsv_color):
         return tuple(int(x) for x in cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2BGR)[0][0])
+    
+    def update_cur_frame(self):
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
+        ret, self.frame = self.cap.read()
+        if not ret:
+            self.frame = None
 
     def show_cur_points(self):
         # Create a copy of the frame to draw waypoints and zoom
-        frame_copy = self.frame.copy()
+        frame_copy = self.frame
         zoomed_frame = cv2.resize(frame_copy[self.zoom_start[0]:self.zoom_end[0], self.zoom_start[1]:self.zoom_end[1]], (self.img_dim[1], self.img_dim[0]))
         scale_x = (self.zoom_end[1] - self.zoom_start[1])/self.img_dim[1]
         scale_y = (self.zoom_end[0] - self.zoom_start[0])/self.img_dim[0]
@@ -74,15 +84,13 @@ class VideoAnnotation:
             adjusted_start = (int((self.line_start[0]-self.zoom_start[1])/scale_x), int((self.line_start[1]-self.zoom_start[0])/scale_y))
             adjusted_end = (int((self.line_end[0]-self.zoom_start[1])/scale_x), int((self.line_end[1]-self.zoom_start[0])/scale_y))
             cv2.line(zoomed_frame, adjusted_start, adjusted_end, (0, 255, 0), 2)
+        if len(BODY_PARTS) > len(self.clicked_points)*2:
+            print(f"Frame [{self.current_frame}], Click on bodypart: {BODY_PARTS[len(self.clicked_points)*2][:-2]}")
+        else: 
+            print(f"Frame [{self.current_frame}], No more points to click, you have : {len(self.clicked_points) - len(BODY_PARTS)//2} to many")
 
         cv2.imshow("Video Frame", zoomed_frame)
 
-    def get_frame(self):
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
-        ret, self.frame = self.cap.read()
-        if not ret:
-            return None
-        return self.frame
 
     def get_zoomed_coords(self, x, y):
         scale_x = (self.zoom_end[1] - self.zoom_start[1])/self.img_dim[1]
@@ -137,6 +145,17 @@ class VideoAnnotation:
             self.zoom_end = (self.zoom_end[0]-diff_y, self.zoom_end[1]-diff_x)
             self.show_cur_points()
 
+    def save_bad_frame(self):
+        self.bad_image_output_path
+        img_path: Path = self.bad_image_output_path / f"{self.video_id}_frame{self.current_frame}.jpg"
+        if not os.path.isfile(img_path):
+            cv2.imwrite(str(img_path), self.frame)
+        self.current_frame += 1
+    
+    def get_clicked_points(self):
+        return list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0, 2:].astype(int), (-1, 2))))
+
+
     def save_annotated_frame(self):
         point_dict = {"Img_Path": f"{self.video_id}_frame{self.current_frame}.jpg",
                       "Frame_ID": self.current_frame}
@@ -155,18 +174,31 @@ class VideoAnnotation:
 
         img_path: Path = self.image_output_path / point_dict["Img_Path"]
         if not os.path.isfile(img_path):
-            cv2.imwrite(img_path, self.frame)
+            cv2.imwrite(str(img_path), self.frame)
 
         self.current_frame += 1
 
+    def show_new_frame(self):
+        self.update_cur_frame()
+        if (self.df_points["Frame_ID"] == self.current_frame).any():
+            self.clicked_points = self.get_clicked_points()
+            self.show_cur_points()
+        else:
+            self.clicked_points = []
+            cv2.imshow("Video Frame", self.frame)
+
+
     def annotate_video(self):
+        #self.frame = self.get_frame()
+        self.update_cur_frame()
+        cv2.imshow("Video Frame", self.frame)
         while True:
-            self.frame = self.get_frame()
             if self.frame is None:
                 break
+            print("loop")
 
-            self.show_cur_points()
-            key = cv2.waitKey(1) & 0xFF
+            # self.show_cur_points()
+            key = cv2.waitKey(0) & 0xFF
             if key == ord('q') or cv2.getWindowProperty('Video Frame', cv2.WND_PROP_VISIBLE) < 1:
                 break
 
@@ -174,35 +206,49 @@ class VideoAnnotation:
                 # Save the clicked points to the CSV file
                 if len(self.clicked_points) == self.num_points:
                     self.save_annotated_frame()
+                    self.update_cur_frame()
+                    self.show_cur_points()
+                    print(f"Saved frame {self.current_frame}.")
                 else:
-                    print(f"Please click on {self.num_points} points, you have clicked {len(self.clicked_points)}.")
+                    print(f"Please click on {self.num_points} points, you have clicked {len(self.clicked_points)*2}.")
+
+            elif key == ord('r'):
+                # Reject frame                   
+                self.save_bad_frame()
+                self.update_cur_frame()
+                self.show_cur_points()
+                print(f"Saved rejected frame {self.current_frame}.")
+
 
             elif key == ord('d'):
                 # Next frame
                 self.current_frame += 1
-                if (self.df_points["Frame_ID"] == self.current_frame).any():
-                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0, 2:].astype(int), (-1, 2))))
-                else:
-                    self.clicked_points = []
+                self.show_new_frame()
+
 
             elif key == ord('f'):
-                # Skip ahead 10 frames frame
+                # Skip ahead 10 frames
                 self.current_frame += 10
-                if (self.df_points["Frame_ID"] == self.current_frame).any():
-                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0, 2:].astype(int), (-1, 2))))
-                else:
-                    self.clicked_points = []
+                self.show_new_frame()
+
+
+            elif key == ord('p'):
+                # Skip ahead 100 frames
+                self.current_frame += 100
+                self.show_new_frame()
+
+            elif key == ord('o'):
+                # Go back 100 frames
+                self.current_frame -= 100
+                self.show_new_frame()
 
             elif key == ord('a'):
                 # Previous frame
                 self.current_frame -= 1
-                if (self.df_points["Frame_ID"] == self.current_frame).any():
-                    self.clicked_points = list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0, 2:].astype(int), (-1, 2))))
-                else:
-                    self.clicked_points = []
+                self.show_new_frame()
 
             if key == ord('b'):
-                # Clear points
+                # Clear last point
                 if self.clicked_points:
                     self.clicked_points.pop()
                     self.show_cur_points()

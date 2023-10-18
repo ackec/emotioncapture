@@ -4,9 +4,12 @@
 - **a:** Step to the previous frame.
 - **d:** Step to the next frame.
 - **f:** Step forward 10 frames.
+- **o:** Step back 100 frames.
+- **o:** Step forward 100 frames.
 - **s:** Save points on the current frame.
 - **q:** Quit the program.
 - **b:** Remove a placed point.
+- **r:** Reject current frame.
 
 ### Mouse Actions:
 - **Left-click:** Place a point.
