@@ -5,7 +5,7 @@
 - **d:** Step to the next frame.
 - **f:** Step forward 10 frames.
 - **o:** Step back 100 frames.
-- **o:** Step forward 100 frames.
+- **p:** Step forward 100 frames.
 - **s:** Save points on the current frame.
 - **q:** Quit the program.
 - **b:** Remove a placed point.
@@ -23,15 +23,22 @@
 
 ### In General:
 
-1. **Ear (4 Points)**
-2. **Eye (4 Points)**
-3. **Nose, Top**
-4. **Nose, Bottom**
-5. **Mouth**
+ ###  **Ear (4 Points)**
 
-### The Four Points for the Ear and Eye Are Placed in Order:
+1. **Tip of ear (red)**
+2. **Hole of ear (orange)**
+3. **Side of ear, furthest to nose(yellow)**
+4. **Side of ear, closest to nose (green)**
+ ### **Eye (4 Points)**
 
-1. **Back**
-2. **Front**
-3. **Bottom**
-4. **Top**
+5. **Furthest from nose of eye (turkos)**
+6. **Closest to nose of eye (light blue)**
+7. **Bottom of eye (dark blue)**
+8. **Top of eye (purple)**
+
+### Other
+9. **Nose, Top (pink)**
+10. **Nose, Bottom (red)**
+11. **Mouth (orange)**
+
+![Alt text](image.png)
