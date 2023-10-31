@@ -41,4 +41,4 @@
 10. **Nose, Bottom (red)**
 11. **Mouth (orange)**
 
-![Alt text](image.png)
+![Alt text](/labeling/example.png)
