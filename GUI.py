@@ -1,4 +1,7 @@
-import sys, random, math
+import sys, random, math, os
+
+import tkinter
+from tkinter import filedialog
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMainWindow, QLabel
@@ -79,8 +82,15 @@ class MainWindow(QMainWindow):
     def createButtons(self):
         self.buttonMap = {}
         buttonsLayout = QtWidgets.QGridLayout()
-        buttons = ["Select Image", "1","2"]
         
+        #buttons = ["Select Image", "1","2"]
+        imageButton = QPushButton("Select Image")
+        imageButton.clicked.connect(self.selectImage)
+        buttonsLayout.addWidget(imageButton)
+        
+        folderButton = QPushButton("Select Folder")
+        folderButton.clicked.connect(self.selectFolder)
+        buttonsLayout.addWidget(folderButton)
         """
         for i,name in enumerate(buttons):
             button = QPushButton(name)
@@ -89,12 +99,35 @@ class MainWindow(QMainWindow):
         """
         self.generalLayout.addLayout(buttonsLayout)
     
-    def addButtons(self):
+    def selectImage(self):
+        tkinter.Tk().withdraw()
+        file_path = filedialog.askopenfilename()
+        print("Selected file:{}".format(file_path))
         
-        # Add widgets
-        self.addWidget(QPushButton("Top"))
-        self.addWidget(QPushButton("Center"))
-        self.addWidget(QPushButton("Bottom"))
+        ## Check if a file is selected
+        if file_path == None or file_path == "":
+            return
+        ## Check if picture (Add more extensions?)
+        file_type = os.path.splitext(file_path)[1]        
+        if file_type.lower() != ".jpg" and file_type.lower() != ".png":
+            return
+        
+        pixmap = QtGui.QPixmap(file_path)
+        pixmap = pixmap.scaledToWidth(self.width())
+        self.image.setPixmap(pixmap)
+        #self.image.resize(pixmap.width(), pixmap.height())
+    
+    def selectFolder(self):
+        tkinter.Tk().withdraw()
+        folder_path = filedialog.askdirectory()
+        files = os.listdir(folder_path)
+        print(files)
+    
+        pixmap = QtGui.QPixmap(folder_path)
+        pixmap = pixmap.scaledToWidth(self.width())
+        self.width()
+        self.image.setPixmap(pixmap)
+        #self.image.resize(pixmap.width(), pixmap.height())
         
     def createGraphicView(self):    
         self.scene = VisGraphicsScene(self)
