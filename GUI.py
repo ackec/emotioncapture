@@ -5,7 +5,7 @@ from tkinter import filedialog
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMainWindow, QLabel
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget,QToolButton
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
 
@@ -56,6 +56,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         
+        self.pictures = None
+        self.image_extensions = [".jpg",".png"]
         #self.createGraphicView()
         self.setWindowTitle("My App")
         
@@ -83,20 +85,27 @@ class MainWindow(QMainWindow):
         self.buttonMap = {}
         buttonsLayout = QtWidgets.QGridLayout()
         
-        #buttons = ["Select Image", "1","2"]
+        backButton = QToolButton()
+        backButton.setArrowType(Qt.LeftArrow)
+        backButton.clicked.connect(self.browseBackward)
+        buttonsLayout.addWidget(backButton,0,0)
+        
+        forwardButton = QToolButton()
+        forwardButton.setArrowType(Qt.RightArrow)
+        forwardButton.clicked.connect(self.browseForward)
+        buttonsLayout.addWidget(forwardButton,0,1)
+        
+        
         imageButton = QPushButton("Select Image")
         imageButton.clicked.connect(self.selectImage)
-        buttonsLayout.addWidget(imageButton)
+        buttonsLayout.addWidget(imageButton,1,0)
         
         folderButton = QPushButton("Select Folder")
         folderButton.clicked.connect(self.selectFolder)
-        buttonsLayout.addWidget(folderButton)
-        """
-        for i,name in enumerate(buttons):
-            button = QPushButton(name)
-            #self.buttonMap[key].setFixedSize(50, 50)
-            buttonsLayout.addWidget(button, 0, i)
-        """
+        buttonsLayout.addWidget(folderButton,1,1)
+        
+        
+        
         self.generalLayout.addLayout(buttonsLayout)
     
     def selectImage(self):
@@ -109,7 +118,7 @@ class MainWindow(QMainWindow):
             return
         ## Check if picture (Add more extensions?)
         file_type = os.path.splitext(file_path)[1]        
-        if file_type.lower() != ".jpg" and file_type.lower() != ".png":
+        if file_type.lower() not in self.image_extensions:
             return
         
         pixmap = QtGui.QPixmap(file_path)
@@ -120,14 +129,40 @@ class MainWindow(QMainWindow):
     def selectFolder(self):
         tkinter.Tk().withdraw()
         folder_path = filedialog.askdirectory()
+        
         files = os.listdir(folder_path)
-        print(files)
-    
-        pixmap = QtGui.QPixmap(folder_path)
+        self.pictures = [folder_path+"/"+path for path in files if os.path.splitext(path)[1].lower() in self.image_extensions]  ##Remove non picture files
+        
+        self.current_index = 0
+        pixmap = QtGui.QPixmap(self.pictures[self.current_index])
         pixmap = pixmap.scaledToWidth(self.width())
-        self.width()
         self.image.setPixmap(pixmap)
-        #self.image.resize(pixmap.width(), pixmap.height())
+    
+    def browseForward(self):
+        if self.pictures == None or len(self.pictures) == 0:
+            return
+        
+        if self.current_index == len(self.pictures)-1:
+            self.current_index = 0
+        else:
+            self.current_index += 1
+            
+        pixmap = QtGui.QPixmap(self.pictures[self.current_index])
+        pixmap = pixmap.scaledToWidth(self.width())
+        self.image.setPixmap(pixmap)
+     
+    def browseBackward(self): 
+        if self.pictures == None or len(self.pictures) == 0:
+            return
+        
+        if self.current_index == 0:
+            self.current_index = len(self.pictures)-1
+        else:
+            self.current_index -= 1
+        
+        pixmap = QtGui.QPixmap(self.pictures[self.current_index])
+        pixmap = pixmap.scaledToWidth(self.width())
+        self.image.setPixmap(pixmap)
         
     def createGraphicView(self):    
         self.scene = VisGraphicsScene(self)
