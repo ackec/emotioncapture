@@ -214,8 +214,11 @@ class VideoAnnotation:
             elif key == ord('r'):
                 # Reject frame                   
                 self.save_bad_frame()
-                self.update_cur_frame()
-                self.show_cur_points()
+                self.current_frame += 1
+
+                self.show_new_frame()
+               # self.update_cur_frame()
+               # self.show_cur_points()
                 print(f"Saved rejected frame {self.current_frame}.")
 
             elif key == ord('d'):
