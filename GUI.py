@@ -11,12 +11,12 @@ from PyQt5.QtCore import Qt
 
 app = QApplication([])
 
-class VisGraphicsScene(QGraphicsScene):
+class VisGraphicsScene(QGraphicsScene): ##Not used
     def __init__(self,window):
         super(VisGraphicsScene, self).__init__()
         
         
-class VisGraphicsView(QGraphicsView):
+class VisGraphicsView(QGraphicsView): ##Not used
     def __init__(self, scene, parent):
         super(VisGraphicsView, self).__init__(scene, parent)
         self.startX = 0.0
@@ -57,9 +57,10 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         
         self.pictures = None
-        self.image_extensions = [".jpg",".png"]
+        self.image_extensions = [".jpg",".png"] ## add in lowercase
+        
         #self.createGraphicView()
-        self.setWindowTitle("My App")
+        self.setWindowTitle("Mouse")
         
         self.generalLayout = QVBoxLayout()
         centralWidget = QWidget(self)
@@ -72,8 +73,9 @@ class MainWindow(QMainWindow):
         self.show()
         
     def imageDisplay(self):
+        ## Label (pixmap) for displaying images
         self.image = QtWidgets.QLabel()
-        self.image.setText("Hi")
+        # self.image.setText("Hi")
         pixmap = QtGui.QPixmap('lul.jpg')
         self.image.setPixmap(pixmap)
         self.image.resize(pixmap.width(), pixmap.height())
@@ -104,11 +106,10 @@ class MainWindow(QMainWindow):
         folderButton.clicked.connect(self.selectFolder)
         buttonsLayout.addWidget(folderButton,1,1)
         
-        
-        
         self.generalLayout.addLayout(buttonsLayout)
     
     def selectImage(self):
+        ## Browse and select image to display
         tkinter.Tk().withdraw()
         file_path = filedialog.askopenfilename()
         print("Selected file:{}".format(file_path))
@@ -127,11 +128,13 @@ class MainWindow(QMainWindow):
         #self.image.resize(pixmap.width(), pixmap.height())
     
     def selectFolder(self):
+        ## Browse and select folder to display images from
         tkinter.Tk().withdraw()
         folder_path = filedialog.askdirectory()
         
         files = os.listdir(folder_path)
-        self.pictures = [folder_path+"/"+path for path in files if os.path.splitext(path)[1].lower() in self.image_extensions]  ##Remove non picture files
+        ##Remove non picture files
+        self.pictures = [folder_path+"/"+path for path in files if os.path.splitext(path)[1].lower() in self.image_extensions]  
         
         self.current_index = 0
         pixmap = QtGui.QPixmap(self.pictures[self.current_index])
