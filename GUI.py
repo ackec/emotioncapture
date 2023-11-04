@@ -9,7 +9,7 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMainWindow, QLabel
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget,QToolButton
 from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPoint
 
 app = QApplication([])
 
@@ -205,15 +205,20 @@ class MainWindow(QMainWindow):
         current_points = self.pict_dict[current_image_name]
         
         if len(current_points) != 22:
+            print("Invalid amount of points")
             return
         
         for i in range(int(len(current_points)/2)):
-            x = int(current_points[2*i])
-            y = int(current_points[2*i+1])
-            
             image_size = self.image.size()
+            x = int(current_points[2*i]) * image_size.width()/1980
+            y = int(current_points[2*i+1]) * image_size.height()/1080
             #print(image_size.width()/1980,image_size.height()/1080)
-            self.drawEllipse(x * image_size.width()/1980,y * image_size.height()/1080)
+            
+            #point = QPoint(round(x),round(y))
+            #point = self.image.mapToGlobal(point)
+            #self.drawEllipse(point.x(),point.y())
+            
+            self.drawEllipse(x,y)
             
         self.image.update()
         
