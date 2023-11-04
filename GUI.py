@@ -1,4 +1,6 @@
 import sys, random, math, os
+import csv
+import numpy as np
 
 import tkinter
 from tkinter import filedialog
@@ -57,7 +59,10 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         
         self.pictures = None
+        self.current_index = None
         self.image_extensions = [".jpg",".png"] ## add in lowercase
+        
+        self.pict_dict = {}
         
         #self.createGraphicView()
         self.setWindowTitle("Mouse")
@@ -83,28 +88,53 @@ class MainWindow(QMainWindow):
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.generalLayout.addWidget(self.image)
         
+        #self.drawEllipse(pixmap.width(), pixmap.height())
+    
+    def drawEllipse(self,x,y,radii=5):
+        painter = QtGui.QPainter(self.image.pixmap())
+        pen = QtGui.QPen()
+        pen.setColor(QtGui.QColor('yellow'))
+        pen.setWidth(radii)
+        painter.setPen(pen)
+        painter.drawEllipse(x-radii/2, y-radii/2, radii, radii)
+        painter.end()
+        
     def createButtons(self):
         self.buttonMap = {}
         buttonsLayout = QtWidgets.QGridLayout()
         
         backButton = QToolButton()
         backButton.setArrowType(Qt.LeftArrow)
+        backButton.setFixedSize(100,30)
         backButton.clicked.connect(self.browseBackward)
         buttonsLayout.addWidget(backButton,0,0)
         
         forwardButton = QToolButton()
         forwardButton.setArrowType(Qt.RightArrow)
+        forwardButton.setFixedSize(100,30)
         forwardButton.clicked.connect(self.browseForward)
         buttonsLayout.addWidget(forwardButton,0,1)
         
         
         imageButton = QPushButton("Select Image")
+        imageButton.setFixedSize(100,30)
         imageButton.clicked.connect(self.selectImage)
         buttonsLayout.addWidget(imageButton,1,0)
         
         folderButton = QPushButton("Select Folder")
+        folderButton.setFixedSize(100,30)
         folderButton.clicked.connect(self.selectFolder)
         buttonsLayout.addWidget(folderButton,1,1)
+        
+        csvButton = QPushButton("Select CSV")
+        csvButton.setFixedSize(100,30)
+        csvButton.clicked.connect(self.loadPoints)
+        buttonsLayout.addWidget(csvButton,2,0)
+        
+        pointButton = QPushButton("Show Points")
+        pointButton.setFixedSize(100,30)
+        pointButton.clicked.connect(self.showPoints)
+        buttonsLayout.addWidget(pointButton,2,1)
         
         self.generalLayout.addLayout(buttonsLayout)
     
@@ -132,17 +162,66 @@ class MainWindow(QMainWindow):
         tkinter.Tk().withdraw()
         folder_path = filedialog.askdirectory()
         
+        if folder_path == None or folder_path == "":
+            return
+        
         files = os.listdir(folder_path)
         ##Remove non picture files
-        self.pictures = [folder_path+"/"+path for path in files if os.path.splitext(path)[1].lower() in self.image_extensions]  
+        
+        self.folder_path = folder_path
+        self.pictures = [image_name for image_name in files if os.path.splitext(image_name)[1].lower() in self.image_extensions]  
         
         self.current_index = 0
-        pixmap = QtGui.QPixmap(self.pictures[self.current_index])
+        pixmap = QtGui.QPixmap(self.folder_path+"/"+self.pictures[self.current_index])
         pixmap = pixmap.scaledToWidth(self.width())
         self.image.setPixmap(pixmap)
     
+    def loadPoints(self):
+        tkinter.Tk().withdraw()
+        csv_path = filedialog.askopenfilename()
+        
+        if csv_path == None or csv_path == "":
+            return
+        file_type = os.path.splitext(csv_path)[1]        
+        if file_type.lower() != ".csv":
+            return
+        
+        with open(csv_path, 'r') as file:
+            reader = csv.reader(file)
+                        
+            header = next(reader)
+            print(header)
+            
+            for row in reader:
+                self.pict_dict[row[0]] = row[2:]
+        
+    def showPoints(self):
+        if self.pict_dict == None or len(self.pict_dict) == 0:
+            return
+        if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:
+            return
+        
+        current_image_name = self.pictures[self.current_index]
+        current_points = self.pict_dict[current_image_name]
+        
+        if len(current_points) != 22:
+            return
+        
+        for i in range(int(len(current_points)/2)):
+            x = int(current_points[2*i])
+            y = int(current_points[2*i+1])
+            
+            image_size = self.image.size()
+            #print(image_size.width()/1980,image_size.height()/1080)
+            self.drawEllipse(x * image_size.width()/1980,y * image_size.height()/1080)
+            
+        self.image.update()
+        
+        
+        
+        
     def browseForward(self):
-        if self.pictures == None or len(self.pictures) == 0:
+        if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:
             return
         
         if self.current_index == len(self.pictures)-1:
@@ -150,12 +229,12 @@ class MainWindow(QMainWindow):
         else:
             self.current_index += 1
             
-        pixmap = QtGui.QPixmap(self.pictures[self.current_index])
+        pixmap = QtGui.QPixmap(self.folder_path+"/"+self.pictures[self.current_index])
         pixmap = pixmap.scaledToWidth(self.width())
         self.image.setPixmap(pixmap)
      
     def browseBackward(self): 
-        if self.pictures == None or len(self.pictures) == 0:
+        if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:
             return
         
         if self.current_index == 0:
@@ -163,7 +242,7 @@ class MainWindow(QMainWindow):
         else:
             self.current_index -= 1
         
-        pixmap = QtGui.QPixmap(self.pictures[self.current_index])
+        pixmap = QtGui.QPixmap(self.folder_path+"/"+self.pictures[self.current_index])
         pixmap = pixmap.scaledToWidth(self.width())
         self.image.setPixmap(pixmap)
         
