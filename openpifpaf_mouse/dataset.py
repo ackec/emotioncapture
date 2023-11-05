@@ -41,9 +41,9 @@ from openpifpaf import encoder, headmeta, metric, transforms
 
 class CustomDataset(Dataset):
     def __init__(self, data, image_dir, transform=None, preprocess=None, device = torch.device("cuda" if torch.cuda.is_available() else "cpu")):
-        self.data =  pd.read_csv('labeling/csv_files/018757.csv')
+        self.data =  pd.read_csv(f'{data}/overfit.csv')
 
-        self.image_dir = "labeling/images"
+        self.image_dir = image_dir
         self.transform = transform
         self.device = device
         self.preprocess = preprocess
@@ -54,7 +54,7 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, idx):
         frame_info = self.data.iloc[idx]
-        frame_path = os.path.join(self.image_dir, f"018757_frame{int(frame_info['Frame_ID'])}.jpg")
+        frame_path = os.path.join(self.image_dir, frame_info['Img_Path'])
 
 # IndexError: only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and integer or boolean arrays are valid indices
 
@@ -65,18 +65,18 @@ class CustomDataset(Dataset):
         points = np.hstack((points.reshape(-1, 2), np.ones((11, 1)))).astype(float) # add visability 1 to all
         anns = [{'keypoints': points}]
 
-
         image, anns, meta = self.preprocess()(image, anns, meta)
 
-        # show_points = True
-        # if show_points:
-        #     img2 = (image*50+120).numpy().astype(np.uint8).transpose(1, 2, 0)
-        #     img2 = np.ascontiguousarray(img2, dtype=np.uint8)
+        show_points = False
+        if show_points:
+            img2 = (image*50+120).numpy().astype(np.uint8).transpose(1, 2, 0)
+            img2 = np.ascontiguousarray(img2, dtype=np.uint8)
 
-        #     for i, (x, y, _) in enumerate(points):
-        #         cv2.circle(img2, (int(x), int(y)), 2, (255, 0, 255), -1)
-        #     cv2.imshow("Video Frame", img2)
-        #     cv2.waitKey(0)
+            for i, (x, y, _) in enumerate(points):
+                cv2.circle(img2, (int(x), int(y)), 2, (255, 0, 255), -1)
+            # cv2.imshow("Video Frame", img2)
+            # cv2.waitKey(0)
+            cv2.imwrite("hej3.png", img2)
         return image, anns, meta
         old_image = image
         # Define a transformation sequence

@@ -13,3 +13,7 @@ train_images
 *.meta
 *.data*
 *.pth
+/work_dirs
+/outputs
+/dataset
+/mmpose

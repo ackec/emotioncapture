@@ -51,7 +51,7 @@ if __name__ == "__main__":
     # extract_frames("torch_model/videos/018757-2023-06-08 08-53-33.mp4")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data = pd.read_csv('labeling/csv_files/018757.csv')
-    image_dir = "labeling/images"
+    image_dir = "annotated_images"
 
 
     train_split=0.7

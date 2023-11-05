@@ -32,10 +32,10 @@ class MouseKp(DataModule):
     debug = False
     pin_memory = True
 
-    train_annotations = 'outputs/csv_files'
+    train_annotations = 'csv_files'
     val_annotations = train_annotations
     eval_annotations = val_annotations
-    train_image_dir = 'outputs/images'
+    train_image_dir = 'annotated_images'
     val_image_dir = train_image_dir
     eval_image_dir = val_image_dir
 

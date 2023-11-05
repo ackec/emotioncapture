@@ -1,6 +1,15 @@
 # eMotionCapture
+Add submodule
 
+    git clone git@github.com:open-mmlab/mmpose.git
 
+To train:
+
+    python mmpose/tools/train.py keypoint_finder/mouse.py --show
+
+To convert from svg-files to COCO-json ans split into train, val and test:
+
+    python svg2coco.py
 
 ## Getting started
 
