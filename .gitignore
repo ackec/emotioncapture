@@ -2,7 +2,7 @@
 /.vscode/*
 */images/*
 __pycache__
-videos/
+videos/*
 train_images
 *.jpg
 *.png
@@ -12,3 +12,8 @@ train_images
 *.index
 *.meta
 *.data*
+*.pth
+/work_dirs
+/outputs
+/dataset
+/mmpose
