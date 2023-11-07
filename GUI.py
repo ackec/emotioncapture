@@ -5,11 +5,10 @@ import numpy as np
 import tkinter
 from tkinter import filedialog
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMainWindow, QLabel
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget,QToolButton
 from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import Qt, QPoint
 
 app = QApplication([])
 
@@ -26,8 +25,8 @@ class VisGraphicsView(QGraphicsView): ##Not used
         self.distance = 0.0
         self.myScene = scene
         self.setRenderHints(QPainter.Antialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
@@ -86,7 +85,7 @@ class MainWindow(QMainWindow):
         
         #self.displayImage()
         
-        self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.generalLayout.addWidget(self.image,0,1)
         
         #self.drawEllipse(pixmap.width(), pixmap.height())
@@ -102,10 +101,17 @@ class MainWindow(QMainWindow):
     
     def createListView(self):
         self.list_widget = QtWidgets.QListWidget()
+        self.list_widget.currentItemChanged.connect(self.selectListItem)
         self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
         self.list_widget.setFixedWidth(200)
         self.generalLayout.addWidget(self.list_widget, 0,0)
     
+    def selectListItem(self,item):
+        name = item.text()
+        self.displayImage(self.folder_path+"/"+name)
+        self.current_index = self.pictures.index(name)
+        
+        
     def addToList(self,item):
         
         new_item = QtWidgets.QListWidgetItem()
@@ -132,20 +138,20 @@ class MainWindow(QMainWindow):
         #self.addToolBar(editToolBar)
         # Using a QToolBar object and a toolbar area
         helpToolBar = QtWidgets.QToolBar("Help", self)
-        self.addToolBar(Qt.LeftToolBarArea, helpToolBar)
+        self.addToolBar(QtCore.Qt.LeftToolBarArea, helpToolBar)
              
     def createButtons(self):
         self.buttonMap = {}
         buttonsLayout = QtWidgets.QGridLayout()
         
         backButton = QToolButton()
-        backButton.setArrowType(Qt.LeftArrow)
+        backButton.setArrowType(QtCore.Qt.LeftArrow)
         backButton.setFixedSize(100,30)
         backButton.clicked.connect(self.browseBackward)
         buttonsLayout.addWidget(backButton,0,0)
         
         forwardButton = QToolButton()
-        forwardButton.setArrowType(Qt.RightArrow)
+        forwardButton.setArrowType(QtCore.Qt.RightArrow)
         forwardButton.setFixedSize(100,30)
         forwardButton.clicked.connect(self.browseForward)
         buttonsLayout.addWidget(forwardButton,0,1)
@@ -267,13 +273,17 @@ class MainWindow(QMainWindow):
     def browseForward(self):
         if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:
             return
-        
+            
         if self.current_index == len(self.pictures)-1:
             self.current_index = 0
         else:
             self.current_index += 1
         
-        self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
+        if self.list_widget.count() != 0:
+            item = self.list_widget.item(self.current_index)
+            self.list_widget.setCurrentItem(item)   ##Also calls selectListItem
+        else:
+            self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
      
     def browseBackward(self): 
         if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:
@@ -284,7 +294,11 @@ class MainWindow(QMainWindow):
         else:
             self.current_index -= 1
         
-        self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
+        if self.list_widget.count() != 0:
+            item = self.list_widget.item(self.current_index)
+            self.list_widget.setCurrentItem(item)   ##Also calls selectListItem
+        else:
+            self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
         
     def createGraphicView(self):    
         self.scene = VisGraphicsScene(self)
