@@ -81,9 +81,10 @@ class MainWindow(QMainWindow):
         ## Label (pixmap) for displaying images
         self.image = QtWidgets.QLabel()
         # self.image.setText("Hi")
-        pixmap = QtGui.QPixmap('lul.jpg')
-        self.image.setPixmap(pixmap)
-        self.image.resize(pixmap.width(), pixmap.height())
+        
+        #pixmap = QtGui.QPixmap('lul.jpg')
+        #self.image.setPixmap(pixmap)
+        #self.image.resize(pixmap.width(), pixmap.height())
         
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.generalLayout.addWidget(self.image)
