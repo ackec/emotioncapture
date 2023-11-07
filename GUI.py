@@ -67,12 +67,15 @@ class MainWindow(QMainWindow):
         #self.createGraphicView()
         self.setWindowTitle("Mouse")
         
-        self.generalLayout = QVBoxLayout()
+        self.generalLayout = QtWidgets.QGridLayout()
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.generalLayout)
         self.setCentralWidget(centralWidget)
         self.imageDisplay()
         self.createButtons()
+        self.createMenuBar()
+        self.createToolBars()
+        self.createListView()
         
         self.setMinimumSize(800, 600)
         self.show()
@@ -80,13 +83,11 @@ class MainWindow(QMainWindow):
     def imageDisplay(self):
         ## Label (pixmap) for displaying images
         self.image = QtWidgets.QLabel()
-        # self.image.setText("Hi")
-        pixmap = QtGui.QPixmap('lul.jpg')
-        self.image.setPixmap(pixmap)
-        self.image.resize(pixmap.width(), pixmap.height())
+        
+        #self.displayImage()
         
         self.image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.generalLayout.addWidget(self.image)
+        self.generalLayout.addWidget(self.image,0,1)
         
         #self.drawEllipse(pixmap.width(), pixmap.height())
     
@@ -98,7 +99,41 @@ class MainWindow(QMainWindow):
         painter.setPen(pen)
         painter.drawEllipse(x-radii/2, y-radii/2, radii, radii)
         painter.end()
+    
+    def createListView(self):
+        self.list_widget = QtWidgets.QListWidget()
+        self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
+        self.list_widget.setFixedWidth(200)
+        self.generalLayout.addWidget(self.list_widget, 0,0)
+    
+    def addToList(self,item):
         
+        new_item = QtWidgets.QListWidgetItem()
+        icon = QtGui.QIcon(self.folder_path+"/"+item)
+        new_item.setIcon(icon)
+        new_item.setText(item)
+        self.list_widget.addItem(new_item)
+        
+    
+    def createMenuBar(self):
+        menuBar = self.menuBar()
+        # Creating menus using a QMenu object
+        fileMenu = QtWidgets.QMenu("&File", self)
+        menuBar.addMenu(fileMenu)
+        # Creating menus using a title
+        editMenu = menuBar.addMenu("&Edit")
+        helpMenu = menuBar.addMenu("&Help")
+     
+    def createToolBars(self):
+        # Using a title
+        fileToolBar = self.addToolBar("File")
+        # Using a QToolBar object
+        #editToolBar = QtWidgets.QToolBar("Edit", self)
+        #self.addToolBar(editToolBar)
+        # Using a QToolBar object and a toolbar area
+        helpToolBar = QtWidgets.QToolBar("Help", self)
+        self.addToolBar(Qt.LeftToolBarArea, helpToolBar)
+             
     def createButtons(self):
         self.buttonMap = {}
         buttonsLayout = QtWidgets.QGridLayout()
@@ -136,8 +171,13 @@ class MainWindow(QMainWindow):
         pointButton.clicked.connect(self.showPoints)
         buttonsLayout.addWidget(pointButton,2,1)
         
-        self.generalLayout.addLayout(buttonsLayout)
+        self.generalLayout.addLayout(buttonsLayout,1,0,1,2)
     
+    def displayImage(self,file_path):
+        pixmap = QtGui.QPixmap(file_path)
+        pixmap = pixmap.scaledToWidth(self.width())
+        self.image.setPixmap(pixmap)
+        
     def selectImage(self):
         ## Browse and select image to display
         tkinter.Tk().withdraw()
@@ -152,11 +192,8 @@ class MainWindow(QMainWindow):
         if file_type.lower() not in self.image_extensions:
             return
         
-        pixmap = QtGui.QPixmap(file_path)
-        pixmap = pixmap.scaledToWidth(self.width())
-        self.image.setPixmap(pixmap)
-        #self.image.resize(pixmap.width(), pixmap.height())
-    
+        self.displayImage(file_path)
+        
     def selectFolder(self):
         ## Browse and select folder to display images from
         tkinter.Tk().withdraw()
@@ -172,9 +209,10 @@ class MainWindow(QMainWindow):
         self.pictures = [image_name for image_name in files if os.path.splitext(image_name)[1].lower() in self.image_extensions]  
         
         self.current_index = 0
-        pixmap = QtGui.QPixmap(self.folder_path+"/"+self.pictures[self.current_index])
-        pixmap = pixmap.scaledToWidth(self.width())
-        self.image.setPixmap(pixmap)
+        self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
+        
+        for name in self.pictures:
+            self.addToList(name)
     
     def loadPoints(self):
         tkinter.Tk().withdraw()
@@ -212,6 +250,7 @@ class MainWindow(QMainWindow):
             image_size = self.image.size()
             x = int(current_points[2*i]) * image_size.width()/1980
             y = int(current_points[2*i+1]) * image_size.height()/1080
+            
             #print(image_size.width()/1980,image_size.height()/1080)
             
             #point = QPoint(round(x),round(y))
@@ -233,10 +272,8 @@ class MainWindow(QMainWindow):
             self.current_index = 0
         else:
             self.current_index += 1
-            
-        pixmap = QtGui.QPixmap(self.folder_path+"/"+self.pictures[self.current_index])
-        pixmap = pixmap.scaledToWidth(self.width())
-        self.image.setPixmap(pixmap)
+        
+        self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
      
     def browseBackward(self): 
         if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:
@@ -247,9 +284,7 @@ class MainWindow(QMainWindow):
         else:
             self.current_index -= 1
         
-        pixmap = QtGui.QPixmap(self.folder_path+"/"+self.pictures[self.current_index])
-        pixmap = pixmap.scaledToWidth(self.width())
-        self.image.setPixmap(pixmap)
+        self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
         
     def createGraphicView(self):    
         self.scene = VisGraphicsScene(self)
