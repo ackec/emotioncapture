@@ -2,10 +2,18 @@
 Add submodule
 
     git clone git@github.com:open-mmlab/mmpose.git
+    git clone git@github.com:open-mmlab/mmdetection.git
 
-To train:
+To train detecion of mouse-head:
+
+    python mmdetection/tools/train.py keypoint_finder/detection_mouse.py
+To train pose detector:
 
     python mmpose/tools/train.py keypoint_finder/mouse.py --show
+
+To run inference:
+
+    python keypoint_finder/inference.py
 
 To convert from svg-files to COCO-json ans split into train, val and test:
 
