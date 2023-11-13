@@ -24,23 +24,31 @@ dataset_info = dict(
         10:dict(name='Mouth', id=10, color=[51, 153, 255], type='upper', swap=''),
     },
     skeleton_info={
-        0: dict(link=('Ear_tip', 'Earhole'), id=0, color=[0, 255, 0]),
-        1: dict(link=('Ear_back', 'Ear_front'), id=1, color=[0, 255, 0]),
-        2: dict(link=('Earhole', 'Eye_back'), id=2, color=[0, 255, 0]),
-        3: dict(link=('Eye_back', 'Eye_top'), id=3, color=[0, 255, 0]),
-        4: dict(link=('Eye_back', 'Eye_bottom'), id=4, color=[0, 255, 0]),
-        5: dict(link=('Eye_bottom', 'Eye_front'), id=5, color=[0, 255, 0]),
-        6: dict(link=('Eye_top', 'Eye_front'), id=6, color=[0, 255, 0]),
-        7: dict(link=('Eye_front', 'Nose_top'), id=7, color=[0, 255, 0]),
-        8: dict(link=('Nose_top', 'Nose_bottom'), id=8, color=[0, 255, 0]),
-        9: dict(link=('Nose_bottom', 'Mouth'), id=9, color=[0, 255, 0]),
-        10: dict(link=('Mouth', 'Eye_front'), id=10, color=[0, 255, 0]),
+        0: dict(link=('Ear_tip', 'Ear_back'), id=0, color=[0, 255, 0]),
+        1: dict(link=('Ear_tip', 'Ear_front'), id=1, color=[0, 255, 0]),
+        2: dict(link=('Ear_back', 'Earhole'), id=2, color=[0, 255, 0]),
+        3: dict(link=('Ear_front', 'Earhole'), id=3, color=[0, 255, 0]),
+        4: dict(link=('Eye_back', 'Eye_top'), id=4, color=[0, 255, 0]),
+        5: dict(link=('Eye_back', 'Eye_bottom'), id=5, color=[0, 255, 0]),
+        6: dict(link=('Eye_bottom', 'Eye_front'), id=6, color=[0, 255, 0]),
+        7: dict(link=('Eye_top', 'Eye_front'), id=7, color=[0, 255, 0]),
+        8: dict(link=('Eye_front', 'Nose_top'), id=8, color=[0, 255, 0]),
+        9: dict(link=('Nose_top', 'Nose_bottom'), id=9, color=[0, 255, 0]),
+        10: dict(link=('Nose_bottom', 'Mouth'), id=10, color=[0, 255, 0]),
+        11: dict(link=('Mouth', 'Eye_front'), id=11, color=[0, 255, 0]),
 
     },
     joint_weights=[
-        1., 1., 1., 1., 1., 1., 1., 1.2, 1.2, 1.5, 1.5,
+        1., 1., 1., 1.,
+        1., 1., 1., 1.,
+        1., 
+        1., 
+        1.,
     ],
     sigmas=[
-        0.026, 0.025, 0.025, 0.035, 0.035, 0.079, 0.079, 0.072, 0.072, 0.062,
+        0.062, 0.062, 0.062, 0.062, #ear
+        0.035, 0.035, 0.035, 0.035, #eye
+        0.062,
+        0.062,
         0.062
     ])

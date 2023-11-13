@@ -17,3 +17,6 @@ train_images
 /outputs
 /dataset
 /mmpose
+mmdeploy/
+mmdetection/
+output/

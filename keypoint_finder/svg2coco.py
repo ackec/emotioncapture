@@ -5,7 +5,7 @@ import random
 
 
 csv_folder = "dataset/csv_files/"
-categories = [{"id": 1, "name": "person", "supercategory": "person"}]
+categories = [{"id": 1, "name": "mouse", "supercategory": "animal"}]
 keypoints = [
     "Ear_back",
     "Ear_front",

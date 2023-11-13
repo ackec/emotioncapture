@@ -92,7 +92,7 @@ model = dict(
             checkpoint='https://download.openmmlab.com/mmpose/v1/projects/'
             'rtmpose/cspnext-m_udp-aic-coco_210e-256x192-f2f7d6f6_20230130.pth',  # noqa
         ),
-        frozen_stages=4
+        frozen_stages=4 # max 4
         ),
     head=dict(
         type=RTMCCHead,
@@ -121,8 +121,9 @@ model = dict(
 
 # base dataset settings
 dataset_type = CocoDataset
+classes = ('mouse')
 data_mode = 'topdown'
-data_root = 'data/coco/'
+data_root = 'dataset'
 
 backend_args = dict(backend='local')
 # backend_args = dict(
@@ -139,6 +140,7 @@ train_pipeline = [
     dict(type=RandomFlip, direction='horizontal'),
     dict(type=RandomHalfBody),
     dict(type=RandomBBoxTransform, scale_factor=[0.6, 1.4], rotate_factor=80),
+    # dict(type=ShiftScaleRotate, p=0.5),
     dict(type=TopdownAffine, input_size=codec['input_size']),
     dict(type=YOLOXHSVRandomAug),
     dict(
@@ -211,7 +213,7 @@ train_dataloader = dict(
 
         ann_file='dataset/train_annotations.json',
         data_prefix=dict(img='dataset/annotated_images'),
-        metainfo=dict(from_file='keypoint_finder/custom.py'),
+        metainfo=dict(from_file='keypoint_finder/mouse_skeleton.py'),
         pipeline=train_pipeline,
     ))
 val_dataloader = dict(
@@ -227,7 +229,7 @@ val_dataloader = dict(
         ann_file='dataset/val_annotations.json',
         data_prefix=dict(img='dataset/annotated_images'),
         # specify the new dataset meta information config file
-        metainfo=dict(from_file='keypoint_finder/custom.py'),
+        metainfo=dict(from_file='keypoint_finder/mouse_skeleton.py'),
         # bbox_file=f'{data_root}person_detection_results/'
         # 'COCO_val2017_detections_AP_H_56_person.json',
         test_mode=True,
