@@ -6,56 +6,12 @@ import tkinter
 from tkinter import filedialog
 
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMainWindow, QLabel
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget,QToolButton
+from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPainter
 
-app = QApplication([])
-
-class VisGraphicsScene(QGraphicsScene): ##Not used
-    def __init__(self,window):
-        super(VisGraphicsScene, self).__init__()
-        
-        
-class VisGraphicsView(QGraphicsView): ##Not used
-    def __init__(self, scene, parent):
-        super(VisGraphicsView, self).__init__(scene, parent)
-        self.startX = 0.0
-        self.startY = 0.0
-        self.distance = 0.0
-        self.myScene = scene
-        self.setRenderHints(QPainter.Antialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setDragMode(QGraphicsView.ScrollHandDrag)
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
-
-
-    def wheelEvent(self, event):
-        zoom = 1 + event.angleDelta().y()*0.001
-        self.scale(zoom, zoom)
-        
-    def mousePressEvent(self, event):
-        self.startX = event.globalPos().x()
-        self.startY = event.globalPos().y()
-        self.myScene.wasDragg = False
-        super().mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        #print(event.globalPos())
-        endX = event.globalPos().x()
-        endY = event.globalPos().y()
-        deltaX = endX - self.startX
-        deltaY = endY - self.startY
-        distance = math.sqrt(deltaX*deltaX + deltaY*deltaY)
-        if(distance > 5):
-            self.myScene.wasDragg = True
-        super().mouseReleaseEvent(event)
-        
-class MainWindow(QMainWindow):
+class poseWidget(QWidget):
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super(poseWidget, self).__init__()
         
         self.pictures = None
         self.current_index = None
@@ -64,17 +20,16 @@ class MainWindow(QMainWindow):
         self.pict_dict = {}
         
         #self.createGraphicView()
-        self.setWindowTitle("Mouse")
         
-        self.generalLayout = QtWidgets.QGridLayout()
-        centralWidget = QWidget(self)
-        centralWidget.setLayout(self.generalLayout)
-        self.setCentralWidget(centralWidget)
+        self.pose_layout = QGridLayout()
         self.imageDisplay()
         self.createButtons()
-        self.createMenuBar()
-        self.createToolBars()
         self.createListView()
+        
+        self.setLayout(self.pose_layout)
+        
+        #centralWidget.setStyleSheet("background-color: midnightblue;")
+        
         
         self.setMinimumSize(800, 600)
         self.show()
@@ -86,7 +41,7 @@ class MainWindow(QMainWindow):
         #self.displayImage()
         
         self.image.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.generalLayout.addWidget(self.image,0,1)
+        self.pose_layout.addWidget(self.image,0,1)
         
         #self.drawEllipse(pixmap.width(), pixmap.height())
     
@@ -102,9 +57,9 @@ class MainWindow(QMainWindow):
     def createListView(self):
         self.list_widget = QtWidgets.QListWidget()
         self.list_widget.currentItemChanged.connect(self.selectListItem)
-        self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
+        self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.ListMode)
         self.list_widget.setFixedWidth(200)
-        self.generalLayout.addWidget(self.list_widget, 0,0)
+        self.pose_layout.addWidget(self.list_widget, 0,0)
     
     def selectListItem(self,item):
         name = item.text()
@@ -114,32 +69,13 @@ class MainWindow(QMainWindow):
         
     def addToList(self,item):
         
-        new_item = QtWidgets.QListWidgetItem()
         icon = QtGui.QIcon(self.folder_path+"/"+item)
-        new_item.setIcon(icon)
-        new_item.setText(item)
+        #item_layout.addWidget(icon)
+        #item_layout.addWidget(item)
+        new_item = QtWidgets.QListWidgetItem(icon,item)
+        
         self.list_widget.addItem(new_item)
         
-    
-    def createMenuBar(self):
-        menuBar = self.menuBar()
-        # Creating menus using a QMenu object
-        fileMenu = QtWidgets.QMenu("&File", self)
-        menuBar.addMenu(fileMenu)
-        # Creating menus using a title
-        editMenu = menuBar.addMenu("&Edit")
-        helpMenu = menuBar.addMenu("&Help")
-     
-    def createToolBars(self):
-        # Using a title
-        fileToolBar = self.addToolBar("File")
-        # Using a QToolBar object
-        #editToolBar = QtWidgets.QToolBar("Edit", self)
-        #self.addToolBar(editToolBar)
-        # Using a QToolBar object and a toolbar area
-        helpToolBar = QtWidgets.QToolBar("Help", self)
-        self.addToolBar(QtCore.Qt.LeftToolBarArea, helpToolBar)
-             
     def createButtons(self):
         self.buttonMap = {}
         buttonsLayout = QtWidgets.QGridLayout()
@@ -177,7 +113,7 @@ class MainWindow(QMainWindow):
         pointButton.clicked.connect(self.showPoints)
         buttonsLayout.addWidget(pointButton,2,1)
         
-        self.generalLayout.addLayout(buttonsLayout,1,0,1,2)
+        self.pose_layout.addLayout(buttonsLayout,1,0,1,2)
     
     def displayImage(self,file_path):
         pixmap = QtGui.QPixmap(file_path)
@@ -268,8 +204,6 @@ class MainWindow(QMainWindow):
         self.image.update()
         
         
-        
-        
     def browseForward(self):
         if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:
             return
@@ -299,24 +233,3 @@ class MainWindow(QMainWindow):
             self.list_widget.setCurrentItem(item)   ##Also calls selectListItem
         else:
             self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
-        
-    def createGraphicView(self):    
-        self.scene = VisGraphicsScene(self)
-        
-        #self.brush = [QBrush(Qt.green), QBrush(Qt.yellow), QBrush(Qt.red)]
-        
-        self.view = VisGraphicsView(self.scene, self)
-        
-        self.setCentralWidget(self.view)
-        self.view.setGeometry(0, 0, 800, 600)
-    
-
-        
-def main():
-    app = QApplication(sys.argv)
-
-    ex = MainWindow()
-    sys.exit(app.exec())
-    
-if __name__ == "__main__":
-    main()
