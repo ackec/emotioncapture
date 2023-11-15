@@ -2,12 +2,14 @@ import sys, random, math, os
 import csv
 import numpy as np
 
+import re
 import tkinter
 from tkinter import filedialog
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPainter
+from PyQt5.QtCore import Qt
 
 class poseWidget(QWidget):
     def __init__(self):
@@ -34,16 +36,7 @@ class poseWidget(QWidget):
         self.setMinimumSize(800, 600)
         self.show()
         
-    def imageDisplay(self):
-        ## Label (pixmap) for displaying images
-        self.image = QtWidgets.QLabel()
-        
-        #self.displayImage()
-        
-        self.image.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.pose_layout.addWidget(self.image,0,1)
-        
-        #self.drawEllipse(pixmap.width(), pixmap.height())
+    
     
     def drawEllipse(self,x,y,radii=5):
         painter = QtGui.QPainter(self.image.pixmap())
@@ -59,7 +52,8 @@ class poseWidget(QWidget):
         self.list_widget.currentItemChanged.connect(self.selectListItem)
         self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.ListMode)
         self.list_widget.setFixedWidth(200)
-        self.pose_layout.addWidget(self.list_widget, 0,0)
+        #self.list_widget.setSortingEnabled(True)
+        self.pose_layout.addWidget(self.list_widget, 0,1)
     
     def selectListItem(self,item):
         name = item.text()
@@ -74,67 +68,38 @@ class poseWidget(QWidget):
         #item_layout.addWidget(item)
         new_item = QtWidgets.QListWidgetItem(icon,item)
         
+        #s = ''.join(re.findall(r'\d+', item))
+        #new_item.setData(int(s),item)
+        
         self.list_widget.addItem(new_item)
         
     def createButtons(self):
         self.buttonMap = {}
-        buttonsLayout = QtWidgets.QGridLayout()
-        
-        backButton = QToolButton()
-        backButton.setArrowType(QtCore.Qt.LeftArrow)
-        backButton.setFixedSize(100,30)
-        backButton.clicked.connect(self.browseBackward)
-        buttonsLayout.addWidget(backButton,0,0)
-        
-        forwardButton = QToolButton()
-        forwardButton.setArrowType(QtCore.Qt.RightArrow)
-        forwardButton.setFixedSize(100,30)
-        forwardButton.clicked.connect(self.browseForward)
-        buttonsLayout.addWidget(forwardButton,0,1)
-        
-        
+        buttonsLayout = QtWidgets.QVBoxLayout()
+        buttonsLayout.setSpacing(20)
         imageButton = QPushButton("Select Image")
-        imageButton.setFixedSize(100,30)
+        imageButton.setFixedSize(200,50)
         imageButton.clicked.connect(self.selectImage)
-        buttonsLayout.addWidget(imageButton,1,0)
-        
+        buttonsLayout.addWidget(imageButton)
         folderButton = QPushButton("Select Folder")
-        folderButton.setFixedSize(100,30)
+        folderButton.setFixedSize(200,50)
         folderButton.clicked.connect(self.selectFolder)
-        buttonsLayout.addWidget(folderButton,1,1)
+        buttonsLayout.addWidget(folderButton)
         
         csvButton = QPushButton("Select CSV")
-        csvButton.setFixedSize(100,30)
+        csvButton.setFixedSize(200,50)
         csvButton.clicked.connect(self.loadPoints)
-        buttonsLayout.addWidget(csvButton,2,0)
+        buttonsLayout.addWidget(csvButton)
         
         pointButton = QPushButton("Show Points")
-        pointButton.setFixedSize(100,30)
+        pointButton.setFixedSize(200,50)
         pointButton.clicked.connect(self.showPoints)
-        buttonsLayout.addWidget(pointButton,2,1)
+        buttonsLayout.addWidget(pointButton)
         
-        self.pose_layout.addLayout(buttonsLayout,1,0,1,2)
+        self.pose_layout.addLayout(buttonsLayout,0,0)
+        #buttonsLayout.addStretch()
+        buttonsLayout.setAlignment(Qt.AlignVCenter)
     
-    def displayImage(self,file_path):
-        pixmap = QtGui.QPixmap(file_path)
-        pixmap = pixmap.scaledToWidth(self.width())
-        self.image.setPixmap(pixmap)
-        
-    def selectImage(self):
-        ## Browse and select image to display
-        tkinter.Tk().withdraw()
-        file_path = filedialog.askopenfilename()
-        print("Selected file:{}".format(file_path))
-        
-        ## Check if a file is selected
-        if file_path == None or file_path == "":
-            return
-        ## Check if picture (Add more extensions?)
-        file_type = os.path.splitext(file_path)[1]        
-        if file_type.lower() not in self.image_extensions:
-            return
-        
-        self.displayImage(file_path)
         
     def selectFolder(self):
         ## Browse and select folder to display images from
@@ -156,6 +121,8 @@ class poseWidget(QWidget):
         for name in self.pictures:
             self.addToList(name)
     
+        #self.list_widget.sortItems()
+        
     def loadPoints(self):
         tkinter.Tk().withdraw()
         csv_path = filedialog.askopenfilename()
@@ -203,6 +170,51 @@ class poseWidget(QWidget):
             
         self.image.update()
         
+    def imageDisplay(self):
+        ## Label (pixmap) for displaying images
+        
+        self.image_layout = QVBoxLayout()
+        
+        self.image = QtWidgets.QLabel()
+        self.image.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.image_layout.addWidget(self.image)
+        
+        button_layout = QHBoxLayout()
+        backButton = QToolButton()
+        backButton.setArrowType(QtCore.Qt.LeftArrow)
+        backButton.setFixedSize(100,30)
+        backButton.clicked.connect(self.browseBackward)
+        button_layout.addWidget(backButton)
+        
+        forwardButton = QToolButton()
+        forwardButton.setArrowType(QtCore.Qt.RightArrow)
+        forwardButton.setFixedSize(100,30)
+        forwardButton.clicked.connect(self.browseForward)
+        button_layout.addWidget(forwardButton)
+        
+        self.image_layout.addLayout(button_layout)        
+        self.pose_layout.addLayout(self.image_layout,0,2)        
+        
+    def displayImage(self,file_path):
+        pixmap = QtGui.QPixmap(file_path)
+        pixmap = pixmap.scaledToWidth(self.width())
+        self.image.setPixmap(pixmap)
+        
+    def selectImage(self):
+        ## Browse and select image to display
+        tkinter.Tk().withdraw()
+        file_path = filedialog.askopenfilename()
+        print("Selected file:{}".format(file_path))
+        
+        ## Check if a file is selected
+        if file_path == None or file_path == "":
+            return
+        ## Check if picture (Add more extensions?)
+        file_type = os.path.splitext(file_path)[1]        
+        if file_type.lower() not in self.image_extensions:
+            return
+        
+        self.displayImage(file_path)
         
     def browseForward(self):
         if self.pictures == None or len(self.pictures) == 0 or self.current_index == None:

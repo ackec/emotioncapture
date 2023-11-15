@@ -73,15 +73,13 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.layout)
         
         self.button_layout = QHBoxLayout()
-        self.btn_pose = QPushButton("Pose Estimation")
-        #self.btn_pose.setCheckable(True)
-        self.btn_pose.setStyleSheet("QPushButton {background-color: lightgrey}")
+        self.btn_pose = QPushButton("Pose \n Estimation")
+        self.btn_pose.setStyleSheet("QPushButton {background-color: lightblue}")
         self.btn_pose.clicked.connect(self.showPose)
         self.button_layout.addWidget(self.btn_pose)
 
-        self.btn_feature = QPushButton("Feature Extraction")
+        self.btn_feature = QPushButton("Feature \n Extraction")
         self.btn_feature.setStyleSheet("QPushButton {background-color: lightgrey}")
-        #self.btn_feature.setCheckable(True)
         self.btn_feature.clicked.connect(self.showFeature)
         self.button_layout.addWidget(self.btn_feature)
         
@@ -108,26 +106,30 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(800, 600)
         self.show()
     
+    def resizeEvent(self, event):
+        QtWidgets.QMainWindow.resizeEvent(self, event)
+        
+        """
+        if self.pose_widget is not None and self.pose_widget.image.pixmap():
+            print("resize")
+            self.pose_widget.image.pixmap().scaledToWidth(self.width())
+        """
+        
     def showPose(self):
-        if not self.btn_pose.isChecked():
+        
+        if self.stacked_widget.currentWidget() != self.pose_widget:
             self.stacked_widget.setCurrentWidget(self.pose_widget)
             
             self.btn_pose.setStyleSheet("QPushButton {background-color: lightblue}")
-            #self.btn_pose.setChecked(True)
-            
             self.btn_feature.setStyleSheet("QPushButton {background-color: lightgrey}")
-            #self.btn_feature.setChecked(False)
         else:
             pass
             
     def showFeature(self):
-        if not self.btn_feature.isChecked():
+        if self.stacked_widget.currentWidget() != self.feature_widget:
             self.stacked_widget.setCurrentWidget(self.feature_widget)
 
-            #self.btn_feature.setChecked(True)
             self.btn_feature.setStyleSheet("QPushButton {background-color: lightblue}")
-            
-            #self.btn_pose.setChecked(False)
             self.btn_pose.setStyleSheet("QPushButton {background-color: lightgrey}")
             
         else:
