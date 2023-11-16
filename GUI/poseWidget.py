@@ -50,7 +50,7 @@ class poseWidget(QWidget):
     def createListView(self):
         self.list_widget = QtWidgets.QListWidget()
         self.list_widget.currentItemChanged.connect(self.selectListItem)
-        self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.ListMode)
+        self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
         self.list_widget.setFixedWidth(200)
         #self.list_widget.setSortingEnabled(True)
         self.pose_layout.addWidget(self.list_widget, 0,1)
@@ -64,6 +64,7 @@ class poseWidget(QWidget):
     def addToList(self,item):
         
         icon = QtGui.QIcon(self.folder_path+"/"+item)
+        
         #item_layout.addWidget(icon)
         #item_layout.addWidget(item)
         new_item = QtWidgets.QListWidgetItem(icon,item)
@@ -137,7 +138,7 @@ class poseWidget(QWidget):
             reader = csv.reader(file)
                         
             header = next(reader)
-            print(header)
+            #print(header)
             
             for row in reader:
                 self.pict_dict[row[0]] = row[2:]

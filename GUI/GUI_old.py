@@ -6,78 +6,10 @@ import tkinter
 from tkinter import filedialog
 
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMainWindow, QLabel
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QWidget,QToolButton
+from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPainter
+from PyQt5.QtCore import Qt
 
-app = QApplication([])
-
-class VisGraphicsScene(QGraphicsScene): ##Not used
-    def __init__(self,window):
-        super(VisGraphicsScene, self).__init__()
-        
-        
-class VisGraphicsView(QGraphicsView): ##Not used
-    def __init__(self, scene, parent):
-        super(VisGraphicsView, self).__init__(scene, parent)
-        self.startX = 0.0
-        self.startY = 0.0
-        self.distance = 0.0
-        self.myScene = scene
-        self.setRenderHints(QPainter.Antialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setDragMode(QGraphicsView.ScrollHandDrag)
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
-
-
-    def wheelEvent(self, event):
-        zoom = 1 + event.angleDelta().y()*0.001
-        self.scale(zoom, zoom)
-        
-    def mousePressEvent(self, event):
-        self.startX = event.globalPos().x()
-        self.startY = event.globalPos().y()
-        self.myScene.wasDragg = False
-        super().mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        #print(event.globalPos())
-        endX = event.globalPos().x()
-        endY = event.globalPos().y()
-        deltaX = endX - self.startX
-        deltaY = endY - self.startY
-        distance = math.sqrt(deltaX*deltaX + deltaY*deltaY)
-        if(distance > 5):
-            self.myScene.wasDragg = True
-        super().mouseReleaseEvent(event)
-        
-class poseWidget(QWidget):
-    def __init__(self):
-        super(poseWidget, self).__init__()
-        
-        self.pictures = None
-        self.current_index = None
-        self.image_extensions = [".jpg",".png"] ## add in lowercase
-        
-        self.pict_dict = {}
-        
-        #self.createGraphicView()
-        
-        centralWidget = QWidget(self)
-        #centralWidget.setStyleSheet("background-color: midnightblue;")
-        centralWidget.setLayout(self.generalLayout)
-        self.setCentralWidget(centralWidget)
-        self.imageDisplay()
-        self.createButtons()
-        self.createMenuBar()
-        self.createToolBars()
-        self.createListView()
-        centralWidget.hide()
-        
-        self.setMinimumSize(800, 600)
-        self.show()
     
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -90,7 +22,6 @@ class MainWindow(QMainWindow):
         
         self.pict_dict = {}
         
-        #self.createGraphicView()
         self.setWindowTitle("Mouse")
         
         self.generalLayout = QtWidgets.QGridLayout()
@@ -101,24 +32,11 @@ class MainWindow(QMainWindow):
         self.imageDisplay()
         self.createButtons()
         self.createMenuBar()
-        self.createToolBars()
         self.createListView()
-        centralWidget.hide()
         
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1000, 600)
         self.show()
-        
-    def imageDisplay(self):
-        ## Label (pixmap) for displaying images
-        self.image = QtWidgets.QLabel()
-        
-        #self.displayImage()
-        
-        self.image.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.generalLayout.addWidget(self.image,0,1)
-        
-        #self.drawEllipse(pixmap.width(), pixmap.height())
-    
+            
     def drawEllipse(self,x,y,radii=5):
         painter = QtGui.QPainter(self.image.pixmap())
         pen = QtGui.QPen()
@@ -131,8 +49,11 @@ class MainWindow(QMainWindow):
     def createListView(self):
         self.list_widget = QtWidgets.QListWidget()
         self.list_widget.currentItemChanged.connect(self.selectListItem)
-        self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.ListMode)
-        self.list_widget.setFixedWidth(200)
+        self.list_widget.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
+        self.list_widget.setIconSize(QtCore.QSize(100,100))
+        self.list_widget.setFixedWidth(450)
+        self.list_widget.setSpacing(0)
+        self.list_widget.setUniformItemSizes(True)
         self.generalLayout.addWidget(self.list_widget, 0,0)
     
     def selectListItem(self,item):
@@ -153,39 +74,28 @@ class MainWindow(QMainWindow):
     
     def createMenuBar(self):
         menuBar = self.menuBar()
-        # Creating menus using a QMenu object
-        fileMenu = QtWidgets.QMenu("&File", self)
-        menuBar.addMenu(fileMenu)
-        # Creating menus using a title
+        
+        fileMenu = menuBar.addMenu("&File")
         editMenu = menuBar.addMenu("&Edit")
         helpMenu = menuBar.addMenu("&Help")
-     
-    def createToolBars(self):
-        # Using a title
-        fileToolBar = self.addToolBar("File")
-        # Using a QToolBar object
-        #editToolBar = QtWidgets.QToolBar("Edit", self)
-        #self.addToolBar(editToolBar)
-        # Using a QToolBar object and a toolbar area
-        helpToolBar = QtWidgets.QToolBar("Help", self)
-        self.addToolBar(QtCore.Qt.LeftToolBarArea, helpToolBar)
-             
+        
+        self.new = fileMenu.addAction("New Project")
+        self.save = fileMenu.addAction("Save Project")
+        self.blank = fileMenu.addAction("")
+        
+        
+        #self.load.triggered.connect(self.loadAction)
+        
+        #fileMenu.addAction(self.openAction)
+        #fileMenu.addAction(self.saveAction)
+        #fileMenu.addAction(self.exitAction)
+    
+    def loadAction(self):
+        self.selectFolder()
+    
     def createButtons(self):
         self.buttonMap = {}
         buttonsLayout = QtWidgets.QGridLayout()
-        
-        backButton = QToolButton()
-        backButton.setArrowType(QtCore.Qt.LeftArrow)
-        backButton.setFixedSize(100,30)
-        backButton.clicked.connect(self.browseBackward)
-        buttonsLayout.addWidget(backButton,0,0)
-        
-        forwardButton = QToolButton()
-        forwardButton.setArrowType(QtCore.Qt.RightArrow)
-        forwardButton.setFixedSize(100,30)
-        forwardButton.clicked.connect(self.browseForward)
-        buttonsLayout.addWidget(forwardButton,0,1)
-        
         
         imageButton = QPushButton("Select Image")
         imageButton.setFixedSize(100,30)
@@ -208,6 +118,33 @@ class MainWindow(QMainWindow):
         buttonsLayout.addWidget(pointButton,2,1)
         
         self.generalLayout.addLayout(buttonsLayout,1,0,1,2)
+    
+    
+    def imageDisplay(self):
+        ## Label (pixmap) for displaying images
+        
+        self.image_layout = QVBoxLayout()
+        
+        self.image = QtWidgets.QLabel()
+        self.image.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.image_layout.addWidget(self.image)
+        
+        button_layout = QHBoxLayout()
+        backButton = QToolButton()
+        backButton.setArrowType(QtCore.Qt.LeftArrow)
+        backButton.setFixedSize(100,30)
+        backButton.clicked.connect(self.browseBackward)
+        button_layout.addWidget(backButton)
+        
+        forwardButton = QToolButton()
+        forwardButton.setArrowType(QtCore.Qt.RightArrow)
+        forwardButton.setFixedSize(100,30)
+        forwardButton.clicked.connect(self.browseForward)
+        button_layout.addWidget(forwardButton)
+        
+        self.image_layout.addLayout(button_layout)        
+        self.generalLayout.addLayout(self.image_layout,0,2)     
+    
     
     def displayImage(self,file_path):
         pixmap = QtGui.QPixmap(file_path)
@@ -243,6 +180,7 @@ class MainWindow(QMainWindow):
         
         self.folder_path = folder_path
         self.pictures = [image_name for image_name in files if os.path.splitext(image_name)[1].lower() in self.image_extensions]  
+       
         
         self.current_index = 0
         self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
@@ -330,17 +268,6 @@ class MainWindow(QMainWindow):
         else:
             self.displayImage(self.folder_path+"/"+self.pictures[self.current_index])
         
-    def createGraphicView(self):    
-        self.scene = VisGraphicsScene(self)
-        
-        #self.brush = [QBrush(Qt.green), QBrush(Qt.yellow), QBrush(Qt.red)]
-        
-        self.view = VisGraphicsView(self.scene, self)
-        
-        self.setCentralWidget(self.view)
-        self.view.setGeometry(0, 0, 800, 600)
-    
-
         
 def main():
     app = QApplication(sys.argv)
