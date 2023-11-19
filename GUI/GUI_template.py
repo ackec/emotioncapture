@@ -87,6 +87,7 @@ class MainWindow(QMainWindow):
         pixmapi = QStyle.StandardPixmap.SP_FileDialogNewFolder
         icon = self.style().standardIcon(pixmapi)
         self.new.setIcon(icon)
+        self.new.triggered.connect(self.newProject)
         
         self.save = file_menu.addAction("Save Project")
         pixmapi = QStyle.StandardPixmap.SP_DialogSaveButton
@@ -110,6 +111,54 @@ class MainWindow(QMainWindow):
         show_points = tempMenu.addAction("Show Points")
         show_points.triggered.connect(self.showPoints)
     
+    def newProject(self):
+        self.dlg = QDialog(self)
+        
+        dlg_layout = QFormLayout()
+        self.dlg.setWindowTitle("New Project")
+        
+        project_name = QLineEdit()
+        project_name.setAlignment(Qt.AlignRight)
+
+        mouse_name = QLineEdit()
+        mouse_name.setAlignment(Qt.AlignRight)
+        
+        file_browse = QHBoxLayout()
+        file_name = QLineEdit()
+        file_name.setObjectName("file_name")
+        file_name.setReadOnly(True)
+        
+        file_browse_btn = QPushButton()
+        file_browse_btn.setText("Browse")
+        file_browse_btn.clicked.connect(self.selectFolder)
+        file_browse.addWidget(file_name)
+        file_browse.addWidget(file_browse_btn)
+
+        create_buttons = QHBoxLayout()
+        
+        cancel_button = QPushButton()
+        cancel_button.setText("Cancel")
+        cancel_button.clicked.connect(self.dlg.close)
+        create_buttons.addWidget(cancel_button)
+        
+        create_button = QPushButton()
+        create_button.setText("Create")
+        create_button.clicked.connect(self.createProject)
+        create_buttons.addWidget(create_button)
+
+        dlg_layout.addRow("Project Name",project_name)
+        dlg_layout.addRow("Mouse Name",mouse_name)
+        dlg_layout.addRow("File Path(s)",file_browse)
+        dlg_layout.addRow("",create_buttons)
+        
+        self.dlg.setLayout(dlg_layout)
+        self.dlg.exec()
+    
+    def createProject(self):
+        ## Add save information from project creation
+        self.dlg.close()
+        return
+        
     def imageDisplay(self):
         ## Label (pixmap) for displaying images
         
@@ -134,17 +183,17 @@ class MainWindow(QMainWindow):
         button_layout.addStretch()
         #button_layout.setSpacing(0)
         
-        backButton = QToolButton()
-        backButton.setArrowType(QtCore.Qt.LeftArrow)
-        backButton.setFixedSize(30,30)
-        backButton.clicked.connect(self.browseBackward)
-        button_layout.addWidget(backButton)
+        back_button = QToolButton()
+        back_button.setArrowType(QtCore.Qt.LeftArrow)
+        back_button.setFixedSize(30,30)
+        back_button.clicked.connect(self.browseBackward)
+        button_layout.addWidget(back_button)
         
-        forwardButton = QToolButton()
-        forwardButton.setArrowType(QtCore.Qt.RightArrow)
-        forwardButton.setFixedSize(30,30)
-        forwardButton.clicked.connect(self.browseForward)
-        button_layout.addWidget(forwardButton)
+        forward_button = QToolButton()
+        forward_button.setArrowType(QtCore.Qt.RightArrow)
+        forward_button.setFixedSize(30,30)
+        forward_button.clicked.connect(self.browseForward)
+        button_layout.addWidget(forward_button)
         
         trash_button = QPushButton()
         trash_button.setFixedSize(30,30)
@@ -216,6 +265,13 @@ class MainWindow(QMainWindow):
         
         if folder_path == None or folder_path == "":
             return
+
+        #Remove earlier loaded pictures (Should remove this and fix add in future)
+        if self.pictures != None and len(self.pictures) != 0:
+            self.pictures = []
+            self.pict_dict = {}
+            self.list_widget.clear()
+            
         
         files = os.listdir(folder_path)
         ##Remove non picture files
@@ -229,6 +285,10 @@ class MainWindow(QMainWindow):
         
         for name in self.pictures:
             self.addToList(name)
+            
+        if self.dlg.isVisible():
+            text = self.dlg.findChild(QLineEdit,name="file_name")
+            text.setText(folder_path)
     
     def loadPoints(self):
         tkinter.Tk().withdraw()
