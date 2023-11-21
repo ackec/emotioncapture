@@ -17,7 +17,7 @@ TRAIN_DATA_PATH = './dataset/train'
 SAVE_MODEL_DIR = './trained_models'
 
 # Config
-EPOCHS = 300
+EPOCHS = 200
 LR = 1e-3
 WD = 1e-4
 
@@ -155,7 +155,10 @@ if __name__ == '__main__':
     objective = nn.BCELoss()
 
     # The optimizer used for training the model
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
+    optimizer = torch.optim.Adam([
+        {"params": model.backbone.parameters(), "lr": LR/100},
+        {"params": model.fc.parameters(), "lr": LR},
+    ], lr=LR, weight_decay=WD)
 
     model, loss_log, acc_log = train(model=model,
                                      train_data=train_loader,
@@ -163,4 +166,5 @@ if __name__ == '__main__':
                                      optimizer=optimizer,
                                      objective=objective,
                                      use_cuda=use_cuda,
-                                     epochs=EPOCHS)
+                                     epochs=EPOCHS,
+                                     name="profile_detector_freeze")

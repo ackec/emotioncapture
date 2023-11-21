@@ -12,19 +12,21 @@ class ProfileDetector(nn.Module):
         if pretrained:
             resnet_params['weights'] = 'ResNet18_Weights.DEFAULT'
 
-        self.model = models.resnet18(**resnet_params)
+        self.backbone = models.resnet18(**resnet_params)
+        self.backbone.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+        self.backbone.fc = nn.Identity()
 
         if freeze_backbone and pretrained:
-            for params in self.model.parameters():
+            for params in self.backbone.parameters():
                 params.requires_grad = False
 
-        self.model.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
-        self.model.fc = nn.Sequential(nn.Flatten(),
-                                      nn.Linear(512, 128),
-                                      nn.ReLU(),
-                                      nn.Dropout(0.2),
-                                      nn.Linear(128, 1),
-                                      nn.Sigmoid())
+        self.fc = nn.Sequential(nn.Flatten(),
+                                nn.Linear(512, 128),
+                                nn.ReLU(),
+                                nn.Dropout(0.2),
+                                nn.Linear(128, 1),
+                                nn.Sigmoid())
         
     def forward(self, inputs):
-        return self.model(inputs)
+        out = self.backbone(inputs)
+        return self.fc(out)
