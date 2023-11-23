@@ -19,6 +19,13 @@ class RadarChart(QGraphicsView):
 
         self.radar_scene = QGraphicsScene()
         self.setSceneRect(0, 0, 400, 300)
+        
+        ##Change alpha of pen. (Prob/def a better way to do this)
+        self.base_pen = QtGui.QPen()
+        color = self.base_pen.color()
+        color.setAlpha(150)
+        self.base_pen.setColor(color)
+        
         self.drawRadar()
         
         
@@ -33,36 +40,49 @@ class RadarChart(QGraphicsView):
         
         num_points = len(self.data)
         angle = 2 * math.pi / num_points
-        nr_edges = 3
+        baseline_edge_id = 3
         points_list = []
-        # Draw the axes and labels
+        
+        pen = QtGui.QPen()
+        color = pen.color()
+        color.setAlpha(50)
+        pen.setColor(color)
+        
+        # Draw the axes going from center
         for i in range(num_points):
-            point = center + QPointF(radius * math.sin(i * angle),radius * math.cos(i * angle))
+            direction = QPointF(math.sin(i * angle),math.cos(i * angle))
+            point = center + radius * direction
             
             line = QLineF(center, point)
-            self.radar_scene.addLine(line)
+            self.radar_scene.addLine(line,self.base_pen)
+            line = QLineF(point, center + 2*radius * direction)
+            self.radar_scene.addLine(line,pen)
             points_list.append(point)
         
-        for i in range(len(points_list)):
-            point = points_list[i]
-            prev_point = points_list[i-1]
+        # Draw the "circular" axes (2*baseline_edge_id) is the amount of drawn "circles"
+        for j in range(1,2*baseline_edge_id+1):
             
-            line = QLineF(prev_point, point)
-            self.radar_scene.addLine(line)
-            
-            for j in range(1,nr_edges):
-                line = QLineF(center+(point-center)*j/nr_edges,center+(prev_point-center)*j/nr_edges)
-                self.radar_scene.addLine(line)
+            if j == baseline_edge_id:
+                    pen = QtGui.QPen(QtGui.QColor(255, 0, 0, 255))
+            elif j > baseline_edge_id:
+                pen = QtGui.QPen()
+                color = pen.color()
+                color.setAlpha(500/j**2)
+                #print(j,500/j**2)
+                pen.setColor(color)
+            else:
+                pen = self.base_pen
+                    
+            for i in range(len(points_list)):
+                point = points_list[i]
+                prev_point = points_list[i-1]
+                
+                line = QLineF(center+(point-center)*j/baseline_edge_id,center+(prev_point-center)*j/baseline_edge_id)
+                self.radar_scene.addLine(line,pen)
               
         for i, label in enumerate(self.labels):
-            point1 = center + radius * QPointF(math.sin(i * angle),math.cos(i * angle))
-            point2 = center + radius * QPointF(math.sin((i + 1) * angle),math.cos((i + 1) * angle))
-            line = QLineF(point1,point2)
-            
-            self.radar_scene.addLine(line)
-
             text = QGraphicsTextItem(label)
-            text.setPos(center.x() + 1.3*radius * math.sin((i + 1) * angle) - 10,center.y() + 1.3*radius * math.cos((i + 1) * angle) - 10)
+            text.setPos(center.x() + 1.5*radius * math.sin(i * angle) - 10,center.y() + 1.5*radius * math.cos(i * angle) - 10)
             self.radar_scene.addItem(text)
         
         # Draw the data polygon
@@ -73,7 +93,7 @@ class RadarChart(QGraphicsView):
             data_polygon.append(center + QPointF(x, y))
 
         poly = self.radar_scene.addPolygon(QtGui.QPolygonF(data_polygon))
-        poly.setBrush(QtGui.QBrush(QtGui.QColor(50, 150, 200, 100)))
+        poly.setBrush(QtGui.QBrush(QtGui.QColor(50, 100, 255, 100)))
 
         #self.fitInView(self.sceneRect())#, Qt.AspectRatioMode.)
         
