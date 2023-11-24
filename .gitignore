@@ -1,4 +1,7 @@
 /videos/*
+/trained_models
+/output*
+/mm*
 /.vscode/*
 */images/*
 __pycache__

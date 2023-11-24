@@ -22,7 +22,7 @@ def plot_clusters(tsne_result, labels):
 
 if __name__ == "__main__":
     # Replace 'your_data.csv' with the path to your CSV file
-    csv_file_path = 'data.csv'
+    csv_file_path = 'Feature_extracion/data.csv'
     
     # Read the CSV file
     data = read_csv(csv_file_path)

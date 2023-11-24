@@ -19,22 +19,10 @@ class VideoAnnotation:
 
     def __init__(self, video_path: Path, output_dir: Path, num_points=8):
         self.video_id = video_path.stem  # Filename without suffix
-
         self.image_output_path = output_dir / 'images'
-        if not self.image_output_path.exists():
-            os.makedirs(self.image_output_path)
-
         self.bad_image_output_path = output_dir / 'bad_images'
-        if not self.bad_image_output_path.exists():
-            os.makedirs(self.bad_image_output_path)
-
         csv_output_path = output_dir / 'csv_files'
-        if not csv_output_path.exists():
-            os.makedirs(csv_output_path)
-
         self.csv_file_path = csv_output_path / f'{self.video_id}.csv'
-        if not self.csv_file_path.exists():
-            self.csv_file_path.touch()
 
         self.num_points = num_points
         self.clicked_points = []
@@ -148,39 +136,11 @@ class VideoAnnotation:
             self.zoom_start = (self.zoom_start[0]-diff_y, self.zoom_start[1]-diff_x)
             self.zoom_end = (self.zoom_end[0]-diff_y, self.zoom_end[1]-diff_x)
             self.show_cur_points()
-
-    def save_bad_frame(self):
-        self.bad_image_output_path
-        img_path: Path = self.bad_image_output_path / f"{self.video_id}_frame{self.current_frame}.jpg"
-        if not os.path.isfile(img_path):
-            cv2.imwrite(str(img_path), self.frame)
-        self.current_frame += 1
     
     def get_clicked_points(self):
         return list(map(tuple, np.reshape(self.df_points.loc[self.df_points["Frame_ID"] == self.current_frame].values[0, 2:].astype(int), (-1, 2))))
 
 
-    def save_annotated_frame(self):
-        point_dict = {"Img_Path": f"{self.video_id}_frame{self.current_frame}.jpg",
-                      "Frame_ID": self.current_frame}
-        for coord, part in zip(list(sum(self.clicked_points, ())), BODY_PARTS):
-            point_dict[part] = coord
-
-        if (self.df_points["Frame_ID"] == self.current_frame).any():
-            existing_index = self.df_points.index[self.df_points["Frame_ID"] == self.current_frame].tolist()[0]
-            self.df_points.loc[existing_index] = point_dict
-        else:
-            self.df_points = pd.concat([self.df_points, pd.DataFrame([point_dict])], ignore_index=True)
-
-        self.df_points.sort_values(by=["Frame_ID"], inplace=True)
-        self.df_points.to_csv(self.csv_file_path, index=False)
-        self.clicked_points = []
-
-        img_path: Path = self.image_output_path / point_dict["Img_Path"]
-        if not os.path.isfile(img_path):
-            cv2.imwrite(str(img_path), self.frame)
-
-        self.current_frame += 1
 
     def show_new_frame(self):
         self.update_cur_frame()
@@ -201,25 +161,7 @@ class VideoAnnotation:
             if key == ord('q') or cv2.getWindowProperty('Video Frame', cv2.WND_PROP_VISIBLE) < 1:
                 break
 
-            if key == ord('s'):
-                # Save the clicked points to the CSV file
-                if len(self.clicked_points) == self.num_points:
-                    self.save_annotated_frame()
-                    self.update_cur_frame()
-                    self.show_cur_points()
-                    print(f"Saved frame {self.current_frame}.")
-                else:
-                    print(f"Please click on {self.num_points} points, you have clicked {len(self.clicked_points)*2}.")
 
-            elif key == ord('r'):
-                # Reject frame                   
-                self.save_bad_frame()
-                self.current_frame += 1
-
-                self.show_new_frame()
-               # self.update_cur_frame()
-               # self.show_cur_points()
-                print(f"Saved rejected frame {self.current_frame}.")
 
             elif key == ord('d'):
                 # Next frame
@@ -246,11 +188,6 @@ class VideoAnnotation:
                 self.current_frame -= 1
                 self.show_new_frame()
 
-            if key == ord('b'):
-                # Clear last point
-                if self.clicked_points:
-                    self.clicked_points.pop()
-                    self.show_cur_points()
 
         self.cap.release()
 

@@ -11,47 +11,54 @@ import hdbscan
 import sklearn.cluster as cluster
 from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score
 
-data = pd.read_csv("data.csv")
 
-mnist = fetch_openml('mnist_784', version=1)
-mnist.target = mnist.target.astype(int)
+def cluster_keypoints(keypoints_csv):
+    data = pd.read_csv(keypoints_csv)
+
+    mnist = fetch_openml('mnist_784', version=1)
+    mnist.target = mnist.target.astype(int)
 
 
-standard_embedding = umap.UMAP(random_state=10).fit_transform(data.values)
-lowd_data = PCA(n_components=1).fit_transform(data.values)
-hdbscan_labels = hdbscan.HDBSCAN(min_samples=10, min_cluster_size=12).fit_predict(standard_embedding)
+    standard_embedding = umap.UMAP(random_state=10).fit_transform(data.values)
+    lowd_data = PCA(n_components=1).fit_transform(data.values)
+    hdbscan_labels = hdbscan.HDBSCAN(min_samples=10, min_cluster_size=12).fit_predict(standard_embedding)
 
-clustered = (hdbscan_labels >= 0)
-#s1 = plt.scatter(standard_embedding[~clustered, 0], standard_embedding[~clustered, 1], color=(0.5, 0.5, 0.5), s=10, alpha=0.5)
-s2 = plt.scatter(standard_embedding[clustered, 0], standard_embedding[clustered, 1], c=hdbscan_labels[clustered], s=10, cmap='viridis')
+    clustered = (hdbscan_labels >= 0)
 
-#print(s2)
-labels = hdbscan_labels
+    plt.figure()
+    #s1 = plt.scatter(standard_embedding[~clustered, 0], standard_embedding[~clustered, 1], color=(0.5, 0.5, 0.5), s=10, alpha=0.5)
+    s2 = plt.scatter(standard_embedding[clustered, 0], standard_embedding[clustered, 1], c=hdbscan_labels[clustered], s=10, cmap='viridis')
 
-color_array = np.where(abs(labels) == 0, "purple", labels)
-color_array = np.where(abs(labels) == 1, "blue", color_array)
-color_array = np.where(abs(labels) == 2, "teal", color_array)
-color_array = np.where(abs(labels) == 3, "green", color_array)
-color_array = np.where(abs(labels) == 4, "yellow", color_array)
+    #print(s2)
+    labels = hdbscan_labels
 
-print(color_array)
+    color_array = np.where(abs(labels) == 0, "purple", labels)
+    color_array = np.where(abs(labels) == 1, "blue", color_array)
+    color_array = np.where(abs(labels) == 2, "teal", color_array)
+    color_array = np.where(abs(labels) == 3, "green", color_array)
+    color_array = np.where(abs(labels) == 4, "yellow", color_array)
 
-df = pd.DataFrame(color_array.T)
-headers_to_csv = ['color']
-df.to_csv('color_array.csv', header=headers_to_csv, index=False)
+    print(color_array)
 
-set(hdbscan_labels)
-Counter(hdbscan_labels)
+    df = pd.DataFrame(color_array.T)
+    headers_to_csv = ['color']
+    df.to_csv('color_array.csv', header=headers_to_csv, index=False)
 
-labels = hdbscan_labels
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-#n_noise_ = list(labels).count(-1)
+    set(hdbscan_labels)
+    Counter(hdbscan_labels)
 
-print("Estimated number of clusters: %d" % n_clusters_)
-#print("Estimated number of noise points: %d" % n_noise_)
+    labels = hdbscan_labels
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    #n_noise_ = list(labels).count(-1)
 
-plt.legend(s2.legend_elements()[0], list(set(hdbscan_labels)))
-plt.title('UMAP clustering of 457 images', fontsize=20)
-plt.xlabel('UMAP_1')
-plt.ylabel('UMAP_2')
-plt.show()
+    print("Estimated number of clusters: %d" % n_clusters_)
+    #print("Estimated number of noise points: %d" % n_noise_)
+    plt.legend(s2.legend_elements()[0], list(set(hdbscan_labels)))
+    plt.title('UMAP clustering of 457 images', fontsize=20)
+    plt.xlabel('UMAP_1')
+    plt.ylabel('UMAP_2')
+    plt.show()
+
+
+if __name__ == "__main__":
+    cluster_keypoints("output/mouse_features.csv")
