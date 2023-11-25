@@ -1,9 +1,13 @@
 from enum import Enum
 
+from pathlib import Path
+
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QMovie
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget)
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT
+from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
 __all__ = ["ProjectDialog", "ProjectMode"]
 
@@ -79,9 +83,40 @@ class NewProject(DialogPlaceHolder):
         super().__init__("New Project", ProjectMode.PROCESS)
 
 
-class Processing(DialogPlaceHolder):
+class Processing(QWidget):
     def __init__(self):
-        super().__init__("Processing", ProjectMode.ERROR)
+        super().__init__()
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Animated GIF
+        icon_label = QLabel(self)
+        self.main_layout.addWidget(icon_label)
+        self.icon_animation = QMovie(PROCESSING_GIF_PATH)
+        icon_label.setMovie(self.icon_animation)
+        self.icon_animation.start()
+
+        # Text beneth GIF
+        text = QLabel()
+        text.setText("Processing...")
+        self.main_layout.addWidget(text)
+
+        # Temporary switch button (remove later)
+        btn = QPushButton("Switch")
+        btn.clicked.connect(lambda: self.parent().parent().switch(next))
+        self.main_layout.addWidget(btn)
+
+        self.setLayout(self.main_layout)
+
+    def startStopAnimation(self):
+        if self.icon_animation.state() == QMovie.MovieState.Running:
+            self.icon_animation.stop()
+        else:
+            self.icon_animation.start()
 
 
 class ProcessingFailed(DialogPlaceHolder):
