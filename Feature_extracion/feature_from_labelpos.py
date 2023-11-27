@@ -29,6 +29,14 @@ def calc_features_sin(point_arr1, point_arr2, point_arr3):
     return sin_ang_deg
 
 
+# https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
+def ccw(A,B,C):
+    return (C[:,1]-A[:,1]) * (B[:,0]-A[:,0]) > (B[:,1]-A[:,1]) * (C[:,0]-A[:,0])
+
+# Return true if line segments AB and CD intersect
+def intersect(A,B,C,D):
+    return np.logical_and(ccw(A,C,D) != ccw(B,C,D), ccw(A,B,C) != ccw(A,B,D))
+
 
 def points_to_features(in_csv_file, out_csv_file):
     myFile = pd.read_csv(in_csv_file)
@@ -77,6 +85,11 @@ def points_to_features(in_csv_file, out_csv_file):
 
     ear_pos_vec = 180 - new_ear_pos
     ear_angle = 90 + np.abs(ear_angle_sin)
+
+    # Set all ear_angle to 180 degrees where back_ear-front_ear line intersects bot_ear-top_ear line.
+    mask = intersect(back_ear,front_ear,bot_ear,top_ear)
+    ear_angle[mask] = 180
+
     snout_pos = np.abs(snout_pos)
     mouth_pos = np.abs(mouth_pos)
     face_incl = 90 - np.abs(face_incl)
