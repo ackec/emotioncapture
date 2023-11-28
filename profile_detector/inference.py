@@ -8,9 +8,9 @@ from torchvision.io import VideoReader
 from torchvision.utils import save_image
 from torchvision.transforms import Resize, Normalize, Compose
 
-from model import ProfileDetector
+from .model import ProfileDetector
 
-VIDEO_PATH = './videos/F3H-2021-10-01 11-23-58.mp4'
+VIDEO_PATH = './videos/018757-2023-06-08 08-53-33.mp4'
 MODEL_PATH = './trained_models/profile_detector_freeze_best'
 OUTPUT_PATH = './output/profiles'
 
@@ -33,7 +33,7 @@ def image_batcher(reader: VideoReader, batch_size=8):
             images = None
             time_stamps = []
 
-        img: torch.Tensor = frame["data"].float().div(255).unsqueeze(0)
+        img: torch.Tensor = frame["data"].to("cuda").float().div(255).unsqueeze(0)
         time_s: float = frame['pts']
 
         images = torch.concat((images, img), 0) if images is not None else img
@@ -61,7 +61,7 @@ def save_score_plot(predictions: list[float], time_stamps: list[float]):
     plt.ylim((0, 100))
     plt.xlim((time_stamps[0], time_stamps[-1]))
     plt.legend()
-    plt.savefig(output_path / 'scores.jpg')
+    plt.savefig(OUTPUT_PATH + 'scores.jpg')
     plt.rcParams["figure.figsize"] = plt.rcParamsDefault["figure.figsize"]
 
 
@@ -69,6 +69,11 @@ def inference(model: nn.Module,
               video_path: Path,
               output_path: Path,
               save_plot=True):
+    
+    video_path = Path(video_path)
+    output_path = Path(output_path)
+    output_path.mkdir(parents=True, exist_ok=True)
+
     reader = VideoReader(str(video_path.absolute()), "video")
     video_len = reader.get_metadata()["video"]["duration"][0]
     frame_rate = reader.get_metadata()["video"]["fps"][0]
@@ -86,7 +91,7 @@ def inference(model: nn.Module,
     # Best frame found of last second
     prev_saved = {"path": "", "time": -10.0, "score": 0}
 
-    for images, f_times in image_batcher(reader, 16):
+    for images, f_times in image_batcher(reader, 24):
         if len(predictions) % (10*frame_rate) == 0:
             print(f"Processed: {f_times[-1]}s / {video_len} s")
 
@@ -102,7 +107,7 @@ def inference(model: nn.Module,
             f_index = len(predictions) + i
             path = output_path / (f'img_{f_index}.{FILE_TYPE}')
 
-            if prev_saved["time"] + 1 > f_times[i]:
+            if f_times[i] < prev_saved["time"] + 0.5 :
                 # Less than one second since last save
                 if prev_saved["score"] > pred:
                     # Last saved was better, skip to next
@@ -125,11 +130,9 @@ if __name__ == '__main__':
     model_path = Path(MODEL_PATH)
     model = ProfileDetector(pretrained=True, freeze_backbone=True)
     model.load_state_dict(torch.load(model_path))
+    model.to("cuda")
 
-    video_path = Path(VIDEO_PATH)
-    output_path = Path(OUTPUT_PATH)
-    output_path.mkdir(parents=True, exist_ok=True)
-    print(f"Processing video: \'{video_path.absolute()}\'")
-    inference(model, video_path, output_path, save_plot=True)
+    print(f"Processing video: \'{VIDEO_PATH}\'")
+    inference(model, VIDEO_PATH, OUTPUT_PATH, save_plot=True)
     print("Done!")
-    print(f"Images saved in {output_path.absolute()}")
+    print(f"Images saved in {OUTPUT_PATH}")

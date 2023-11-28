@@ -1,14 +1,19 @@
 from enum import Enum
 
-from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
-                             QVBoxLayout, QPushButton)
+from pathlib import Path
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QMovie
+from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
+                             QVBoxLayout, QPushButton, QStackedWidget)
+
+from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
 __all__ = ["ProjectDialog", "ProjectMode"]
 
 
 class ProjectMode(Enum):
+    """ Possible states of the project management. """
     NEW = 0
     """ New project screen. """
     PROCESS = 1
@@ -34,15 +39,13 @@ class DialogPlaceHolder(QWidget):
         self.main_layout.addWidget(text)
 
         btn = QPushButton("Switch")
-        btn.clicked.connect(lambda: self.parent().switch(next))
+        btn.clicked.connect(lambda: self.parent().parent().switch(next))
         self.main_layout.addWidget(btn)
 
         self.setLayout(self.main_layout)
 
 
 class ProjectDialog(QDialog):
-
-    # TODO: Use a QStackedWidget instead
 
     titles = ["Create new project",
               "Processing data",
@@ -57,24 +60,18 @@ class ProjectDialog(QDialog):
         self.setModal(True)  # Prevent loss of focus
 
         self.main_layout = QVBoxLayout()
-        self.displayed_widget = QWidget()
-        self.main_layout.addWidget(self.displayed_widget)
+
+        self.modes = QStackedWidget()
+        self.modes.addWidget(NewProject())
+        self.modes.addWidget(Processing())
+        self.modes.addWidget(ProcessingFailed())
+
+        self.main_layout.addWidget(self.modes)
         self.setLayout(self.main_layout)
 
-    def switch(self, mode: ProjectMode, **kwargs):
-        if mode == ProjectMode.NEW:
-            new_widget = NewProject(**kwargs)
-        elif mode == ProjectMode.PROCESS:
-            new_widget = Processing(**kwargs)
-        elif mode == ProjectMode.ERROR:
-            new_widget = ProcessingFailed(**kwargs)
-        else:
-            raise ValueError("Incorrect mode supplied.")
-
+    def switch(self, mode: ProjectMode):
         self.setWindowTitle(self.titles[mode.value])
-        self.main_layout.replaceWidget(self.displayed_widget, new_widget)
-        self.displayed_widget.setParent(None)
-        self.displayed_widget = new_widget
+        self.modes.setCurrentIndex(mode.value)
 
     def show(self, mode: ProjectMode):
         self.switch(mode)
@@ -86,9 +83,40 @@ class NewProject(DialogPlaceHolder):
         super().__init__("New Project", ProjectMode.PROCESS)
 
 
-class Processing(DialogPlaceHolder):
+class Processing(QWidget):
     def __init__(self):
-        super().__init__("Processing", ProjectMode.ERROR)
+        super().__init__()
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Animated GIF
+        icon_label = QLabel(self)
+        self.main_layout.addWidget(icon_label)
+        self.icon_animation = QMovie(PROCESSING_GIF_PATH)
+        icon_label.setMovie(self.icon_animation)
+        self.icon_animation.start()
+
+        # Text beneth GIF
+        text = QLabel()
+        text.setText("Processing...")
+        self.main_layout.addWidget(text)
+
+        # Temporary switch button (remove later)
+        btn = QPushButton("Switch")
+        btn.clicked.connect(lambda: self.parent().parent().switch(next))
+        self.main_layout.addWidget(btn)
+
+        self.setLayout(self.main_layout)
+
+    def startStopAnimation(self):
+        if self.icon_animation.state() == QMovie.MovieState.Running:
+            self.icon_animation.stop()
+        else:
+            self.icon_animation.start()
 
 
 class ProcessingFailed(DialogPlaceHolder):

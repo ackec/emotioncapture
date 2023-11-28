@@ -1,11 +1,14 @@
-""" Default window width. """
 WINDOW_WIDTH = 1280
+""" Default window width. """
 
-""" Default window height. """
 WINDOW_HEIGHT = 720
+""" Default window height. """
 
-""" Default dialog height. """
 DIALOG_WIDTH = 640
+""" Default dialog width. """
 
-""" Default dialog height. """
 DIALOG_HEIGHT = 640
+""" Default dialog height. """
+
+PROCESSING_GIF_PATH = "GUI/res/mouse.gif"
+""" Path to gif to show during processing. """
