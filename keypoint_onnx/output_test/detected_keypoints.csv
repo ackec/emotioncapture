@@ -1,0 +1,3 @@
+Img_Path,Frame_ID,Ear_back_x,Ear_back_y,Ear_front_x,Ear_front_y,Ear_bottom_x,Ear_bottom_y,Ear_top_x,Ear_top_y,Eye_back_x,Eye_back_y,Eye_front_x,Eye_front_y,Eye_bottom_x,Eye_bottom_y,Eye_top_x,Eye_top_y,Nose_top_x,Nose_top_y,Nose_bottom_x,Nose_bottom_y,Mouth_x,Mouth_y
+mouse.jpg,0,834,276,743,399,823,396,761,301,619,409,563,411,591,421,593,395,420,436,430,482,495,554
+mouse2.jpg,1,812,253,742,405,817,400,733,310,633,480,589,503,612,500,601,470,474,630,507,658,593,673
