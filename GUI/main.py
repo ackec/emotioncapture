@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
         self.image_viewer = ImageViewer()
         self.file_list = ImageFileList(self.image_viewer)
         self.image_metadata_viewer = ImageMetadataViewer()
+        self.image_control = ImageControl(self.file_list)
 
         # Dialogs
         self.project_dialog = ProjectDialog()
@@ -70,6 +71,7 @@ class MainWindow(QMainWindow):
         # Right side
         right_side_layout = QVBoxLayout()
         right_side_layout.addWidget(self.image_viewer, 65)
+        right_side_layout.addWidget(self.image_control)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
         main_layout.addLayout(right_side_layout, 60)
 

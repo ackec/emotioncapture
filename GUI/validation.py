@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QLabel, QSizePolicy, QFrame, QWidget
+from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, 
+                            QWidget,QHBoxLayout, QStyle)
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore,QtGui
 import tkinter
@@ -36,9 +37,9 @@ class ImageFileList(QtWidgets.QListWidget):
                                                 
         self.currentItemChanged.connect(self.select_list_item)
         self.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
-        self.setIconSize(QtCore.QSize(100,100))
-        self.setFixedWidth(450)
-        self.setSpacing(0)
+        self.setIconSize(QtCore.QSize(150,100))
+        self.setFixedWidth(550)
+        self.setSpacing(5)
         self.setUniformItemSizes(True)
         
     
@@ -103,11 +104,97 @@ class ImageViewer(QLabel):
         pixmap = pixmap.scaledToWidth(self.width())
         self.setPixmap(pixmap)
 
-class ImageControl(PlaceHolder):
-    def __init__(self):
-        super().__init__("Image controls")
+class ImageControl(QWidget):
+    def __init__(self,file_list):
+        super().__init__() #"Image controls"
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        
+        #self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        self.file_list = file_list
+        
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        back_button = QtWidgets.QToolButton()
+        back_button.setArrowType(QtCore.Qt.LeftArrow)
+        back_button.setFixedSize(30,30)
+        back_button.clicked.connect(self.browse_backward)
+        button_layout.addWidget(back_button)
+        
+        forward_button = QtWidgets.QToolButton()
+        forward_button.setArrowType(QtCore.Qt.RightArrow)
+        forward_button.setFixedSize(30,30)
+        forward_button.clicked.connect(self.browse_forward)
+        button_layout.addWidget(forward_button)
+        
+        trash_button = QtWidgets.QPushButton()
+        trash_button.setFixedSize(30,30)
+        pixmapi = QStyle.StandardPixmap.SP_TrashIcon
+        icon = self.style().standardIcon(pixmapi)
+        trash_button.setIcon(icon)
+        button_layout.addWidget(trash_button)
+        
+        edit_button = QtWidgets.QPushButton()
+        edit_button.setFixedSize(30,30)
+        pixmapi = QStyle.StandardPixmap.SP_DialogResetButton
+        icon = self.style().standardIcon(pixmapi)
+        edit_button.setIcon(icon)
+        button_layout.addWidget(edit_button)
+        
+        button_layout.addStretch()
+        self.setLayout(button_layout)
+        
 
-
-class ImageMetadataViewer(PlaceHolder):
+    def browse_forward(self):
+        if self.file_list.pictures == None or len(self.file_list.pictures) == 0 or self.file_list.current_index == None:
+            return
+            
+        if self.file_list.current_index == len(self.file_list.pictures)-1:
+            self.file_list.current_index = 0
+        else:
+            self.file_list.current_index += 1
+        
+        if self.file_list.count() != 0:
+            item = self.file_list.item(self.file_list.current_index)
+            self.file_list.setCurrentItem(item)   ##Also calls selectListItem
+     
+    def browse_backward(self): 
+        if self.file_list.pictures == None or len(self.file_list.pictures) == 0 or self.file_list.current_index == None:
+            return
+        
+        if self.file_list.current_index == 0:
+            self.file_list.current_index = len(self.pictures)-1
+        else:
+            self.file_list.current_index -= 1
+            
+        if self.file_list.count() != 0:
+            item = self.file_list.item(self.file_list.current_index)
+            self.file_list.setCurrentItem(item)   ##Also calls selectListItem
+        
+            
+class ImageMetadataViewer(QLabel):
     def __init__(self):
-        super().__init__("Image metadata")
+        super().__init__() #"Image metadata"
+        
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        
+        self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        
+        self.info_layout = QHBoxLayout()
+        self.setAlignment(QtCore.Qt.AlignCenter)
+        self.info_dict = {"Mouse:":"Anonymouse",
+                          "Gender:":"Male",
+                          "Genotype:":"Opto",
+                            "Image:":"Img_example.jpg",
+                            "Profile Score:":0.89,
+                            "Key Point Score":0.97}
+        
+        temp_text = ""
+        for key,value in self.info_dict.items():
+            temp_text += "{} \t \t \t {} \n".format(key,value)
+            
+        self.setText(temp_text)
+        
+        self.setLayout(self.info_layout)
