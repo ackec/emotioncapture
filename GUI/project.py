@@ -1,13 +1,11 @@
 from enum import Enum
 
-from pathlib import Path
-
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QMovie
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QMovie, QFont
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget)
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
+from config import DIALOG_WIDTH, DIALOG_HEIGHT, RESOURCE_PATH
 
 __all__ = ["ProjectDialog", "ProjectMode"]
 
@@ -95,28 +93,24 @@ class Processing(QWidget):
 
         # Animated GIF
         icon_label = QLabel(self)
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(icon_label)
-        self.icon_animation = QMovie(PROCESSING_GIF_PATH)
-        icon_label.setMovie(self.icon_animation)
-        self.icon_animation.start()
+        icon_animation = QMovie(RESOURCE_PATH + '/mouse.gif')
+        icon_label.setMovie(icon_animation)
+        icon_label.setScaledContents(True)
+        icon_animation.start()
+        icon_animation.setScaledSize(QSize(160, 160))
 
-        # Text beneth GIF
+        # Text beneath GIF
         text = QLabel()
+        text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = QFont('Arial', 12)
+        text.setStyleSheet("color: #404040")
+        text.setFont(font)
         text.setText("Processing...")
         self.main_layout.addWidget(text)
 
-        # Temporary switch button (remove later)
-        btn = QPushButton("Switch")
-        btn.clicked.connect(lambda: self.parent().parent().switch(next))
-        self.main_layout.addWidget(btn)
-
         self.setLayout(self.main_layout)
-
-    def startStopAnimation(self):
-        if self.icon_animation.state() == QMovie.MovieState.Running:
-            self.icon_animation.stop()
-        else:
-            self.icon_animation.start()
 
 
 class ProcessingFailed(DialogPlaceHolder):

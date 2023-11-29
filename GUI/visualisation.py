@@ -1,7 +1,15 @@
-from enum import Enum
-import sys
+from pathlib import Path
+import numpy as np
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QMovie
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget)
+
+from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
+from PyQt5.QtWidgets import QLabel, QSizePolicy, QFrame, QWidget
+
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas as pd
@@ -53,9 +61,11 @@ class ImageFileList(PlaceHolder):
         super().__init__("File list")
 
 
-class RadarPlot(PlaceHolder):
+class RadarPlot(QMainWindow):
     def __init__(self):
-        super().__init__("Radar Plot")
+        super().__init__()
+        stimuli_start = 100
+        stimuli_end = 200
 
         # Set up the main window
         self.setWindowTitle("Radar Plot")
@@ -71,43 +81,47 @@ class RadarPlot(PlaceHolder):
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
 
-        # Load data (replace 'clipboard' with your file path)
-        self.radardata = pd.read_clipboard(sep='\t', header=True)
+        # Load data (replace 'your_file.csv' with your file path)
+        self.radardata = pd.read_csv('output/mouse_features.csv')
 
-        # Initialize the radar plot
+        # Calculate upper and lower bounds
+        start = self.radardata.iloc[:stimuli_start]
+        end = self.radardata.iloc[stimuli_end:]
+        self.baseline = pd.concat((start,end)).mean(axis=0)
+        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline
+
+        self.upper = self.stimulation.mean(axis=0) + self.stimulation.sem(axis=0)
+        self.lower = self.stimulation.mean(axis=0) - self.stimulation.sem(axis=0)
         self.init_radar_plot()
 
     def init_radar_plot(self):
-        # Create axis for the figure
         ax = self.figure.add_subplot(111, polar=True)
-
-        # Plot the radar
         self.radar_plot(ax)
-
-        # Draw the canvas
         self.canvas.draw()
 
     def radar_plot(self, ax):
-        parameter = self.radardata['parameter']
-        stimulation = self.radardata['stimulation']
-        baseline = self.radardata['baseline']
-        upper = self.radardata['upper']
-        lower = self.radardata['lower']
-
+        parameters = list(self.radardata.columns)
+        rad_linspace = np.linspace(0, 2 * np.pi, len(parameters), endpoint=False)
         # Plot polygons
         polygons = [
-            Polygon(list(zip(parameter, upper)), facecolor='darkgrey', alpha=0.5),
-            Polygon(list(zip(parameter, lower)), facecolor='white', alpha=0.7),
-            Polygon(list(zip(parameter, baseline)), edgecolor='black', linewidth=1, facecolor='none'),
+            Polygon(list(zip(rad_linspace, self.upper)), facecolor='darkgrey', alpha=0.5),
+
+            Polygon(list(zip(rad_linspace, self.lower)), facecolor='white', alpha=0.7),
+            Polygon(list(zip(rad_linspace, self.stimulation.mean(axis=0))), edgecolor='blue', linewidth=1, facecolor='none'),
+            Polygon(list(zip(rad_linspace, [1]*7)), edgecolor='black', linewidth=1, facecolor='none'),
         ]
 
         pc = PatchCollection(polygons, match_original=True)
         ax.add_collection(pc)
 
         # Set axis labels and limits
-        ax.set_xlabel("Facial profile response to stimulation X")
-        ax.set_ylabel("Proportional change from baseline")
-        ax.set_ylim(-0.25, 0.2)
+        # ax.set_xlabel("Facial profile response to stimulation X")
+        # ax.set_ylabel("Proportional change from baseline")
+        ax.set_ylim(0, 1.1)
+
+        ax.set_xticks(rad_linspace)
+        ax.set_xticklabels(parameters)
+        ax.set_yticklabels([])
 
 
 class UMAPViewer(PlaceHolder):
