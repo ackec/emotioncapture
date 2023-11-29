@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
 from validation import *
 from project import *
 from editor import *
+from visualisation import RadarPlot
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
@@ -60,6 +61,7 @@ class MainWindow(QMainWindow):
         self.file_list = ImageFileList(self.image_viewer)
         self.image_metadata_viewer = ImageMetadataViewer()
         self.image_control = ImageControl(self.file_list)
+        self.radar_plot = RadarPlot()
 
         # Dialogs
         self.project_dialog = ProjectDialog()
@@ -72,6 +74,9 @@ class MainWindow(QMainWindow):
         right_side_layout = QVBoxLayout()
         right_side_layout.addWidget(self.image_viewer, 65)
         right_side_layout.addWidget(self.image_control)
+
+        # TODO MOVE to right component
+        right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
         main_layout.addLayout(right_side_layout, 60)
 
