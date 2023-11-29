@@ -1,13 +1,22 @@
 import sys
+from enum import Enum
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
-                             QHBoxLayout, QVBoxLayout)
+                             QHBoxLayout, QVBoxLayout, QStackedWidget)
 
 from validation import *
 from project import *
 from editor import *
+from visualisation import *
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
+
+class GuiMode(Enum):
+    """ Possible states of the project management. """
+    MAIN = 0
+    """ New project screen. """
+    VISUAL = 1
+    """ Processing data screen. """
 
 
 class MainWindow(QMainWindow):
@@ -24,11 +33,13 @@ class MainWindow(QMainWindow):
         self.create_widgets()
         self.create_menu_bar()
 
+
     def create_menu_bar(self):
         menu_bar = self.menuBar()
 
         file_menu = menu_bar.addMenu("&File")
         edit_menu = menu_bar.addMenu("&Edit")
+        visualisation_menu = menu_bar.addMenu("&Visualisation")
 
         # Create new project button
         new = file_menu.addAction("New Project")
@@ -46,6 +57,13 @@ class MainWindow(QMainWindow):
         self.edit.setIcon(icon)
         self.edit.triggered.connect(self.editor_dialog.show)
 
+        # Switch window to visualisation
+        self.visualisation = visualisation_menu.addAction("Visualisation")
+        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        icon = self.style().standardIcon(pixmapi)
+        self.visualisation.setIcon(icon)
+        self.visualisation.triggered.connect(self.switchwindow)
+
     def create_widgets(self):
         main_layout = QHBoxLayout()
 
@@ -57,18 +75,33 @@ class MainWindow(QMainWindow):
         # Dialogs
         self.project_dialog = ProjectDialog()
         self.editor_dialog = ImageEditorDialog()
+        self.visualisation_widget = VisualisationWidget("test")
 
         # Left side
         main_layout.addWidget(file_list, 40)
 
         # Right side
+        right_side_widget = QWidget()
         right_side_layout = QVBoxLayout()
+        right_side_widget.setLayout(right_side_layout)
         right_side_layout.addWidget(image_viewer, 65)
         right_side_layout.addWidget(image_metadata_viewer, 35)
-        main_layout.addLayout(right_side_layout, 60)
 
+
+        self.modes = QStackedWidget()
+        self.modes.addWidget(right_side_widget) # index 0
+        self.modes.addWidget(self.visualisation_widget) # index 1
+
+
+        main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
-
+    
+    def switchwindow(self):
+        #print(self.modes.currentIndex())
+        if self.modes.currentIndex() == 0:
+            self.modes.setCurrentIndex(1)
+        elif self.modes.currentIndex() == 1:
+            self.modes.setCurrentIndex(0)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

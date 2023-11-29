@@ -1,28 +1,40 @@
-<<<<<<< HEAD
-from pathlib import Path
-
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QMovie
+from enum import Enum
+import sys
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget)
-
-from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
-=======
-from PyQt5.QtWidgets import QLabel, QSizePolicy, QFrame, QWidget
-
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas as pd
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
+from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
 # List of packages that are allowed to be imported
-__all__ = ["ImageMetadataViewer", "ImageControl",
-           "ImageViewer", "ImageFileList"]
+__all__ = ["ImageFileList",
+           "VisualisationWidget"]
 
+class VisualisationWidget(QWidget):
+    """ Placeholder widget while app is being developed """
+
+    def __init__(self, name: str):
+        super().__init__()
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+
+        self.main_layout = QVBoxLayout()
+
+        text = QLabel()
+        text.setText(name)
+        text.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        self.main_layout.addWidget(text)
+
+        btn = QPushButton("Switch")
+        btn.clicked.connect(lambda: self.parent().parent().switch(next))
+        self.main_layout.addWidget(btn)
+
+        self.setLayout(self.main_layout)
 
 class PlaceHolder(QLabel):
     """ Placeholder widget while app is being developed """
@@ -106,4 +118,3 @@ class UMAPViewer(PlaceHolder):
 class MouseFeatures(PlaceHolder):
     def __init__(self):
         super().__init__("Mouse Features")
->>>>>>> f81401b244d8097779ad0be365f9fc93ca76c081
