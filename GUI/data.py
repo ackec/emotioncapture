@@ -5,7 +5,7 @@ class ProjectData:
     path: str
     """ Path to project directory. """
 
-    mouse: list["MouseData"]
+    mice: list["MouseData"]
     """ Mice that belong to project. """
 
     images: list["MouseImageData"]
