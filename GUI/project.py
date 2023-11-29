@@ -5,7 +5,7 @@ from PyQt5.QtGui import QMovie, QFont
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget)
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
+from config import DIALOG_WIDTH, DIALOG_HEIGHT, RESOURCE_PATH
 
 __all__ = ["ProjectDialog", "ProjectMode"]
 
@@ -95,7 +95,7 @@ class Processing(QWidget):
         icon_label = QLabel(self)
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(icon_label)
-        icon_animation = QMovie(PROCESSING_GIF_PATH)
+        icon_animation = QMovie(RESOURCE_PATH + '/mouse.gif')
         icon_label.setMovie(icon_animation)
         icon_label.setScaledContents(True)
         icon_animation.start()

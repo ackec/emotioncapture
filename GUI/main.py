@@ -51,7 +51,7 @@ class MainWindow(QMainWindow):
         pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
         icon = self.style().standardIcon(pixmapi)
         self.edit.setIcon(icon)
-        self.edit.triggered.connect(self.editor_dialog.show)
+        self.edit.triggered.connect(lambda: self.editor_dialog.show(None))
 
     def create_widgets(self):
         main_layout = QHBoxLayout()

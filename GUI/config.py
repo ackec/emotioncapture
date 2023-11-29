@@ -10,5 +10,8 @@ DIALOG_WIDTH = 640
 DIALOG_HEIGHT = 640
 """ Default dialog height. """
 
-PROCESSING_GIF_PATH = "GUI/res/mouse.gif"
-""" Path to gif to show during processing. """
+RESOURCE_PATH = "GUI/res"
+""" Path to resource folder. """
+
+ZOOM_RANGE = (0.25, 4)
+""" Allowed zoom range in image editor. """
