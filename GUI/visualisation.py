@@ -5,7 +5,7 @@ from PyQt5.QtGui import QMovie
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget)
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
+from config import DIALOG_WIDTH, DIALOG_HEIGHT
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QFrame, QWidget
 
 import sys
@@ -16,11 +16,11 @@ import pandas as pd
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
+from config import DIALOG_WIDTH, DIALOG_HEIGHT
 
 # List of packages that are allowed to be imported
 __all__ = ["ImageFileList",
-           "VisualisationWidget"]
+           "VisualisationWidget", "RadarPlot"]
 
 class VisualisationWidget(QWidget):
     """ Placeholder widget while app is being developed """

@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
         tempMenu = menu_bar.addMenu("&Temp")
         
         load_folder = tempMenu.addAction("Select Folder")
-        load_folder.triggered.connect(self.file_list.select_folder)
+        #load_folder.triggered.connect(self.file_list.select_folder)
         ##
         
         # Create new project button
@@ -71,22 +71,16 @@ class MainWindow(QMainWindow):
         self.visualisation.setIcon(icon)
         self.visualisation.triggered.connect(self.switchwindow)
 
-        # Switch window to visualisation
-        self.visualisation = visualisation_menu.addAction("Visualisation")
-        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
-        icon = self.style().standardIcon(pixmapi)
-        self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.switchwindow)
 
     def create_widgets(self):
         main_layout = QHBoxLayout()
 
         # Components
         self.image_viewer = ImageViewer()
-        self.file_list = ImageFileList(self.image_viewer)
+        #self.file_list = ImageFileList(self.image_viewer)
         self.image_metadata_viewer = ImageMetadataViewer()
-        self.image_control = ImageControl(self.file_list)
-        self.radar_plot = RadarPlot()
+        #self.image_control = ImageControl(self.file_list)
+        #self.radar_plot = RadarPlot()
 
         # Dialogs
         self.project_dialog = ProjectDialog()
@@ -94,17 +88,17 @@ class MainWindow(QMainWindow):
         self.visualisation_widget = VisualisationWidget("test")
 
         # Left side
-        main_layout.addWidget(self.file_list, 40)
+        #main_layout.addWidget(self.file_list, 40)
 
         # Right side
         right_side_widget = QWidget()
         right_side_layout = QVBoxLayout()
         right_side_widget.setLayout(right_side_layout)
         right_side_layout.addWidget(self.image_viewer, 65)
-        right_side_layout.addWidget(self.image_control)
+        #right_side_layout.addWidget(self.image_control)
 
         # TODO MOVE to right component
-        right_side_layout.addWidget(self.radar_plot, 35)
+        #right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
 
 
@@ -115,6 +109,16 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
+    
+    def switchwindow(self):
+        print(self.modes.currentIndex())
+        if self.modes.currentIndex() == 0:
+            self.modes.setCurrentIndex(1)
+            print("switching to vis")
+        elif self.modes.currentIndex() == 1:
+            self.modes.setCurrentIndex(0)
+            print("switching to main")
+
 
 
 if __name__ == "__main__":
