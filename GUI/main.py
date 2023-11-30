@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         self.image_metadata_viewer = ImageMetadataViewer()
         #self.image_control = ImageControl(self.file_list)
         #self.radar_plot = RadarPlot()
+        self.mouse_feature_data = MouseFeatures()
 
         # Dialogs
         self.project_dialog = ProjectDialog()
@@ -101,7 +102,12 @@ class MainWindow(QMainWindow):
         #right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
 
+        # Visualisation widget
+        #visualisation_layout = QVBoxLayout()
+        #visualisation_layout.addWidget(self.mouse_feature_data, 65)
 
+
+        # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget) # index 0
         self.modes.addWidget(self.visualisation_widget) # index 1

@@ -3,7 +3,8 @@ import numpy as np
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QMovie
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
-                             QVBoxLayout, QPushButton, QStackedWidget)
+                             QVBoxLayout, QPushButton, QStackedWidget, QSizePolicy,
+                             QHBoxLayout)
 
 from config import DIALOG_WIDTH, DIALOG_HEIGHT
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QFrame, QWidget
@@ -19,7 +20,7 @@ from matplotlib.collections import PatchCollection
 from config import DIALOG_WIDTH, DIALOG_HEIGHT
 
 # List of packages that are allowed to be imported
-__all__ = ["ImageFileList",
+__all__ = ["ImageFileList", "MouseFeatures",
            "VisualisationWidget", "RadarPlot"]
 
 class VisualisationWidget(QWidget):
@@ -38,9 +39,10 @@ class VisualisationWidget(QWidget):
         text.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
         self.main_layout.addWidget(text)
 
-        btn = QPushButton("Switch")
-        btn.clicked.connect(lambda: self.parent().parent().switch(next))
-        self.main_layout.addWidget(btn)
+        self.main_layout.addWidget(ImageFileList(), 1)
+        self.main_layout.addWidget(PlaceHolder("RadarPlot"), 4)
+        self.main_layout.addWidget(PlaceHolder("ClusterPlot"), 2)
+        self.main_layout.addWidget(MouseFeatures(), 3)
 
         self.setLayout(self.main_layout)
 
@@ -129,6 +131,25 @@ class UMAPViewer(PlaceHolder):
         super().__init__("UMAP Viewer")
 
 
-class MouseFeatures(PlaceHolder):
+class MouseFeatures(QLabel):
     def __init__(self):
         super().__init__("Mouse Features")
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        
+        self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        
+        self.info_layout = QHBoxLayout()
+        self.setAlignment(Qt.AlignCenter)
+        self.info_dict = {"Mouse:":"Anonymouse",
+                          "Gender:":"Male",
+                          "Genotype:":"Opto",
+                          "Image:":"Img_example.jpg",
+                          "Profile Score:":0.89,
+                          "Key Point Score":0.97}
+        temp_text = ""
+        for key,value in self.info_dict.items():
+            temp_text += "{} \t \t \t {} \n".format(key,value)
+            
+        self.setText(temp_text)
+        self.setLayout(self.info_layout)
