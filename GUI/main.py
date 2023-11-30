@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
 from validation import *
 from project import *
 from editor import *
-from visualisation import *
+from visualisation import RadarPlot,VisualisationWidget,ScatterPlot
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
@@ -77,10 +77,12 @@ class MainWindow(QMainWindow):
 
         # Components
         self.image_viewer = ImageViewer()
-        #self.file_list = ImageFileList(self.image_viewer)
+        self.file_list = ImageFileList(self.image_viewer)
         self.image_metadata_viewer = ImageMetadataViewer()
-        #self.image_control = ImageControl(self.file_list)
-        #self.radar_plot = RadarPlot()
+        
+        self.image_control = ImageControl(self.file_list)
+        self.radar_plot = RadarPlot()
+        self.umap_cluster = ScatterPlot()
 
         # Dialogs
         self.project_dialog = ProjectDialog()
@@ -100,6 +102,10 @@ class MainWindow(QMainWindow):
         # TODO MOVE to right component
         #right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
+
+
+        
+        right_side_layout.addWidget(self.umap_cluster, 35)
 
 
         self.modes = QStackedWidget()

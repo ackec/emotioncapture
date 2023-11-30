@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import umap
 
 
 #mouth_pos1 
@@ -99,9 +100,20 @@ def points_to_features(in_csv_file, out_csv_file):
     print(average_values)
 
     df = pd.DataFrame(mapping_vectors.T)
-    headers_to_csv = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
-    df.to_csv(out_csv_file, header=headers_to_csv, index=False)
+    df.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
 
+
+    # data = pd.read_csv(keypoints_csv)
+    standard_embedding = umap.UMAP(random_state=10).fit_transform(df.values)
+    df["umap_x"]=standard_embedding[:,0]
+    df["umap_y"]=standard_embedding[:,1]
+    # data.to_csv(keypoints_csv)
+    # return standard_embedding
+
+    df[["Img_Path", "Frame_ID"]] = myFile[["Img_Path", "Frame_ID"]]
+
+    df.to_csv(out_csv_file, index=False)
+    # do_umap_projection(out_csv_file)
 
 if __name__ == "__main__":
     points_to_features('output/detected_keypoints.csv', "output/mouse_features.csv")
