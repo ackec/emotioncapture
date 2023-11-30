@@ -164,30 +164,23 @@ class ScatterPlot(QMainWindow):
         kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(self.umap)
 
         cmap = ['red', 'blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan']
-        clustered = (hdbscan_labels >= 0)
-        baseline = self.features["Frame_ID"][:10]
-
-        markers = ["*", "x", "o"]
-
-
-
-        markers2 = list(markers[0]*self.stim_start + markers[1]*(self.stim_end-self.stim_start) + markers[2] * (len(self.features) - self.stim_end))
+        # clustered = (hdbscan_labels >= 0)
 
         ax = self.figure.add_subplot(111)
-        self.colous = [cmap[label] for label in hdbscan_labels[clustered]]
-        # self.markers = [cmap[label] for label in hdbscan_labels[clustered]]
-        self.scatter1 = ax.scatter(self.umap[:self.stim_start, 0], self.umap[:self.stim_start, 1], c=self.colous[:self.stim_start], marker="*", s=10, picker=10)
-        self.scatter2 = ax.scatter(self.umap[self.stim_start:self.stim_end, 0], self.umap[self.stim_start:self.stim_end, 1], c=self.colous[self.stim_start:self.stim_end], marker="x", s=10, picker=10)
-        self.scatter3 = ax.scatter(self.umap[self.stim_end:, 0], self.umap[self.stim_end:, 1], c=self.colous[self.stim_end:], marker="o", s=10, picker=10)
+        self.colous = [cmap[label] for label in hdbscan_labels]
+        self.scatter1 = ax.scatter(self.umap[:self.stim_start, 0], self.umap[:self.stim_start, 1], c=self.colous[:self.stim_start], marker="^", label='Baseline', s=10, picker=10)
+        self.scatter2 = ax.scatter(self.umap[self.stim_start:self.stim_end, 0], self.umap[self.stim_start:self.stim_end, 1], c=self.colous[self.stim_start:self.stim_end], marker="x", label='Stumulation', s=10, picker=10)
+        self.scatter3 = ax.scatter(self.umap[self.stim_end:, 0], self.umap[self.stim_end:, 1], c=self.colous[self.stim_end:], marker="o", label='Recovery', s=10, picker=10)
 
-        
-        ax.set_xlabel("X-axis")
-        ax.set_ylabel("Y-axis")
-        ax.set_title("Scatter Plot")
-        ax.legend()
+        # ax.set_xlabel("X-axis")
+        # ax.set_ylabel("Y-axis")
+        # ax.set_title("Scatter Plot")
+
+        handles, labels = ax.get_legend_handles_labels()
+        leg = ax.legend(handles=handles, labels=labels)
+        [lgd.set_color('black') for lgd in leg.legendHandles]
+
         self.canvas.mpl_connect('pick_event', self.on_pick)
-
-        # Draw the canvas
         self.canvas.draw()
 
     def on_pick(self, event):
@@ -197,8 +190,6 @@ class ScatterPlot(QMainWindow):
                 distances = np.sqrt((self.umap[:,0] - event.mouseevent.xdata)**2 + (self.umap[:,1] - event.mouseevent.ydata)**2)
                 closest_index = np.argmin(distances)
 
-
-                # Unmark the previous clicked point
                 if self.last_clicked_index is not None:
                     if self.last_clicked_index < self.stim_start:
                         self.scatter1._facecolors[self.last_clicked_index] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index]) 
