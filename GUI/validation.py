@@ -86,6 +86,7 @@ class ImageFileList(QtWidgets.QListWidget):
         
         self.image_viewer.display_image(image_data)
         self.current_index = self.pictures.index(image_data)
+
         
         
 class ImageViewer(QLabel):
@@ -225,20 +226,23 @@ class ImageControl(QWidget):
         
             
 class ImageMetadataViewer(QLabel):
-    def __init__(self,example_data:ExampleData):
+    def __init__(self,file_list):
         super().__init__() #"Image metadata"
         
+        self.file_list = file_list
+        self.file_list.currentItemChanged.connect(self.update_attributes)
+
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
         
         #self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Sunken)
         self.setStyleSheet('background-color: white; border-radius: 10px;' )
 
-
         self.info_layout = QGridLayout()
         self.info_layout.setContentsMargins(20,0,10,0)
         self.info_layout.setVerticalSpacing(0)
-        self.create_labels(example_data)
+        self.current_data = ExampleData()
+        self.create_labels(self.current_data)
         self.setAlignment(QtCore.Qt.AlignCenter)
         
         self.setLayout(self.info_layout)
@@ -251,7 +255,7 @@ class ImageMetadataViewer(QLabel):
         self.create_label_row("Gender", mouse.gender,1)
         
         self.create_label_row("Filename", data.filename,2)
-        self.create_label_row("Gender", data.path,3)
+        self.create_label_row("Path", data.path,3)
         
         self.create_label_row("Profile Confidence", data.profile_conf,4)
         self.create_label_row("Key Point Confidence", data.key_point_conf,5)
@@ -267,6 +271,25 @@ class ImageMetadataViewer(QLabel):
         self.info_layout.addWidget(value_widget,row,1)
         self.attr_to_label_map[description+"_value"] = value_widget
 
+    def update_label_row(self,description:str,value:int|str):
 
-    def update_attributes(self,data: MouseImageData):
-        pass
+        value_widget = self.attr_to_label_map[description+"_value"]
+        value_widget.setText("{}".format(value))
+
+    def update_attributes(self):
+        #name = self.file_list.currentItem()
+        ##data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
+        if type(self.current_data) == ExampleData:
+            self.current_data = ExampleData2()
+        elif type(self.current_data) == ExampleData2:
+            self.current_data = ExampleData()
+
+        mouse = self.current_data.mouse
+        self.update_label_row("Mouse", mouse.name)
+        self.update_label_row("Gender", mouse.gender)
+        
+        self.update_label_row("Filename", self.current_data.filename)
+        self.update_label_row("Path", self.current_data.path)
+        
+        self.update_label_row("Profile Confidence", self.current_data.profile_conf)
+        self.update_label_row("Key Point Confidence", self.current_data.key_point_conf)

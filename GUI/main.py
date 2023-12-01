@@ -80,11 +80,9 @@ class MainWindow(QMainWindow):
         # Components
         self.image_viewer = ImageViewer()
         self.file_list = ImageFileList(self.image_viewer)
-
-        example_data = ExampleData()
-        self.image_metadata_viewer = ImageMetadataViewer(example_data)
+        self.image_metadata_viewer = ImageMetadataViewer(self.file_list)
         
-        #self.image_metadata_viewer.update_attributes()
+        #self.image_metadata_viewer.update_attributes(ExampleData2)
 
         self.image_control = ImageControl(self.file_list)
         #self.radar_plot = RadarPlot()

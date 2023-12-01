@@ -77,11 +77,11 @@ class MouseImageData:
 
 class ExampleData:
     mouse = MouseData()
-    mouse.gender = "NaN"
+    mouse.gender = "Lesser"
     mouse.name = "Anonymouse"
     """ Mouse that image is of. """
 
-    filename = "test.jpg"
+    filename = "lul.jpg"
     """ Name of the image. """
 
     path = "C:/Mouse/lul.jpg"
@@ -96,3 +96,23 @@ class ExampleData:
     key_points: KeyPoints
     """ Set of keypoints for the image. """
 
+class ExampleData2:
+    mouse = MouseData()
+    mouse.gender = "Sir"
+    mouse.name = "Mickey"
+    """ Mouse that image is of. """
+
+    filename = "disney.jpg"
+    """ Name of the image. """
+
+    path = "C:/Mouse/disney.jpg"
+    """ Path to image, relative project base. """
+
+    profile_conf = 1
+    """ Model confidence that image is in profile. """
+
+    key_point_conf = 1
+    """ Model confidence of key point placement. """
+
+    key_points: KeyPoints
+    """ Set of keypoints for the image. """
