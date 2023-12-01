@@ -18,10 +18,19 @@ class GuiMode(Enum):
     VISUAL = 1
     """ Processing data screen. """
 
+# TODO
+# Create inferencer class elsewhere
+class tempInferencer():
+    def inference(self):
+        print("Start inference")
+
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.inferencer = tempInferencer()
 
         self.setWindowTitle("Mouse")
         self.setGeometry(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -81,12 +90,12 @@ class MainWindow(QMainWindow):
         self.image_metadata_viewer = ImageMetadataViewer()
         
         self.image_control = ImageControl(self.file_list)
-        self.radar_plot = RadarPlot()
+        #self.radar_plot = RadarPlot()
 
         # Dialogs
-        self.project_dialog = ProjectDialog()
+        self.project_dialog = ProjectDialog(self)
         self.editor_dialog = ImageEditorDialog()
-        self.visualisation_widget = VisualisationWidget("test")
+        #self.visualisation_widget = VisualisationWidget("test")
 
         # Left side
         #main_layout.addWidget(self.file_list, 40)
@@ -96,7 +105,7 @@ class MainWindow(QMainWindow):
         right_side_layout = QVBoxLayout()
         right_side_widget.setLayout(right_side_layout)
         right_side_layout.addWidget(self.image_viewer, 65)
-        #right_side_layout.addWidget(self.image_control)
+        right_side_layout.addWidget(self.image_control)
 
         # TODO MOVE to right component
         # right_side_layout.addWidget(self.radar_plot, 35)
@@ -110,7 +119,7 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget) # index 0
-        self.modes.addWidget(self.visualisation_widget) # index 1
+        #self.modes.addWidget(self.visualisation_widget) # index 1
 
 
         main_layout.addWidget(self.modes, 60)
