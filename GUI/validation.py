@@ -172,7 +172,8 @@ class ImageControl(QWidget):
         pixmapi = QStyle.StandardPixmap.SP_TrashIcon
         icon = self.style().standardIcon(pixmapi)
         trash_button.setIcon(icon)
-       # trash_button.setStyleSheet("background-color: rgba(0,0,0,0);")
+       # trash_button.setStyleSheet("background-color: rgba(0,0,0,0);"    
+        trash_button.clicked.connect(self.remove_current_image)
         button_layout.addWidget(trash_button, 0,
                                    QtCore.Qt.AlignmentFlag.AlignTrailing |
                                    QtCore.Qt.AlignmentFlag.AlignVCenter)
@@ -195,8 +196,8 @@ class ImageControl(QWidget):
         
     def update_index(self):
         current_index = self.file_list.current_index
-        items = len(self.file_list.pictures)
-        self.image_index.setText("{} / {}".format(current_index,items))
+        items = self.file_list.count()
+        self.image_index.setText("{} / {}".format(current_index+1,items))
 
     def browse_forward(self):
         if self.file_list.pictures == None or len(self.file_list.pictures) == 0 or self.file_list.current_index == None:
@@ -224,7 +225,18 @@ class ImageControl(QWidget):
             item = self.file_list.item(self.file_list.current_index)
             self.file_list.setCurrentItem(item)   ##Also calls selectListItem
         
-            
+    def remove_current_image(self):
+        name = self.file_list.currentItem().text()
+        image_data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
+        self.file_list.pictures.remove(image_data)  ##Remove from pictures list
+        self.file_list.takeItem(self.file_list.current_index)   #remove from widget
+
+        #self.file_list.image_viewer.setPixmap(QtGui.QPixmap()) ##Not required. new selected image in list -> update image viewer
+        #self.file_list.current_index -= 1
+
+        self.update_index()
+
+
 class ImageMetadataViewer(QLabel):
     def __init__(self,file_list):
         super().__init__() #"Image metadata"
