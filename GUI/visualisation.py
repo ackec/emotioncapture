@@ -41,10 +41,11 @@ class VisualisationWidget(QWidget):
         col2_layout = QVBoxLayout(self)
         col2_row2_layout = QHBoxLayout(self)
 
-        col2_row2_layout.addWidget(RadarPlot())
+        self.radar_plot = RadarPlot()
+        col2_row2_layout.addWidget(self.radar_plot)
         col2_row2_layout.addWidget(MouseFeatures())
         col1_layout.addWidget(ImageFileList())
-        col2_layout.addWidget(ScatterPlot())
+        col2_layout.addWidget(ScatterPlot(self.radar_plot))
         col2_layout.addLayout(col2_row2_layout)
 
         self.main_layout.addLayout(col1_layout)
@@ -71,7 +72,7 @@ class ImageFileList(PlaceHolder):
 
 
 class RadarPlot(QMainWindow):
-    def __init__(self, csv_features_filepath="../Feature_extracion/output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
+    def __init__(self, csv_features_filepath="output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
         super().__init__()
 
         self.setWindowTitle("Radar Plot")
@@ -86,8 +87,8 @@ class RadarPlot(QMainWindow):
         layout.addWidget(self.canvas)
 
         self.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
-        df = pd.read_csv(csv_features_filepath)
-        self.radardata = df[self.columns]
+        self.df = pd.read_csv(csv_features_filepath)
+        self.radardata = self.df[self.columns]
 
         self.stimuli_start = stimuli_start
         self.stimuli_end = stimuli_end
@@ -139,7 +140,6 @@ class RadarPlot(QMainWindow):
 class ScatterPlot(QMainWindow):
     def __init__(self, radar_plot):
         super().__init__()
-
         self.setWindowTitle("Scatter Plot")
         self.setGeometry(100, 100, 800, 600)
 
@@ -151,27 +151,43 @@ class ScatterPlot(QMainWindow):
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
 
-
-        self.features = pd.read_csv('../Feature_extracion/output/mouse_features.csv')
+        self.features = radar_plot.df
         self.umap = self.features[["umap_x", "umap_y"]].values
 
         self.last_clicked_index = None
-        self.stim_start = 100
-        self.stim_end = 200
+        self.stim_start = radar_plot.stimuli_start
+        self.stim_end = radar_plot.stimuli_end
         self.init_scatter_plot()
         self.radar_plot = radar_plot
+
+    def features_in_range(self):
+        self.features["eye_oppening"].between(0.51,0.79)
+        self.features["ear_oppening"].between(1/0.65, 1/0.41)
+
+        pass
+
+        # Eye opening: 0.51-0.79 (ratio width/length)
+        # Ear opening: 0.41-0.65 (ratio width/length)
+        # Ear position: 131-158 (degrees)
+        # Ear angle: probably better estimated by a present/absent indicator, otherwise most often at 180 degrees.
+        # Snout position: 72-90 (degrees)
+        # Mouth position: 28-39 (degrees)
+        # Face inclination: 62-75 (degrees)
 
     def init_scatter_plot(self):
         hdbscan_labels = hdbscan.HDBSCAN(min_samples=10, min_cluster_size=12).fit_predict(self.umap)
         kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(self.umap)
 
-        cmap = ['red', 'blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan']
+        cmap = ['blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan', 'red']
         # clustered = (hdbscan_labels >= 0)
         ax = self.figure.add_subplot(111)
         self.colous = [cmap[label] for label in hdbscan_labels]
+
+        self.colous = [cmap[label] for label in hdbscan_labels]
+
         self.scatter1 = ax.scatter(self.umap[:self.stim_start, 0], self.umap[:self.stim_start, 1], c=self.colous[:self.stim_start], marker="^", label='Baseline', s=10, picker=10)
         self.scatter2 = ax.scatter(self.umap[self.stim_start:self.stim_end, 0], self.umap[self.stim_start:self.stim_end, 1], c=self.colous[self.stim_start:self.stim_end], marker="x", label='Stumulation', s=10, picker=10)
-        #self.scatter3 = ax.scatter(self.umap[self.stim_end:, 0], self.umap[self.stim_end:, 1], c=self.colous[self.stim_end:], marker="o", label='Recovery', s=10, picker=10)
+        self.scatter3 = ax.scatter(self.umap[self.stim_end:, 0], self.umap[self.stim_end:, 1], c=self.colous[self.stim_end:], marker="o", label='Recovery', s=10, picker=10)
 
         # ax.set_xlabel("X-axis")
         # ax.set_ylabel("Y-axis")
