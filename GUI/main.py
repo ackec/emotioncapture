@@ -20,10 +20,19 @@ class GuiMode(Enum):
     VISUAL = 1
     """ Processing data screen. """
 
+# TODO
+# Create inferencer class elsewhere
+class tempInferencer():
+    def inference(self):
+        print("Start inference")
+
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.inferencer = tempInferencer()
 
         self.setWindowTitle("Mouse")
         self.setGeometry(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -88,9 +97,9 @@ class MainWindow(QMainWindow):
         #self.radar_plot = RadarPlot()
 
         # Dialogs
-        self.project_dialog = ProjectDialog()
+        self.project_dialog = ProjectDialog(self)
         self.editor_dialog = ImageEditorDialog()
-        self.visualisation_widget = VisualisationWidget("test")
+        #self.visualisation_widget = VisualisationWidget("test")
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -101,19 +110,25 @@ class MainWindow(QMainWindow):
         right_side_widget.setLayout(right_side_layout)
         right_side_layout.addWidget(self.image_viewer, 65)
         right_side_layout.addWidget(self.image_control,0,QtCore.Qt.AlignmentFlag.AlignCenter )
-
-        # TODO MOVE to right component
-        #right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
 
-
+        # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget) # index 0
-        self.modes.addWidget(self.visualisation_widget) # index 1
-
+        #self.modes.addWidget(self.visualisation_widget) # index 1
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
+    
+    def switchwindow(self):
+        print(self.modes.currentIndex())
+        if self.modes.currentIndex() == 0:
+            self.modes.setCurrentIndex(1)
+            print("switching to vis")
+        elif self.modes.currentIndex() == 1:
+            self.modes.setCurrentIndex(0)
+            print("switching to main")
+
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ __all__ = ["ImageMetadataViewer", "ImageControl",
 class PlaceHolder(QLabel):
     """ Placeholder widget while app is being developed """
 
-    def __init__(self, name: str, parent: QWidget | None = None):
+    def __init__(self, name: str, parent=None):
         super().__init__(parent)
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
