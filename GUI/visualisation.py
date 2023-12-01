@@ -148,6 +148,7 @@ class ScatterPlot(QMainWindow):
         super().__init__()
         self.mouse_features = mouse_features
         self.radar_plot = radar_plot
+        self.radardata = radar_plot.radardata
 
         self.setWindowTitle("Scatter Plot")
         self.setGeometry(100, 100, 800, 600)
@@ -238,14 +239,17 @@ class ScatterPlot(QMainWindow):
                 y_clicked = self.umap[self.last_clicked_index][1]
                 self.radar_plot.update_radar_plot(self.last_clicked_index)
                 print(f"Clicked Point: ({x_clicked:.2f}, {y_clicked:.2f}), from frame {self.features['Frame_ID'][self.last_clicked_index]}, and with path: {self.features['Img_Path'][self.last_clicked_index]}")
+                
 
-                info_text = f"Eye Opening: {self.features['eye_oppening'][self.last_clicked_index]:.2f}\n"\
-                        f"Ear Opening: {self.features['ear_oppening'][self.last_clicked_index]:.2f}\n"\
-                        f"Ear Angle: {self.features['ear_angle'][self.last_clicked_index]:.2f}\n"\
-                        f"Ear Position: {self.features['ear_pos_vec'][self.last_clicked_index]:.2f}\n"\
-                        f"Snout Position: {self.features['snout_pos'][self.last_clicked_index]:.2f}\n"\
-                        f"Mouth Position: {self.features['mouth_pos'][self.last_clicked_index]:.2f}\n"\
-                        f"Face inclination: {self.features['face_incl'][self.last_clicked_index]:.2f}\n"\
+                features = self.features.iloc[self.last_clicked_index]
+                percental_change = features / self.radar_plot.baseline.mean()
+                info_text = f"Eye Opening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
+                        f"Ear Opening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
+                        f"Ear Angle: {features['ear_angle']:.2f},  {percental_change['ear_angle']:.2%}\n"\
+                        f"Ear Position: {features['ear_pos_vec']:.2f},  {percental_change['ear_pos_vec']:.2%}\n"\
+                        f"Snout Position: {features['snout_pos']:.2f},  {percental_change['snout_pos']:.2%}\n"\
+                        f"Mouth Position: {features['mouth_pos']:.2f},  {percental_change['mouth_pos']:.2%}\n"\
+                        f"Face inclination: {features['face_incl']:.2f},  {percental_change['face_incl']:.2%}\n"\
                         f"Colour: {self.colous[self.last_clicked_index]}\n"\
                         f"Feeling: Unclear \n"\
 
