@@ -42,10 +42,12 @@ class VisualisationWidget(QWidget):
         col2_row2_layout = QHBoxLayout(self)
 
         self.radar_plot = RadarPlot()
+        self.mouse_features = MouseFeatures()
+
         col2_row2_layout.addWidget(self.radar_plot)
-        col2_row2_layout.addWidget(MouseFeatures())
+        col2_row2_layout.addWidget(self.mouse_features)
         col1_layout.addWidget(ImageFileList())
-        col2_layout.addWidget(ScatterPlot(self.radar_plot))
+        col2_layout.addWidget(ScatterPlot(self.radar_plot, self.mouse_features))
         col2_layout.addLayout(col2_row2_layout)
 
         self.main_layout.addLayout(col1_layout)
@@ -104,42 +106,49 @@ class RadarPlot(QMainWindow):
         self.init_radar_plot()
 
     def init_radar_plot(self):
-        ax = self.figure.add_subplot(111, polar=True)
-        self.radar_plot(ax)
+        self.ax = self.figure.add_subplot(111, polar=True)
+        self.radar_plot()
         self.canvas.draw()
 
     def update_radar_plot(self, clicked_index):
         self.sample = self.radardata.iloc[clicked_index] / self.baseline.mean()
         print(self.sample)
-        ax = self.figure.add_subplot(111, polar=True)
-        ax.clear()
-        self.radar_plot(ax)
-        ax.set_ylim(self.sample.min()-0.02, self.sample.max()+0.02)
+        self.ax.clear()
+        self.radar_plot()
+        self.ax.set_ylim(self.sample.min()-0.02, self.sample.max()+0.02)
         self.canvas.draw()
 
-    def radar_plot(self, ax):
+    def radar_plot(self):
         rad_linspace = np.linspace(0, 2 * np.pi, len(self.columns), endpoint=False)
-
         polygons = [
             Polygon(list(zip(rad_linspace, self.upper)), facecolor='darkgrey', alpha=0.5),
-            Polygon(list(zip(rad_linspace, self.lower)), facecolor='white', alpha=0.7),
-            Polygon(list(zip(rad_linspace, [1]*7)), edgecolor='black', linewidth=1, facecolor='none'),
-            Polygon(list(zip(rad_linspace, self.sample)), edgecolor='blue', linewidth=1, facecolor='none'),
+            Polygon(list(zip(rad_linspace, self.lower)), facecolor='white',  alpha=0.7),
+            Polygon(list(zip(rad_linspace, [1]*7)), edgecolor='black',  linewidth=1, facecolor='none'),
+            Polygon(list(zip(rad_linspace, self.sample)), edgecolor='blue', label="Clicked sample", linewidth=1, facecolor='none'),
         ]
 
         pc = PatchCollection(polygons, match_original=True)
-        ax.add_collection(pc)
+        self.ax.add_collection(pc)
+        self.ax.set_ylim(0.85, 1.15)
+        self.ax.set_xticks(rad_linspace)
+        self.ax.set_xticklabels(self.columns)
+        self.ax.set_yticklabels([])
 
-        ax.set_ylim(0.85, 1.15)
-        ax.set_xticks(rad_linspace)
-        ax.set_xticklabels(self.columns)
-        ax.set_yticklabels([])
+        legend_labels = ['stimulation +- SEM', 'Clicked sample', 'Normalized baseline']
+        legend_handles = [self.ax.plot([], [], color='darkgrey', alpha=0.5)[0],
+                        #   ax.plot([], [], color='white', alpha=0.7)[0],
+                          self.ax.plot([], [], color='blue', linewidth=1)[0],
+                          self.ax.plot([], [], color='black', linewidth=1)[0]]
 
+        self.ax.legend(legend_handles, legend_labels, loc='lower left', bbox_to_anchor=(1, 0.7))
 
 
 class ScatterPlot(QMainWindow):
-    def __init__(self, radar_plot):
+    def __init__(self, radar_plot, mouse_features):
         super().__init__()
+        self.mouse_features = mouse_features
+        self.radar_plot = radar_plot
+
         self.setWindowTitle("Scatter Plot")
         self.setGeometry(100, 100, 800, 600)
 
@@ -158,7 +167,6 @@ class ScatterPlot(QMainWindow):
         self.stim_start = radar_plot.stimuli_start
         self.stim_end = radar_plot.stimuli_end
         self.init_scatter_plot()
-        self.radar_plot = radar_plot
 
     def features_in_range(self):
         self.features["eye_oppening"].between(0.51,0.79)
@@ -230,6 +238,18 @@ class ScatterPlot(QMainWindow):
                 y_clicked = self.umap[self.last_clicked_index][1]
                 self.radar_plot.update_radar_plot(self.last_clicked_index)
                 print(f"Clicked Point: ({x_clicked:.2f}, {y_clicked:.2f}), from frame {self.features['Frame_ID'][self.last_clicked_index]}, and with path: {self.features['Img_Path'][self.last_clicked_index]}")
+
+                info_text = f"Eye Opening: {self.features['eye_oppening'][self.last_clicked_index]:.2f}\n"\
+                        f"Ear Opening: {self.features['ear_oppening'][self.last_clicked_index]:.2f}\n"\
+                        f"Ear Angle: {self.features['ear_angle'][self.last_clicked_index]:.2f}\n"\
+                        f"Ear Position: {self.features['ear_pos_vec'][self.last_clicked_index]:.2f}\n"\
+                        f"Snout Position: {self.features['snout_pos'][self.last_clicked_index]:.2f}\n"\
+                        f"Mouth Position: {self.features['mouth_pos'][self.last_clicked_index]:.2f}\n"\
+                        f"Face inclination: {self.features['face_incl'][self.last_clicked_index]:.2f}\n"\
+                        f"Colour: {self.colous[self.last_clicked_index]}\n"\
+                        f"Feeling: Unclear \n"\
+
+                self.mouse_features.setText(info_text)
             self.canvas.draw()
 
 class UMAPViewer(PlaceHolder):
