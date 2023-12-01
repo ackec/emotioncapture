@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmengine.config import read_base
-
+from mmpose.evaluation.metrics import EPE,MPJPE, InterHandMetric, PCKAccuracy
 with read_base():
-    from mmpose.configs._base_.default_runtime import *
+    from ..mmpose.configs._base_.default_runtime import *
 
 from albumentations.augmentations import Blur, CoarseDropout, MedianBlur
 from mmdet.datasets.transforms import YOLOXHSVRandomAug
@@ -27,7 +27,7 @@ from mmpose.models import (KLDiscretLoss, PoseDataPreprocessor, RTMCCHead,
                            TopdownPoseEstimator)
 
 # runtime
-max_epochs = 420
+max_epochs = 500
 stage2_num_epochs = 30
 base_lr = 4e-3
 
@@ -258,9 +258,24 @@ custom_hooks = [
 ]
 
 # evaluators
-val_evaluator = dict(
-    type=CocoMetric,
-    ann_file='dataset/val_annotations.json')
+val_evaluator = [dict(
+    type=PCKAccuracy, 
+    # mode = "mpjpe",
+    # ann_file='dataset/val_annotations.json')
+), dict(
+    type=EPE, 
+    # mode = "mpjpe",
+    # ann_file='dataset/val_annotations.json'
+
+), dict(
+    type=CocoMetric, 
+    # mode = "mpjpe",
+    ann_file='dataset/val_annotations.json'
+)
+]
+
+
+
 test_evaluator = val_evaluator
 
 

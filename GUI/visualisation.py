@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget, QSizePolicy,
                              QHBoxLayout)
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT
+# from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QFrame, QWidget
 
 import sys
@@ -17,7 +17,11 @@ import pandas as pd
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT
+import hdbscan
+import sklearn.cluster as cluster
+import matplotlib.colors
+
+# from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
 # List of packages that are allowed to be imported
 __all__ = ["ImageFileList", "MouseFeatures",
@@ -32,17 +36,20 @@ class VisualisationWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
 
-        self.main_layout = QVBoxLayout()
+        self.main_layout = QHBoxLayout(self)
+        col1_layout = QHBoxLayout()
+        col2_layout = QVBoxLayout(self)
+        col2_row2_layout = QHBoxLayout(self)
 
-        text = QLabel()
-        text.setText(name)
-        text.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
-        self.main_layout.addWidget(text)
+        col2_row2_layout.addWidget(RadarPlot())
+        col2_row2_layout.addWidget(MouseFeatures())
+        col1_layout.addWidget(ImageFileList())
+        col2_layout.addWidget(ScatterPlot())
+        col2_layout.addLayout(col2_row2_layout)
 
-        self.main_layout.addWidget(ImageFileList(), 1)
-        self.main_layout.addWidget(PlaceHolder("RadarPlot"), 4)
-        self.main_layout.addWidget(PlaceHolder("ClusterPlot"), 2)
-        self.main_layout.addWidget(MouseFeatures(), 3)
+        self.main_layout.addLayout(col1_layout)
+        self.main_layout.addLayout(col2_layout)
+        self.main_layout.addLayout(col2_row2_layout)
 
         self.setLayout(self.main_layout)
 
@@ -84,11 +91,12 @@ class RadarPlot(QMainWindow):
         layout.addWidget(self.canvas)
 
         # Load data (replace 'your_file.csv' with your file path)
-        self.radardata = pd.read_csv('output/mouse_features.csv')
+        self.radardata = pd.read_csv('../Feature_extracion/output/mouse_features.csv')
 
         # Calculate upper and lower bounds
-        start = self.radardata.iloc[:stimuli_start]
-        end = self.radardata.iloc[stimuli_end:]
+        columns =  ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+        start = self.radardata.iloc[:stimuli_start][columns]
+        end = self.radardata.iloc[stimuli_end:][columns]
         self.baseline = pd.concat((start,end)).mean(axis=0)
         self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline
 
@@ -119,12 +127,106 @@ class RadarPlot(QMainWindow):
         # Set axis labels and limits
         # ax.set_xlabel("Facial profile response to stimulation X")
         # ax.set_ylabel("Proportional change from baseline")
-        ax.set_ylim(0, 1.1)
+        ax.set_ylim(0.95, 1.05)
 
         ax.set_xticks(rad_linspace)
         ax.set_xticklabels(parameters)
         ax.set_yticklabels([])
 
+
+
+
+class ScatterPlot(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        # Set up the main window
+        self.setWindowTitle("Scatter Plot")
+        self.setGeometry(100, 100, 800, 600)
+
+        # Create central widget and layout
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+
+        # Create Matplotlib figure and canvas
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        layout.addWidget(self.canvas)
+
+
+        self.features = pd.read_csv('../Feature_extracion/output/mouse_features.csv')
+        self.umap = self.features[["umap_x", "umap_y"]].values
+
+        # Initialize the scatter plot
+        self.last_clicked_index = None
+        self.stim_start = 100
+        self.stim_end = 200
+        self.init_scatter_plot()
+
+    def init_scatter_plot(self):
+        hdbscan_labels = hdbscan.HDBSCAN(min_samples=10, min_cluster_size=12).fit_predict(self.umap)
+        kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(self.umap)
+
+        cmap = ['red', 'blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan']
+        clustered = (hdbscan_labels >= 0)
+        baseline = self.features["Frame_ID"][:10]
+
+        markers = ["*", "x", "o"]
+
+
+
+        markers2 = list(markers[0]*self.stim_start + markers[1]*(self.stim_end-self.stim_start) + markers[2] * (len(self.features) - self.stim_end))
+
+        ax = self.figure.add_subplot(111)
+        self.colous = [cmap[label] for label in hdbscan_labels[clustered]]
+        # self.markers = [cmap[label] for label in hdbscan_labels[clustered]]
+        self.scatter1 = ax.scatter(self.umap[:self.stim_start, 0], self.umap[:self.stim_start, 1], c=self.colous[:self.stim_start], marker="*", s=10, picker=10)
+        self.scatter2 = ax.scatter(self.umap[self.stim_start:self.stim_end, 0], self.umap[self.stim_start:self.stim_end, 1], c=self.colous[self.stim_start:self.stim_end], marker="x", s=10, picker=10)
+        # self.scatter3 = ax.scatter(self.umap[self.stim_end:, 0], self.umap[self.stim_end:, 1], c=self.colous[self.stim_end:], marker="o", s=10, picker=10)
+
+        
+        ax.set_xlabel("X-axis")
+        ax.set_ylabel("Y-axis")
+        ax.set_title("Scatter Plot")
+        ax.legend()
+        self.canvas.mpl_connect('pick_event', self.on_pick)
+
+        # Draw the canvas
+        self.canvas.draw()
+
+    def on_pick(self, event):
+        if event.mouseevent.name == 'button_press_event':
+            ind = event.ind
+            if len(ind) > 0:
+                distances = np.sqrt((self.umap[:,0] - event.mouseevent.xdata)**2 + (self.umap[:,1] - event.mouseevent.ydata)**2)
+                closest_index = np.argmin(distances)
+
+
+                # Unmark the previous clicked point
+                if self.last_clicked_index is not None:
+                    if self.last_clicked_index < self.stim_start:
+                        self.scatter1._facecolors[self.last_clicked_index] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index]) 
+                    elif self.last_clicked_index < self.stim_end:
+                        self.scatter2._facecolors[self.last_clicked_index - self.stim_start] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index])
+                    else:
+                        self.scatter3._facecolors[self.last_clicked_index - self.stim_end] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index])
+
+                if closest_index < self.stim_start:
+                    self.scatter1._facecolors[closest_index] = (0, 1, 0, 1)
+                elif closest_index < self.stim_end:
+                    self.scatter2._facecolors[closest_index-self.stim_start] = (0, 1, 0, 1)
+                else:
+                    self.scatter3._facecolors[closest_index-self.stim_end] = (0, 1, 0, 1)
+            
+                if closest_index == self.last_clicked_index:
+                    return
+
+                self.last_clicked_index = closest_index
+                x_clicked = self.umap[self.last_clicked_index][0]
+                y_clicked = self.umap[self.last_clicked_index][1]
+                print(f"Clicked Point: ({x_clicked:.2f}, {y_clicked:.2f}), from frame {self.features['Frame_ID'][self.last_clicked_index]}, and with path: {self.features['Img_Path'][self.last_clicked_index]}")
+            self.canvas.draw()
 
 class UMAPViewer(PlaceHolder):
     def __init__(self):

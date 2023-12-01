@@ -14,10 +14,10 @@ from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score
 
 def cluster_keypoints(keypoints_csv):
     data = pd.read_csv(keypoints_csv)
-
-
-    standard_embedding = umap.UMAP(random_state=10).fit_transform(data.values)
+    standard_embedding = data[["umap_x", "umap_y"]].values
+    # values = data[['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']].values
     hdbscan_labels = hdbscan.HDBSCAN(min_samples=10, min_cluster_size=12).fit_predict(standard_embedding)
+    kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(standard_embedding)
 
     cmap = ['red', 'blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan']
     clustered = (hdbscan_labels >= 0)
@@ -56,4 +56,5 @@ def cluster_keypoints(keypoints_csv):
 
 
 if __name__ == "__main__":
-    cluster_keypoints("data.csv")
+    # do_umap_projection("output/mouse_features.csv")
+    cluster_keypoints("output/mouse_features.csv")
