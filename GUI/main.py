@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         
         self.image_control = ImageControl(self.file_list)
         self.radar_plot = RadarPlot()
-        self.umap_cluster = ScatterPlot()
+        self.umap_cluster = ScatterPlot(self.radar_plot)
 
         # Dialogs
         self.project_dialog = ProjectDialog()
@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
         #right_side_layout.addWidget(self.image_control)
 
         # TODO MOVE to right component
-        #right_side_layout.addWidget(self.radar_plot, 35)
+        right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
 
 
