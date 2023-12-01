@@ -3,11 +3,13 @@ from enum import Enum
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
                              QHBoxLayout, QVBoxLayout, QStackedWidget)
+from PyQt5 import QtCore
 
 from validation import *
 from project import *
 from editor import *
 from visualisation import *
+from data import *
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
@@ -69,14 +71,8 @@ class MainWindow(QMainWindow):
         pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
         icon = self.style().standardIcon(pixmapi)
         self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.switchwindow)
+        #self.visualisation.triggered.connect(self.switchwindow)
 
-        # Switch window to visualisation
-        self.visualisation = visualisation_menu.addAction("Visualisation")
-        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
-        icon = self.style().standardIcon(pixmapi)
-        self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.switchwindow)
 
     def create_widgets(self):
         main_layout = QHBoxLayout()
@@ -84,9 +80,14 @@ class MainWindow(QMainWindow):
         # Components
         self.image_viewer = ImageViewer()
         self.file_list = ImageFileList(self.image_viewer)
-        self.image_metadata_viewer = ImageMetadataViewer()
+
+        example_data = ExampleData()
+        self.image_metadata_viewer = ImageMetadataViewer(example_data)
+        
+        #self.image_metadata_viewer.update_attributes()
+
         self.image_control = ImageControl(self.file_list)
-        self.radar_plot = RadarPlot()
+        #self.radar_plot = RadarPlot()
 
         # Dialogs
         self.project_dialog = ProjectDialog()
@@ -101,10 +102,10 @@ class MainWindow(QMainWindow):
         right_side_layout = QVBoxLayout()
         right_side_widget.setLayout(right_side_layout)
         right_side_layout.addWidget(self.image_viewer, 65)
-        right_side_layout.addWidget(self.image_control)
+        right_side_layout.addWidget(self.image_control,0,QtCore.Qt.AlignmentFlag.AlignCenter )
 
         # TODO MOVE to right component
-        right_side_layout.addWidget(self.radar_plot, 35)
+        #right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
 
 

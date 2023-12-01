@@ -74,3 +74,25 @@ class MouseImageData:
 
     key_points: KeyPoints
     """ Set of keypoints for the image. """
+
+class ExampleData:
+    mouse = MouseData()
+    mouse.gender = "NaN"
+    mouse.name = "Anonymouse"
+    """ Mouse that image is of. """
+
+    filename = "test.jpg"
+    """ Name of the image. """
+
+    path = "C:/Mouse/lul.jpg"
+    """ Path to image, relative project base. """
+
+    profile_conf = 0.97
+    """ Model confidence that image is in profile. """
+
+    key_point_conf = 0.89
+    """ Model confidence of key point placement. """
+
+    key_points: KeyPoints
+    """ Set of keypoints for the image. """
+
