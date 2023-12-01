@@ -5,10 +5,10 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
                              QHBoxLayout, QVBoxLayout, QStackedWidget)
 from PyQt5 import QtCore
 
-from validation import *
+from validation import ImageFileList, ImageViewer, ImageMetadataViewer, ImageControl
 from project import *
 from editor import *
-from visualisation import *
+from visualisation import VisualisationWidget
 from data import *
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
         # Dialogs
         self.project_dialog = ProjectDialog(self)
         self.editor_dialog = ImageEditorDialog()
-        #self.visualisation_widget = VisualisationWidget("test")
+        self.visualisation_widget = VisualisationWidget("test")
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -115,7 +115,7 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget) # index 0
-        #self.modes.addWidget(self.visualisation_widget) # index 1
+        self.modes.addWidget(self.visualisation_widget) # index 1
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)

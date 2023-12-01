@@ -20,7 +20,7 @@ from matplotlib.collections import PatchCollection
 import hdbscan
 import sklearn.cluster as cluster
 import matplotlib.colors
-
+from validation import ImageFileList, ImageViewer
 # from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
 # List of packages that are allowed to be imported
@@ -43,11 +43,17 @@ class VisualisationWidget(QWidget):
 
         self.radar_plot = RadarPlot()
         self.mouse_features = MouseFeatures()
+        self.line_plot = LinePlot(self.radar_plot)
+        self.scatter_plot = ScatterPlot(self.radar_plot, self.mouse_features, self.line_plot)
+        self.image_viewer = ImageViewer()
 
         col2_row2_layout.addWidget(self.radar_plot)
         col2_row2_layout.addWidget(self.mouse_features)
-        col1_layout.addWidget(ImageFileList())
-        col2_layout.addWidget(ScatterPlot(self.radar_plot, self.mouse_features))
+
+        col1_layout.addWidget(ImageFileList(self.image_viewer))
+        col2_layout.addWidget(self.scatter_plot)
+        col2_layout.addWidget(self.line_plot)
+
         col2_layout.addLayout(col2_row2_layout)
 
         self.main_layout.addLayout(col1_layout)
@@ -138,10 +144,11 @@ class RadarPlot(QMainWindow):
 
 
 class ScatterPlot(QMainWindow):
-    def __init__(self, radar_plot, mouse_features):
+    def __init__(self, radar_plot, mouse_features, line_plot):
         super().__init__()
         self.mouse_features = mouse_features
         self.radar_plot = radar_plot
+        self.line_plot = line_plot
         self.radardata = radar_plot.radardata
 
         self.setWindowTitle("Scatter Plot")
@@ -247,8 +254,105 @@ class ScatterPlot(QMainWindow):
                         f"Colour: {self.colous[self.last_clicked_index]}\n"\
                         f"Feeling: Unclear \n"\
 
+                self.line_plot.mark_point(self.last_clicked_index)
                 self.mouse_features.setText(info_text)
             self.canvas.draw()
+
+
+
+
+class LinePlot(QMainWindow):
+    def __init__(self, radar_plot):
+        super().__init__()
+
+        # Set up the main window
+        self.setWindowTitle("Line Plot")
+        self.setGeometry(100, 100, 800, 600)
+
+        # Create central widget and layout
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+
+        # Create Matplotlib figure and canvas
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        layout.addWidget(self.canvas)
+
+        # Reference to RadarPlot and ScatterPlot instances
+        self.radar_plot = radar_plot
+        # self.scatter_plot = scatter_plot
+
+        # Generate sample data
+        x = np.linspace(0, 10, 100)
+        y = np.sin(x)
+
+        # Initialize the line plot
+        self.init_line_plot(x, y)
+
+        # Enable mplcursors for hover functionality
+
+        self.canvas.draw()
+
+    def init_line_plot(self, x, y):
+        self.ax = self.figure.add_subplot(111)
+
+        # Plot the line
+        # line, = ax.plot(x, y, label='Line Plot', color='red', linestyle='-', alpha=0.5)
+        self.data = self.radar_plot.radardata/self.radar_plot.baseline.mean()
+        # self.line = self.data.plot()
+        for col in self.data.columns:
+            self.ax.plot(self.data.index, self.data[col], label=col)
+        # self.line, = ax.plot(self.data.index, self.data, label='Line Plot', color='red', linestyle='-', alpha=0.5)
+        # self.line, = ax.plot(self.data.index, self.dockWidgetAreadata.iloc[:, 0], label='Line Plot', color='red', linestyle='-', alpha=0.5)
+        # self.line, = ax.plot(x, y, label='Line Plot', color='red', linestyle='-', alpha=0.5)
+        # self.radar_plot.radardata/self.radar_plot.baseline.mean()
+        # ax.set_xlabel("X-axis")
+        # ax.set_ylabel("Y-axis")
+        # ax.set_title("Line Plot")
+
+        # Connect the hover event to the on_hover function
+        # mplcursors.cursor(line).connect('add', self.on_hover)
+
+    # def on_hover(self, sel):
+    #     # Get the index of the hovered point
+    #     ind = sel.target.index
+
+    #     # Update the corresponding point in the ScatterPlot
+    #     self.scatter_plot.update_scatter_plot(ind)
+
+
+
+    # def on_hover(self, sel):
+    #     # Get the index of the hovered point
+    #     ind = sel.target.index
+
+    #     # Update the corresponding point in the ScatterPlot
+    #     self.scatter_plot.update_scatter_plot(ind)
+
+    def mark_point(self, index):
+        # Add a marker to the corresponding point in the line plot
+        self.ax.clear()
+
+        for col in self.data.columns:
+            self.ax.plot(self.data.index, self.data[col], label=col)
+
+        for line in self.figure.axes[0].lines:
+            print(line.get_xdata())
+            print("hej")
+            x_data = line.get_xdata()
+            if len(x_data)<=1:
+                return
+            x = x_data[index]
+            y = line.get_ydata()[index]           
+            self.figure.axes[0].plot(x, y, 'ro')  # 'ro' represents a red circle marker
+
+
+        # x = self.line.data[index]
+        # y = self.line.data[index]
+        # self.line.axes.plot(x, y, 'ro')  # 'ro' represents a red circle marker
+
+
 
 class UMAPViewer(PlaceHolder):
     def __init__(self):
