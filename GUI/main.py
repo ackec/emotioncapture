@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         
         self.image_control = ImageControl(self.file_list)
         self.radar_plot = RadarPlot()
-        self.umap_cluster = ScatterPlot()
+        self.umap_cluster = ScatterPlot(self.radar_plot)
 
         # Dialogs
         self.project_dialog = ProjectDialog()

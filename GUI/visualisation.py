@@ -66,37 +66,35 @@ class ImageFileList(PlaceHolder):
 
 
 class RadarPlot(QMainWindow):
-    def __init__(self):
+    def __init__(self, csv_features_filepath="output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
         super().__init__()
-        stimuli_start = 100
-        stimuli_end = 200
 
-        # Set up the main window
         self.setWindowTitle("Radar Plot")
         self.setGeometry(100, 100, 800, 600)
 
-        # Create central widget and layout
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
-        # Create Matplotlib figure and canvas
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
 
-        # Load data (replace 'your_file.csv' with your file path)
-        self.radardata = pd.read_csv('output/mouse_features.csv')
+        self.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+        df = pd.read_csv(csv_features_filepath)
+        self.radardata = df[self.columns]
 
-        # Calculate upper and lower bounds
-        self.columns =  ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
-        start = self.radardata.iloc[:stimuli_start][self.columns]
-        end = self.radardata.iloc[stimuli_end:][self.columns]
-        self.baseline = pd.concat((start,end)).mean(axis=0)
-        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end][self.columns]/self.baseline
+        self.stimuli_start = stimuli_start
+        self.stimuli_end = stimuli_end
 
-        self.upper = self.stimulation.mean(axis=0) + self.stimulation.sem(axis=0)
-        self.lower = self.stimulation.mean(axis=0) - self.stimulation.sem(axis=0)
+        self.baseline = self.radardata.iloc[:stimuli_start]
+        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline.mean()
+        self.recovery = self.radardata.iloc[stimuli_end:]
+        # self.baseline = pd.concat((start,end)).mean(axis=0)
+        self.upper = self.stimulation.mean() + self.stimulation.sem()
+        self.lower = self.stimulation.mean() - self.stimulation.sem()
+        self.sample = self.stimulation.mean()
+        print(self.sample)
         self.init_radar_plot()
 
     def init_radar_plot(self):
@@ -104,58 +102,58 @@ class RadarPlot(QMainWindow):
         self.radar_plot(ax)
         self.canvas.draw()
 
+    def update_radar_plot(self, clicked_index):
+        self.sample = self.radardata.iloc[clicked_index] / self.baseline.mean()
+        print(self.sample)
+        ax = self.figure.add_subplot(111, polar=True)
+        ax.clear()
+        self.radar_plot(ax)
+        ax.set_ylim(self.sample.min()-0.02, self.sample.max()+0.02)
+        self.canvas.draw()
+
     def radar_plot(self, ax):
-        # parameters = list(self.baseline.columns)
         rad_linspace = np.linspace(0, 2 * np.pi, len(self.columns), endpoint=False)
-        # Plot polygons
+
         polygons = [
             Polygon(list(zip(rad_linspace, self.upper)), facecolor='darkgrey', alpha=0.5),
             Polygon(list(zip(rad_linspace, self.lower)), facecolor='white', alpha=0.7),
-            Polygon(list(zip(rad_linspace, self.stimulation.mean(axis=0))), edgecolor='blue', linewidth=1, facecolor='none'),
             Polygon(list(zip(rad_linspace, [1]*7)), edgecolor='black', linewidth=1, facecolor='none'),
+            Polygon(list(zip(rad_linspace, self.sample)), edgecolor='blue', linewidth=1, facecolor='none'),
         ]
 
         pc = PatchCollection(polygons, match_original=True)
         ax.add_collection(pc)
 
-        # ax.set_xlabel("Facial profile response to stimulation X")
-        # ax.set_ylabel("Proportional change from baseline")
-        ax.set_ylim(0.95, 1.05)
-
+        ax.set_ylim(0.85, 1.15)
         ax.set_xticks(rad_linspace)
         ax.set_xticklabels(self.columns)
         ax.set_yticklabels([])
 
 
 
-
 class ScatterPlot(QMainWindow):
-    def __init__(self):
+    def __init__(self, radar_plot):
         super().__init__()
 
-        # Set up the main window
         self.setWindowTitle("Scatter Plot")
         self.setGeometry(100, 100, 800, 600)
 
-        # Create central widget and layout
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
-        # Create Matplotlib figure and canvas
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
 
-
         self.features = pd.read_csv("output/mouse_features.csv")
         self.umap = self.features[["umap_x", "umap_y"]].values
 
-        # Initialize the scatter plot
         self.last_clicked_index = None
         self.stim_start = 100
         self.stim_end = 200
         self.init_scatter_plot()
+        self.radar_plot = radar_plot
 
     def init_scatter_plot(self):
         hdbscan_labels = hdbscan.HDBSCAN(min_samples=10, min_cluster_size=12).fit_predict(self.umap)
@@ -163,7 +161,6 @@ class ScatterPlot(QMainWindow):
 
         cmap = ['red', 'blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan']
         # clustered = (hdbscan_labels >= 0)
-
         ax = self.figure.add_subplot(111)
         self.colous = [cmap[label] for label in hdbscan_labels]
         self.scatter1 = ax.scatter(self.umap[:self.stim_start, 0], self.umap[:self.stim_start, 1], c=self.colous[:self.stim_start], marker="^", label='Baseline', s=10, picker=10)
@@ -209,6 +206,7 @@ class ScatterPlot(QMainWindow):
                 self.last_clicked_index = closest_index
                 x_clicked = self.umap[self.last_clicked_index][0]
                 y_clicked = self.umap[self.last_clicked_index][1]
+                self.radar_plot.update_radar_plot(self.last_clicked_index)
                 print(f"Clicked Point: ({x_clicked:.2f}, {y_clicked:.2f}), from frame {self.features['Frame_ID'][self.last_clicked_index]}, and with path: {self.features['Img_Path'][self.last_clicked_index]}")
             self.canvas.draw()
 
