@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
         #right_side_layout.addWidget(self.image_control)
 
         # TODO MOVE to right component
-        #right_side_layout.addWidget(self.radar_plot, 35)
+        right_side_layout.addWidget(self.radar_plot, 35)
         right_side_layout.addWidget(self.image_metadata_viewer, 35)
 
 

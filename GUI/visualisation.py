@@ -89,11 +89,11 @@ class RadarPlot(QMainWindow):
         self.radardata = pd.read_csv('output/mouse_features.csv')
 
         # Calculate upper and lower bounds
-        columns =  ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
-        start = self.radardata.iloc[:stimuli_start][columns]
-        end = self.radardata.iloc[stimuli_end:][columns]
+        self.columns =  ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+        start = self.radardata.iloc[:stimuli_start][self.columns]
+        end = self.radardata.iloc[stimuli_end:][self.columns]
         self.baseline = pd.concat((start,end)).mean(axis=0)
-        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline
+        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end][self.columns]/self.baseline
 
         self.upper = self.stimulation.mean(axis=0) + self.stimulation.sem(axis=0)
         self.lower = self.stimulation.mean(axis=0) - self.stimulation.sem(axis=0)
@@ -105,12 +105,11 @@ class RadarPlot(QMainWindow):
         self.canvas.draw()
 
     def radar_plot(self, ax):
-        parameters = list(self.radardata.columns)
-        rad_linspace = np.linspace(0, 2 * np.pi, len(parameters), endpoint=False)
+        # parameters = list(self.baseline.columns)
+        rad_linspace = np.linspace(0, 2 * np.pi, len(self.columns), endpoint=False)
         # Plot polygons
         polygons = [
             Polygon(list(zip(rad_linspace, self.upper)), facecolor='darkgrey', alpha=0.5),
-
             Polygon(list(zip(rad_linspace, self.lower)), facecolor='white', alpha=0.7),
             Polygon(list(zip(rad_linspace, self.stimulation.mean(axis=0))), edgecolor='blue', linewidth=1, facecolor='none'),
             Polygon(list(zip(rad_linspace, [1]*7)), edgecolor='black', linewidth=1, facecolor='none'),
@@ -119,13 +118,12 @@ class RadarPlot(QMainWindow):
         pc = PatchCollection(polygons, match_original=True)
         ax.add_collection(pc)
 
-        # Set axis labels and limits
         # ax.set_xlabel("Facial profile response to stimulation X")
         # ax.set_ylabel("Proportional change from baseline")
         ax.set_ylim(0.95, 1.05)
 
         ax.set_xticks(rad_linspace)
-        ax.set_xticklabels(parameters)
+        ax.set_xticklabels(self.columns)
         ax.set_yticklabels([])
 
 
