@@ -28,9 +28,8 @@ __all__ = ["MouseFeatures",
            "VisualisationWidget", "RadarPlot"]
 
 class VisualisationWidget(QWidget):
-    """ Placeholder widget while app is being developed """
 
-    def __init__(self, name: str):
+    def __init__(self):
         super().__init__()
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
@@ -41,7 +40,7 @@ class VisualisationWidget(QWidget):
         col2_layout = QVBoxLayout(self)
         col2_row2_layout = QHBoxLayout(self)
 
-        self.radar_plot = RadarPlot()
+        self.radar_plot = QWidget()  # RadarPlot()
         self.mouse_features = MouseFeatures()
         self.line_plot = LinePlot(self.radar_plot)
         self.scatter_plot = ScatterPlot(self.radar_plot, self.mouse_features, self.line_plot)
@@ -74,7 +73,7 @@ class PlaceHolder(QLabel):
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
 
 class RadarPlot(QMainWindow):
-    def __init__(self, csv_features_filepath="output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
+    def __init__(self, csv_features_filepath: str, stimuli_start: int, stimuli_end: int):
         super().__init__()
 
         self.setWindowTitle("Radar Plot")

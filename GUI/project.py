@@ -1,17 +1,18 @@
+import os
+import json
+
 from enum import Enum
 
 from PyQt5.QtCore import Qt, QSize, QDir
 from PyQt5.QtGui import QMovie, QFont
-from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
-                             QVBoxLayout, QPushButton, QStackedWidget, QLineEdit,
-                             QHBoxLayout, QFileDialog, QInputDialog, QComboBox)
+from PyQt5.QtWidgets import (QLabel, QSizePolicy, QDialog, QWidget,
+                             QVBoxLayout, QPushButton, QStackedWidget,
+                             QLineEdit, QHBoxLayout, QFileDialog, QInputDialog,
+                             QComboBox)
 
-from config import DIALOG_WIDTH, DIALOG_HEIGHT, RESOURCE_PATH, BASE_PROJECT_DIRECTORY_PATH
+from config import (DIALOG_WIDTH, DIALOG_HEIGHT, RESOURCE_PATH,
+                    BASE_PROJECT_DIRECTORY_PATH)
 
-from main import MainWindow
-
-import os
-import json
 
 __all__ = ["ProjectDialog", "ProjectMode"]
 
@@ -37,16 +38,16 @@ class DialogPlaceHolder(QWidget):
 
         self.main_layout = QVBoxLayout()
 
-        #text = QLabel()
-        #text.setText(name)
-        #text.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
-        #self.main_layout.addWidget(text)
+        # text = QLabel()
+        # text.setText(name)
+        # text.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        # self.main_layout.addWidget(text)
 
         self.btn = QPushButton("Switch")
         self.btn.clicked.connect(lambda: self.parent().parent().switch(next))
-        #self.main_layout.addWidget(btn)
+        # self.main_layout.addWidget(btn)
 
-        #self.setLayout(self.main_layout)
+        # self.setLayout(self.main_layout)
 
 
 class ProjectDialog(QDialog):
@@ -55,14 +56,15 @@ class ProjectDialog(QDialog):
               "Processing data",
               "Error processing data",]
 
-    def __init__(self, main_window: MainWindow):
+    def __init__(self, inferencer):
         super().__init__()
-        self.main = main_window
         self.setWindowTitle("Team Mouse")
-        #self.setGeometry(0, 0, DIALOG_WIDTH, DIALOG_HEIGHT)
-        #self.setMinimumSize(DIALOG_WIDTH, DIALOG_HEIGHT)
+        # self.setGeometry(0, 0, DIALOG_WIDTH, DIALOG_HEIGHT)
+        # self.setMinimumSize(DIALOG_WIDTH, DIALOG_HEIGHT)
         self.set_default_size
         self.setModal(True)  # Prevent loss of focus
+
+        self.inferencer = inferencer
 
         self.main_layout = QVBoxLayout()
 
@@ -82,18 +84,19 @@ class ProjectDialog(QDialog):
         self.switch(mode)
         super().show()
 
-        
     def set_default_size(self):
         self.setGeometry(100, 100, DIALOG_WIDTH, DIALOG_HEIGHT)
         self.setMinimumSize(DIALOG_WIDTH, DIALOG_HEIGHT)
         self.setMaximumSize(5000, 5000)
+
 
 class TwoInputsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Two Inputs Dialog")
 
-        self.label = QLabel("Please type mouse name and its gender below", self)
+        self.label = QLabel("Please type mouse name and its gender below",
+                            self)
 
         # Create two QLineEdit widgets
         self.input1_line_edit = QLineEdit(self)
@@ -114,10 +117,11 @@ class TwoInputsDialog(QDialog):
 
     def get_inputs(self):
         # Return the entered values for input1 and input2
-        return self.input1_line_edit.text(), self.input2_line_edit.text(),  self.input3_line_edit.text()
-    
+        return (self.input1_line_edit.text(),
+                self.input2_line_edit.text(),
+                self.input3_line_edit.text())
 
-    
+
 class VideoWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -126,10 +130,11 @@ class VideoWidget(QWidget):
         layout = QHBoxLayout()
         # Create two QLineEdit widgets
         label = QLabel("Select MP4 video")
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
+        # Set text alignment to center
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.input1_line_edit = QLineEdit()
         self.input1_line_edit.setEnabled(False)
-        browsebtn =  QPushButton("Browse")
+        browsebtn = QPushButton("Browse")
         browsebtn.clicked.connect(lambda: self.get_video_path())
 
         # Create a layout and add the widgets to it
@@ -138,23 +143,22 @@ class VideoWidget(QWidget):
         layout.addWidget(self.input1_line_edit)
         layout.addWidget(browsebtn)
 
-    
-
     def get_video_path(self):
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        options |= QFileDialog.Option.DontUseNativeDialog
         file_dialog = QFileDialog()
         file_dialog.setOptions(options)
 
         file_dialog.setDirectory(os.getcwd())
 
         # Open file explorer for selecting a directory
-        file_name = file_dialog.getOpenFileName(self, "Select Video", "", "*.mp4")
+        file_name = file_dialog.getOpenFileName(self, "Select Video",
+                                                "", "*.mp4")
         if file_name:
             print(file_name)
             self.videopath = file_name[0]
             print("Selected file: ", self.videopath)
-        
+
             self.show_input()
         else:
             OSError("Video must be a mp4")
@@ -164,16 +168,20 @@ class VideoWidget(QWidget):
             self.input1_line_edit.setText(self.videopath)
 
 
-class ProjectManager(DialogPlaceHolder):
-    def __init__(self, PDialog: ProjectDialog):
-        super().__init__("New Project", ProjectMode.PROCESS)
+class ProjectManager(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.hidemouse = True
         self.data = None
-        self.Dialog = PDialog
-        self.set_geometry(self.Dialog)
+        self.set_geometry(self.parent())
 
-        self.btn.clicked.connect(lambda: PDialog.set_default_size())
-        self.btn.clicked.connect(lambda: PDialog.main.inferencer.inference())
+        self.btn = QPushButton("Switch")
+        self.btn.clicked.connect(
+            lambda: self.parent().parent().switch(ProjectMode.PROCESS)
+        )
+
+        self.btn.clicked.connect(self.parent().set_default_size)
+        self.btn.clicked.connect(self.parent().inferencer.inference)
 
         self.create_widgets()
 
@@ -204,9 +212,11 @@ class ProjectManager(DialogPlaceHolder):
         self.project_input = QLineEdit()
         label_project = QLabel("Select project below", self)
         label_or = QLabel("Or", self)
-        label_or.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
-        label_project.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
-        browsebtn =  QPushButton("Browse", self)
+        # Set text alignment to center
+        label_or.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Set text alignment to center
+        label_project.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        browsebtn = QPushButton("Browse", self)
         browsebtn.clicked.connect(lambda: self.openFileExplorer())
 
         project_layout.addWidget(label_project)
@@ -217,7 +227,7 @@ class ProjectManager(DialogPlaceHolder):
         project_layout.addLayout(browser)
         project_layout.addWidget(label_or)
 
-        create_new_project =  QPushButton("Create New Project", self)
+        create_new_project = QPushButton("Create New Project", self)
         create_new_project.clicked.connect(lambda: self.create_project())
 
         # TODO
@@ -241,7 +251,8 @@ class ProjectManager(DialogPlaceHolder):
         file_dialog.setDirectory(os.getcwd())
 
         # Open file explorer for selecting a directory
-        directory = file_dialog.getExistingDirectory(self, "Select Directory", QDir.currentPath())
+        directory = file_dialog.getExistingDirectory(
+            self, "Select Directory", QDir.currentPath())
         if directory:
 
             print(f"Selected directory: {directory}")
@@ -259,12 +270,12 @@ class ProjectManager(DialogPlaceHolder):
                     self.name_input.setText("")
                     self.gender_input.setText("")
 
-
     def create_project(self):
         base_path = BASE_PROJECT_DIRECTORY_PATH
 
         # Get the directory name from the user
-        project_name, ok = QInputDialog.getText(self, "Enter Project Name", "Project/Directory Name:")
+        project_name, ok = QInputDialog.getText(
+            self, "Enter Project Name", "Project/Directory Name:")
 
         if ok and project_name:
             # Construct the full path
@@ -303,23 +314,25 @@ class ProjectManager(DialogPlaceHolder):
 
     def create_mouse_selector(self):
         label1 = QLabel("Select Mouse from below")
-        label1.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
+        # Set text alignment to center
+        label1.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         label2 = QLabel("Or:  create / edit one from below")
-        label2.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
+        # Set text alignment to center
+        label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.name_input = QLineEdit(self)
         self.gender_input = QLineEdit(self)
         self.genotype_input = QLineEdit(self)
 
         label_name = QLabel("Name")
-        #label_name.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
+        # label_name.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
 
         label_gender = QLabel("Gender")
-        #label_gender.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
+        # label_gender.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
 
         label_genotype = QLabel("Genotype")
-        #label_genotype.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
+        # label_genotype.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
 
         layout = QVBoxLayout()
         layout_name = QHBoxLayout()
@@ -330,7 +343,8 @@ class ProjectManager(DialogPlaceHolder):
         layout.addWidget(label1)
         self.dropdown = QComboBox(self)
         self.dropdown.setCurrentIndex(-1)
-        self.dropdown.currentIndexChanged.connect(lambda: self.update_mouse_data())
+        self.dropdown.currentIndexChanged.connect(
+            lambda: self.update_mouse_data())
         layout.addWidget(self.dropdown)
         layout.addWidget(label2)
 
@@ -349,7 +363,7 @@ class ProjectManager(DialogPlaceHolder):
 
         # Add buttons for mouse selecting
         edit_buttons = QHBoxLayout()
-        editbtn =  QPushButton("Edit")
+        editbtn = QPushButton("Edit")
         editbtn.clicked.connect(lambda: self.toggle_edit_mode())
         confirm_button = QPushButton("Add Mouse")
         confirm_button.clicked.connect(lambda: self.show_input_dialog())
@@ -371,18 +385,22 @@ class ProjectManager(DialogPlaceHolder):
             if self.name_input.text() != "" and self.gender_input.text() != "" and self.genotype_input.text() != "":
                 print(self.name_input.text())
                 self.data["registered_mice"][current_index]["name"] = self.name_input.text()
-                self.data["registered_mice"][current_index]["gender"] = self.gender_input.text()
-                self.data["registered_mice"][current_index]["genotype"] = self.genotype_input.text()
+                self.data["registered_mice"][current_index]["gender"] = self.gender_input.text(
+                )
+                self.data["registered_mice"][current_index]["genotype"] = self.genotype_input.text(
+                )
 
-                self.name_input.setText(self.data["registered_mice"][current_index]["name"])
-                self.gender_input.setText(self.data["registered_mice"][current_index]["gender"])
-                self.gender_input.setText(self.data["registered_mice"][current_index]["genotype"])
+                self.name_input.setText(
+                    self.data["registered_mice"][current_index]["name"])
+                self.gender_input.setText(
+                    self.data["registered_mice"][current_index]["gender"])
+                self.gender_input.setText(
+                    self.data["registered_mice"][current_index]["genotype"])
             else:
                 print("Please fill the meta data of mouse attributes")
                 return
 
-
-        self.hidemouse = not(self.hidemouse)
+        self.hidemouse = not (self.hidemouse)
         self.name_input.setEnabled(self.hidemouse)
         self.gender_input.setEnabled(self.hidemouse)
         self.genotype_input.setEnabled(self.hidemouse)
@@ -396,12 +414,15 @@ class ProjectManager(DialogPlaceHolder):
     def update_mouse_data(self):
         if hasattr(self, 'data'):
             current_index = self.dropdown.currentIndex()
-            self.name_input.setText(self.data["registered_mice"][current_index]["name"])
-            self.gender_input.setText(self.data["registered_mice"][current_index]["gender"])
-            self.genotype_input.setText(self.data["registered_mice"][current_index]["genotype"])
+            self.name_input.setText(
+                self.data["registered_mice"][current_index]["name"])
+            self.gender_input.setText(
+                self.data["registered_mice"][current_index]["gender"])
+            self.genotype_input.setText(
+                self.data["registered_mice"][current_index]["genotype"])
         else:
             return
-        
+
     def save_mouse(self):
 
         new = {"name": '{name}'.format(name=self.name_input.text()), "gender": '{gender}'.format(gender=self.gender_input.text()),
@@ -413,7 +434,8 @@ class ProjectManager(DialogPlaceHolder):
 
     def validate_dropdown(self):
         if hasattr(self, 'data'):
-            items_text = [self.dropdown.itemText(i) for i in range(self.comboBox.count())]
+            items_text = [self.dropdown.itemText(
+                i) for i in range(self.comboBox.count())]
 
     def show_input_dialog(self):
         # Create an instance of the custom dialog
@@ -433,7 +455,6 @@ class ProjectManager(DialogPlaceHolder):
             self.update_mouse_data()
 
 
-    
 class Processing(QWidget):
     def __init__(self):
         super().__init__()
