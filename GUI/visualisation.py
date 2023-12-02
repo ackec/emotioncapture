@@ -309,7 +309,6 @@ class LinePlot(QMainWindow):
         self.ax.set_ylim(0.5, 1.5)
         leg.set_draggable(True)
 
-
     def mark_point(self, index):
         if self.dot:
             self.dot.pop(0).remove()
