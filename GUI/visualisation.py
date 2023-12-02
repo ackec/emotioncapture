@@ -20,6 +20,7 @@ from matplotlib.collections import PatchCollection
 import hdbscan
 import sklearn.cluster as cluster
 import matplotlib.colors
+import matplotlib.pyplot as plt
 from validation import ImageFileList, ImageViewer
 # from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
@@ -49,7 +50,7 @@ class VisualisationWidget(QWidget):
         col2_row2_layout.addWidget(self.radar_plot)
         col2_row2_layout.addWidget(self.mouse_features)
 
-        col1_layout.addWidget(ImageFileList(self.image_viewer))
+        # col1_layout.addWidget(ImageFileList(self.image_viewer))
         col2_layout.addWidget(self.scatter_plot)
         col2_layout.addWidget(self.line_plot)
 
@@ -264,93 +265,56 @@ class LinePlot(QMainWindow):
     def __init__(self, radar_plot):
         super().__init__()
 
-        # Set up the main window
         self.setWindowTitle("Line Plot")
         self.setGeometry(100, 100, 800, 600)
-
-        # Create central widget and layout
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
-
-        # Create Matplotlib figure and canvas
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
+
         layout.addWidget(self.canvas)
-
-        # Reference to RadarPlot and ScatterPlot instances
+        self.ax = self.figure.add_subplot(111)
+        self.dot = None
         self.radar_plot = radar_plot
-        # self.scatter_plot = scatter_plot
+        self.lines = {}
+        self.init_line_plot()
 
-        # Generate sample data
-        x = np.linspace(0, 10, 100)
-        y = np.sin(x)
-
-        # Initialize the line plot
-        self.init_line_plot(x, y)
-
-        # Enable mplcursors for hover functionality
-
+        self.canvas.mpl_connect('pick_event', self.on_legend_pick)
         self.canvas.draw()
 
-    def init_line_plot(self, x, y):
-        self.ax = self.figure.add_subplot(111)
 
-        # Plot the line
-        # line, = ax.plot(x, y, label='Line Plot', color='red', linestyle='-', alpha=0.5)
+
+    def init_line_plot(self):
         self.data = self.radar_plot.radardata/self.radar_plot.baseline.mean()
-        # self.line = self.data.plot()
         for col in self.data.columns:
-            self.ax.plot(self.data.index, self.data[col], label=col)
-        # self.line, = ax.plot(self.data.index, self.data, label='Line Plot', color='red', linestyle='-', alpha=0.5)
-        # self.line, = ax.plot(self.data.index, self.dockWidgetAreadata.iloc[:, 0], label='Line Plot', color='red', linestyle='-', alpha=0.5)
-        # self.line, = ax.plot(x, y, label='Line Plot', color='red', linestyle='-', alpha=0.5)
-        # self.radar_plot.radardata/self.radar_plot.baseline.mean()
-        # ax.set_xlabel("X-axis")
-        # ax.set_ylabel("Y-axis")
-        # ax.set_title("Line Plot")
+            line, = self.ax.plot(self.data.index, self.data[col], label=col)
+            self.lines[col] = line
+        leg = self.ax.legend()
+        self.ax.set_ylim(0.5, 1.5)
+        leg.set_draggable(True)
+        self.map_legend_to_ax = {}  # Will map legend lines to original lines.
 
-        # Connect the hover event to the on_hover function
-        # mplcursors.cursor(line).connect('add', self.on_hover)
-
-    # def on_hover(self, sel):
-    #     # Get the index of the hovered point
-    #     ind = sel.target.index
-
-    #     # Update the corresponding point in the ScatterPlot
-    #     self.scatter_plot.update_scatter_plot(ind)
-
-
-
-    # def on_hover(self, sel):
-    #     # Get the index of the hovered point
-    #     ind = sel.target.index
-
-    #     # Update the corresponding point in the ScatterPlot
-    #     self.scatter_plot.update_scatter_plot(ind)
+        # lines = []
+        # for legend_line, ax_line in zip(leg.get_lines(), lines):
+        #     print(legend_line)
+        #     print(ax_line)
+        #     legend_line.set_picker(True)  # Enable picking on the legend line.
+        #     legend_line.set_pickradius(5)
+        #     self.map_legend_to_ax[legend_line] = ax_line
 
     def mark_point(self, index):
-        # Add a marker to the corresponding point in the line plot
-        self.ax.clear()
+        if self.dot:
+            self.dot.pop(0).remove()
 
-        for col in self.data.columns:
-            self.ax.plot(self.data.index, self.data[col], label=col)
+        line = self.figure.axes[0].lines[0]
+        x = line.get_xdata()[index]
+        y = line.get_ydata()[index]
+        self.dot = self.ax.plot(x, y, 'ro', markersize=8)
+        self.canvas.draw()
 
-        for line in self.figure.axes[0].lines:
-            print(line.get_xdata())
-            print("hej")
-            x_data = line.get_xdata()
-            if len(x_data)<=1:
-                return
-            x = x_data[index]
-            y = line.get_ydata()[index]           
-            self.figure.axes[0].plot(x, y, 'ro')  # 'ro' represents a red circle marker
-
-
-        # x = self.line.data[index]
-        # y = self.line.data[index]
-        # self.line.axes.plot(x, y, 'ro')  # 'ro' represents a red circle marker
-
+    def on_legend_pick(self, event):
+        pass
 
 
 class UMAPViewer(PlaceHolder):
