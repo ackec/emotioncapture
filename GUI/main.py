@@ -1,4 +1,6 @@
 import sys, os
+
+sys.path.append('../profile_detector')
 from enum import Enum
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
@@ -12,6 +14,10 @@ from visualisation import VisualisationWidget
 from data import *
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
+
+#from inference import Inferencer
+
+#from project import NewProject
 
 class GuiMode(Enum):
     """ Possible states of the project management. """
@@ -32,7 +38,11 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.inferencer = tempInferencer()
+        # TODO
+        # Fix this because it gives a circular import
+        #self.inferencer = Inferencer(self)
+
+        self.Project = ProjectData()
 
         self.setWindowTitle("Mouse")
         self.setGeometry(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -68,6 +78,20 @@ class MainWindow(QMainWindow):
             lambda: self.project_dialog.show(ProjectMode.NEW)
         )
 
+        # Create new project button
+        newnew = file_menu.addAction("Newer Project")
+        newnew.setIcon(icon)
+        newnew.triggered.connect(
+            lambda: self.new_project_dialog.show()
+        )
+
+        # Create Add Mouse to project button
+        newnew = file_menu.addAction("Add Mouse to Project")
+        newnew.setIcon(icon)
+        newnew.triggered.connect(
+            lambda: self.new_mouse_dialog.show()
+        )
+
         # Open edit view (temporary button)
         self.edit = edit_menu.addAction("Edit")
         pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
@@ -98,8 +122,10 @@ class MainWindow(QMainWindow):
 
         # Dialogs
         self.project_dialog = ProjectDialog(self)
+        self.new_project_dialog = NewProject(self)
+        self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        self.visualisation_widget = VisualisationWidget("test")
+        #self.visualisation_widget = VisualisationWidget("test")
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -115,7 +141,7 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget) # index 0
-        self.modes.addWidget(self.visualisation_widget) # index 1
+        #self.modes.addWidget(self.visualisation_widget) # index 1
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
@@ -128,6 +154,21 @@ class MainWindow(QMainWindow):
         elif self.modes.currentIndex() == 1:
             self.modes.setCurrentIndex(0)
             print("switching to main")
+
+    #def show_new_project_dialog(self):
+    #    self.new_project_dialog = NewProject()
+
+        # Show the dialog and get the results
+    #    result = dialog.exec_()
+
+        # Check if the user clicked OK
+    #    if result == QDialog.Accepted:
+    #        project_name = dialog.get_inputs()
+    #        project_path = 
+    #        self.data["registered_mice"].append(new)
+    #        self.dropdown.addItem(self.new_mouse)
+    #        self.dropdown.setCurrentIndex(-1)
+    #        self.update_mouse_data()
 
 
 

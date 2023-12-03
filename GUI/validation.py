@@ -256,25 +256,32 @@ class ImageMetadataViewer(QLabel):
         
         self.create_label_row("Filename", data.filename,2)
         self.create_label_row("Path", data.path,3)
-        
+
         self.create_label_row("Profile Confidence", data.profile_conf,4)
         self.create_label_row("Key Point Confidence", data.key_point_conf,5)
 
-    def create_label_row(self,description:str,value:int|str,row:int):
-        attr_widget = QLabel()
-        attr_widget.setText("{}:".format(description))
-        self.info_layout.addWidget(attr_widget,row,0)
-        self.attr_to_label_map[description] = attr_widget
+    # Change inputs to work on python 3.9
+    def create_label_row(self,description:str, value, row:int):
+        if isinstance(value, (float,str)):
+            attr_widget = QLabel()
+            attr_widget.setText("{}:".format(description))
+            self.info_layout.addWidget(attr_widget,row,0)
+            self.attr_to_label_map[description] = attr_widget
 
-        value_widget = QLabel()
-        value_widget.setText("{}".format(value))
-        self.info_layout.addWidget(value_widget,row,1)
-        self.attr_to_label_map[description+"_value"] = value_widget
+            value_widget = QLabel()
+            value_widget.setText("{}".format(value))
+            self.info_layout.addWidget(value_widget,row,1)
+            self.attr_to_label_map[description+"_value"] = value_widget
+        else:
+            raise ValueError("Value must be either a string or an integer.")
 
-    def update_label_row(self,description:str,value:int|str):
-
-        value_widget = self.attr_to_label_map[description+"_value"]
-        value_widget.setText("{}".format(value))
+    # Change inputs to work on python 3.9
+    def update_label_row(self,description:str,value):
+        if isinstance(value, (int,str)):
+            value_widget = self.attr_to_label_map[description+"_value"]
+            value_widget.setText("{}".format(value))
+        else: 
+            raise ValueError("Value must be either a string or an integer.")
 
     def update_attributes(self):
         #name = self.file_list.currentItem()
@@ -290,6 +297,5 @@ class ImageMetadataViewer(QLabel):
         
         self.update_label_row("Filename", self.current_data.filename)
         self.update_label_row("Path", self.current_data.path)
-        
         self.update_label_row("Profile Confidence", self.current_data.profile_conf)
         self.update_label_row("Key Point Confidence", self.current_data.key_point_conf)

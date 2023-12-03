@@ -1,26 +1,29 @@
 class ProjectData:
     """ Meta data about an entire project. """
 
-    name: str
+    name: str = ""
     """ Name of project. """
 
-    path: str
+    path: str = ""
     """ Path to project directory. """
 
-    mice: list["MouseData"]
+    mice: list["MouseData"] = []
     """ Mice that belong to project. """
 
-    images: list["MouseImageData"]
+    images: list["MouseImageData"] = []
     """ Images that are part of the project. """
+
+    active_mouse_index: int = None
+    """ Index that point to which mouse in self.mice is active """
 
 
 class MouseData:
     """ Meta data about a specific mouse. """
 
-    name: str
+    name: str = ""
     """ Name of mouse. """
 
-    gender: str
+    gender: str = ""
     """ Gender of mouse. """
 
 

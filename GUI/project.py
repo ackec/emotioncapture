@@ -10,10 +10,15 @@ from config import DIALOG_WIDTH, DIALOG_HEIGHT, RESOURCE_PATH, BASE_PROJECT_DIRE
 
 from main import MainWindow
 
+from utilities import *
+
 import os
 import json
 
-__all__ = ["ProjectDialog", "ProjectMode"]
+__all__ = ["ProjectDialog", "ProjectMode", "NewProject", "MouseCreator", "NewData"]
+
+
+
 
 
 class ProjectMode(Enum):
@@ -67,8 +72,8 @@ class ProjectDialog(QDialog):
         self.main_layout = QVBoxLayout()
 
         self.modes = QStackedWidget()
-        self.modes.addWidget(ProjectManager(self))
-        self.modes.addWidget(Processing())
+        self.modes.addWidget(NewData(self))
+        self.modes.addWidget(Processing(self.main))
         self.modes.addWidget(ProcessingFailed())
 
         self.main_layout.addWidget(self.modes)
@@ -119,13 +124,17 @@ class TwoInputsDialog(QDialog):
 
     
 class VideoWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, projectdata, btn):
+        super().__init__()
+
+        self.start = btn
+        self.project = projectdata
+
         self.videopath = None
 
         layout = QHBoxLayout()
         # Create two QLineEdit widgets
-        label = QLabel("Select MP4 video")
+        label = QLabel("Select video or images")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Set text alignment to center
         self.input1_line_edit = QLineEdit()
         self.input1_line_edit.setEnabled(False)
@@ -148,20 +157,23 @@ class VideoWidget(QWidget):
 
         file_dialog.setDirectory(os.getcwd())
 
+        file_filter = "Video Files (*.mp4);;Image Files (*.png *.jpg *.jpeg)"
+
         # Open file explorer for selecting a directory
-        file_name = file_dialog.getOpenFileName(self, "Select Video", "", "*.mp4")
-        if file_name:
-            print(file_name)
-            self.videopath = file_name[0]
+        file_names, _ = file_dialog.getOpenFileNames(self, "Select Files", "", file_filter)
+        if file_names:
+            print(file_names)
+            self.videopath = file_names
             print("Selected file: ", self.videopath)
-        
             self.show_input()
+            if self.project.active_mouse_index:
+                self.start.setEnabled(True)
         else:
             OSError("Video must be a mp4")
 
     def show_input(self):
         if self.videopath:
-            self.input1_line_edit.setText(self.videopath)
+            self.input1_line_edit.setText(self.videopath[0])
 
 
 class ProjectManager(DialogPlaceHolder):
@@ -432,10 +444,105 @@ class ProjectManager(DialogPlaceHolder):
             self.dropdown.setCurrentIndex(-1)
             self.update_mouse_data()
 
+class MouseSelector(QComboBox):
+    def __init__(self, projectdata: ProjectData):
+        super().__init__()
+        self.project = projectdata
+
+        self.update()
+
+        self.currentIndexChanged.connect(lambda: self.update_active_mouse_index())
+
+    def update_active_mouse_index(self):
+        self.project.active_mouse_index = self.currentIndex()
+        print("Selected Mouse: ", self.project.mice[self.project.active_mouse_index].name)
+
+    def update(self):
+
+        self.clear()
+
+        if self.project.active_mouse_index is None:
+            self.setCurrentIndex(-1)
+        else:
+            self.setCurrentIndex(self.project.active_mouse_index)
+
+        if len(self.project.mice) > 0:
+            for mouse in self.project.mice:
+                self.addItem(mouse.name)
+
+
+class ProjectInformation(QWidget):
+    def __init__(self, projectdata: ProjectData):
+        super().__init__()
+
+        self.project = projectdata
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        text = QLabel("Project information")
+        self.name = QLabel(projectdata.name)
+        self.path = QLabel(projectdata.path)
+
+        self.main_layout.addWidget(text)
+        self.main_layout.addWidget(self.name)
+        self.main_layout.addWidget(self.path)
+        #self.setWindowTitle("Team Mouse")
+
+    def update(self):
+        self.name.setText(self.project.name)
+        self.path.setText(self.project.path)
+
+
+class NewData(DialogPlaceHolder):
+    def __init__(self, PDialog: ProjectDialog):
+        super().__init__("New Project", ProjectMode.PROCESS)
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+
+        self.dialog = PDialog
+        self.set_geometry(self.dialog)
+
+        self.project_info = ProjectInformation(self.dialog.main.Project)
+        self.mouse_selector = MouseSelector(self.dialog.main.Project)
+        self.video_widget = VideoWidget(self.dialog.main.Project, self.btn)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.project_info)
+        self.layout.addWidget(self.mouse_selector)
+        self.layout.addWidget(self.video_widget)
+        self.layout.addWidget(self.btn)
+
+        self.setLayout(self.layout)
+
+    
+    def set_geometry(self, PDialog: ProjectDialog):
+        PDialog.setGeometry(100, 100, 300, 400)
+        PDialog.setMinimumSize(300, 400)
+        PDialog.setMaximumSize(300, 400)
+
+    def update_params(self):
+        self.project_info.update()
+        self.mouse_selector.update()
+        self.video_widget.update()
+
+    def showEvent(self, event):
+        # Override the showEvent method to update parameters when the dialog is shown
+        #parameter_value = "New Value"  # Replace with your updated parameter value
+        #self.update_parameters(parameter_value)
+        print(self.dialog.main.Project.mice)
+        self.update_params()
+        super().showEvent(event)
 
     
 class Processing(QWidget):
-    def __init__(self):
+    def __init__(self, main: MainWindow):
         super().__init__()
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
@@ -465,7 +572,187 @@ class Processing(QWidget):
 
         self.setLayout(self.main_layout)
 
+        self.main = main
+        print("start inference here") 
+
 
 class ProcessingFailed(DialogPlaceHolder):
     def __init__(self):
         super().__init__("Processing failed", ProjectMode.NEW)
+
+
+
+class NewProject(QDialog):
+    def __init__(self, main: MainWindow):
+        super().__init__()
+
+        # 
+        self.mainwindow = main
+
+        #print(self.mainwindow.Project)
+
+        # Set window parameters
+        self.setWindowTitle("Create New Project")
+        
+        self.set_size()
+
+        # Create widgets
+        text = QLabel("Enter name of project")
+        text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.input = QLineEdit(self)
+        accept_button = QPushButton("Create Project", self)
+        accept_button.clicked.connect(self.accept)
+
+        # Create layout
+        layout = QVBoxLayout(self)
+        
+        # Add widgets to layout
+        layout.addWidget(text)
+        layout.addWidget(self.input)
+        layout.addWidget(accept_button)
+
+        # Set layout
+        self.setLayout(layout)
+
+
+    def set_size(self):
+        """
+            Set window geometry
+        """
+        self.setGeometry(100, 100, 200, 300)
+        self.setMinimumSize(200, 300)
+        self.setMaximumSize(200, 300)
+
+
+    def get_inputs(self):
+        """
+            Get user input text from QLineEdit
+        """
+        return self.input.text()
+    
+
+    
+    def show(self):
+        """
+            Open window and wait for input of project name from user
+            Create project with given projectname
+        """
+        #print(str.join())
+        result = self.exec_()
+        if result == QDialog.Accepted:
+            project_name = self.get_inputs()
+            print("project name: ", project_name)
+            if project_name != "":
+                project_path = os.path.join(BASE_PROJECT_DIRECTORY_PATH, project_name)
+                print("projectpath=", project_path)
+                if os.path.exists(project_path):
+                    print("Project with that name already exists")
+                else:
+                    create_project(self.mainwindow.Project, project_path)
+                    print("Created new project at: ", project_path)
+
+    
+class MouseCreator(QDialog):
+    def __init__(self, main: MainWindow):
+        super().__init__()
+
+        self.mainwindow = main
+
+        # Set window parameters
+        self.setWindowTitle("Add new mouse")
+        self.set_size()
+
+        text = QLabel("Add new mouse to project by filling the inputs below")
+
+        text_name = QLabel("Mouse name: ")
+        self.input_name = QLineEdit()
+        #text_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #text_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        text_gender = QLabel("Mouse gender: ")
+        self.input_gender = QLineEdit()
+        #text_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #text_gender.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        text_genotype = QLabel("Mouse genotype")
+        self.input_genotype = QLineEdit()
+        #text_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #text_genotype.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        accept_button = QPushButton("Add Mouse", self)
+        accept_button.clicked.connect(self.accept)
+
+        layout = QVBoxLayout()
+        layout_name = QHBoxLayout()
+        layout_gender = QHBoxLayout()
+        layout_genotype = QHBoxLayout()
+
+        layout_name.addWidget(text_name)
+        layout_name.addWidget(self.input_name)
+
+        layout_gender.addWidget(text_gender)
+        layout_gender.addWidget(self.input_gender)
+
+        layout_genotype.addWidget(text_genotype)
+        layout_genotype.addWidget(self.input_genotype)
+
+        layout.addWidget(text)
+        layout.addLayout(layout_name)
+        layout.addLayout(layout_gender)
+        layout.addLayout(layout_genotype)
+        layout.addWidget(accept_button)
+
+        self.setLayout(layout)
+
+
+    def set_size(self):
+        """
+            Set window geometry
+        """
+        self.setGeometry(100, 100, 200, 300)
+        self.setMinimumSize(200, 300)
+        self.setMaximumSize(200, 300)
+
+    def get_inputs(self):
+        """
+            Get user input texts from QLineEdit
+        """
+        return self.input_name.text(), self.input_gender.text(), self.input_genotype.text()
+    
+    def check_if_project(self):
+        if self.mainwindow.Project.name != "":
+            return True
+        else:
+            return False
+    
+    def check_validity_of_name(self, name: str):
+        registered_mice = self.mainwindow.Project.mice
+        if len(registered_mice) <= 1:
+            return True
+
+        for mouse in registered_mice:
+            if mouse.name == name:
+                return False
+    
+
+
+    def show(self):
+        """
+            Open window and wait for input of project name from user
+            Create project with given projectname
+        """
+        #print(str.join())
+        if self.mainwindow.Project.name != "":
+            result = self.exec_()
+            if result == QDialog.Accepted:
+                name, gender, genotype = self.get_inputs()
+                #print("project name: ", project_name)
+                if name != "" and gender != "" and genotype != "":
+                    if self.check_validity_of_name(name):
+                        add_mouse(self.mainwindow.Project, name, gender, genotype)
+                    else:
+                        print("Mouse with that name already exists, please enter a non existing name")
+
+
+    
