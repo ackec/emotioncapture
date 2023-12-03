@@ -66,17 +66,12 @@ class MainWindow(QMainWindow):
         load_folder = tempMenu.addAction("Select Folder")
         load_folder.triggered.connect(self.file_list.select_folder)
 
-        # Create new project button
-        new = file_menu.addAction("New Project")
+         
         pixmapi = QStyle.StandardPixmap.SP_FileDialogNewFolder
         icon = self.style().standardIcon(pixmapi)
-        new.setIcon(icon)
-        new.triggered.connect(
-            lambda: self.project_dialog.show(ProjectMode.NEW)
-        )
 
         # Create new project button
-        newnew = file_menu.addAction("Newer Project")
+        newnew = file_menu.addAction("New Project")
         newnew.setIcon(icon)
         newnew.triggered.connect(
             lambda: self.new_project_dialog.show()
@@ -87,6 +82,15 @@ class MainWindow(QMainWindow):
         newnew.setIcon(icon)
         newnew.triggered.connect(
             lambda: self.new_mouse_dialog.show()
+        )
+
+        # Create new project button
+        new = file_menu.addAction("New Data")
+        #pixmapi = QStyle.StandardPixmap.SP_FileDialogNewFolder
+        #icon = self.style().standardIcon(pixmapi)
+        new.setIcon(icon)
+        new.triggered.connect(
+            lambda: self.project_dialog.show(ProjectMode.NEW)
         )
 
         # Open edit view (temporary button)
