@@ -1,26 +1,33 @@
+# List of packages that are allowed to be imported
+__all__ = ["ProjectData", "MouseData", "KeyPoints", "MouseImageData"]
+
+
 class ProjectData:
     """ Meta data about an entire project. """
 
-    name: str
+    name: str = ""
     """ Name of project. """
 
-    path: str
+    path: str = ""
     """ Path to project directory. """
 
-    mice: list["MouseData"]
+    mice: list["MouseData"] = []
     """ Mice that belong to project. """
 
-    images: list["MouseImageData"]
+    images: list["MouseImageData"] = []
     """ Images that are part of the project. """
+
+    active_mouse_index: int = None
+    """ Index that point to which mouse in self.mice is active """
 
 
 class MouseData:
     """ Meta data about a specific mouse. """
 
-    name: str
+    name: str = ""
     """ Name of mouse. """
 
-    gender: str
+    gender: str = ""
     """ Gender of mouse. """
 
 
@@ -70,48 +77,6 @@ class MouseImageData:
     """ Model confidence that image is in profile. """
 
     key_point_conf: float
-    """ Model confidence of key point placement. """
-
-    key_points: KeyPoints
-    """ Set of keypoints for the image. """
-
-class ExampleData:
-    mouse = MouseData()
-    mouse.gender = "Lesser"
-    mouse.name = "Anonymouse"
-    """ Mouse that image is of. """
-
-    filename = "lul.jpg"
-    """ Name of the image. """
-
-    path = "C:/Mouse/lul.jpg"
-    """ Path to image, relative project base. """
-
-    profile_conf = 0.97
-    """ Model confidence that image is in profile. """
-
-    key_point_conf = 0.89
-    """ Model confidence of key point placement. """
-
-    key_points: KeyPoints
-    """ Set of keypoints for the image. """
-
-class ExampleData2:
-    mouse = MouseData()
-    mouse.gender = "Sir"
-    mouse.name = "Mickey"
-    """ Mouse that image is of. """
-
-    filename = "disney.jpg"
-    """ Name of the image. """
-
-    path = "C:/Mouse/disney.jpg"
-    """ Path to image, relative project base. """
-
-    profile_conf = 1
-    """ Model confidence that image is in profile. """
-
-    key_point_conf = 1
     """ Model confidence of key point placement. """
 
     key_points: KeyPoints
