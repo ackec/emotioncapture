@@ -44,7 +44,7 @@ class VisualisationWidget(QWidget):
         col2_row2_layout.addWidget(RadarPlot())
         col2_row2_layout.addWidget(MouseFeatures())
         col1_layout.addWidget(ImageFileList())
-        col2_layout.addWidget(ScatterPlot())
+        col2_layout.addWidget(ScatterPlot("test"))
         col2_layout.addLayout(col2_row2_layout)
 
         self.main_layout.addLayout(col1_layout)
