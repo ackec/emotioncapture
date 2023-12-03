@@ -15,3 +15,6 @@ RESOURCE_PATH = "GUI/res"
 
 ZOOM_RANGE = (0.25, 4)
 """ Allowed zoom range in image editor. """
+
+BASE_PROJECT_DIRECTORY_PATH = "Projects/"
+""" Path to base project folder. """
