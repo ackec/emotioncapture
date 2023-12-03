@@ -1,3 +1,7 @@
+# List of packages that are allowed to be imported
+__all__ = ["ProjectData", "MouseData", "KeyPoints", "MouseImageData"]
+
+
 class ProjectData:
     """ Meta data about an entire project. """
 
@@ -73,48 +77,6 @@ class MouseImageData:
     """ Model confidence that image is in profile. """
 
     key_point_conf: float
-    """ Model confidence of key point placement. """
-
-    key_points: KeyPoints
-    """ Set of keypoints for the image. """
-
-class ExampleData:
-    mouse = MouseData()
-    mouse.gender = "Lesser"
-    mouse.name = "Anonymouse"
-    """ Mouse that image is of. """
-
-    filename = "lul.jpg"
-    """ Name of the image. """
-
-    path = "C:/Mouse/lul.jpg"
-    """ Path to image, relative project base. """
-
-    profile_conf = 0.97
-    """ Model confidence that image is in profile. """
-
-    key_point_conf = 0.89
-    """ Model confidence of key point placement. """
-
-    key_points: KeyPoints
-    """ Set of keypoints for the image. """
-
-class ExampleData2:
-    mouse = MouseData()
-    mouse.gender = "Sir"
-    mouse.name = "Mickey"
-    """ Mouse that image is of. """
-
-    filename = "disney.jpg"
-    """ Name of the image. """
-
-    path = "C:/Mouse/disney.jpg"
-    """ Path to image, relative project base. """
-
-    profile_conf = 1
-    """ Model confidence that image is in profile. """
-
-    key_point_conf = 1
     """ Model confidence of key point placement. """
 
     key_points: KeyPoints

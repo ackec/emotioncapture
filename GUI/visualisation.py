@@ -1,6 +1,6 @@
 from pathlib import Path
 import numpy as np
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QMovie
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget, QSizePolicy,
@@ -20,6 +20,7 @@ from matplotlib.collections import PatchCollection
 import hdbscan
 import sklearn.cluster as cluster
 import matplotlib.colors
+import matplotlib.pyplot as plt
 from validation import ImageFileList, ImageViewer
 # from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
@@ -27,10 +28,23 @@ from validation import ImageFileList, ImageViewer
 __all__ = ["MouseFeatures",
            "VisualisationWidget", "RadarPlot"]
 
-class VisualisationWidget(QWidget):
-    """ Placeholder widget while app is being developed """
+class MouseData():
+    def __init__(self, csv_features_filepath="output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
+        self.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+        self.df = pd.read_csv(csv_features_filepath)
+        self.radardata = self.df[self.columns]
+        self.stimuli_start = stimuli_start
+        self.stimuli_end = stimuli_end
 
-    def __init__(self, name: str):
+        self.baseline = self.radardata.iloc[:stimuli_start]
+        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline.mean()
+        self.recovery = self.radardata.iloc[stimuli_end:]
+
+
+
+class VisualisationWidget(QWidget):
+
+    def __init__(self):
         super().__init__()
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
@@ -41,16 +55,17 @@ class VisualisationWidget(QWidget):
         col2_layout = QVBoxLayout(self)
         col2_row2_layout = QHBoxLayout(self)
 
-        self.radar_plot = RadarPlot()
         self.mouse_features = MouseFeatures()
-        self.line_plot = LinePlot(self.radar_plot)
-        self.scatter_plot = ScatterPlot(self.radar_plot, self.mouse_features, self.line_plot)
+        self.mousedata = MouseData()
+        self.line_plot = LinePlot(self.mousedata)
+        self.radar_plot = RadarPlot(self.mousedata, self.line_plot)
+        self.scatter_plot = ScatterPlot(self.mousedata, self.radar_plot, self.mouse_features, self.line_plot)
         self.image_viewer = ImageViewer()
 
         col2_row2_layout.addWidget(self.radar_plot)
         col2_row2_layout.addWidget(self.mouse_features)
 
-        col1_layout.addWidget(ImageFileList(self.image_viewer))
+        # col1_layout.addWidget(ImageFileList(self.image_viewer))
         col2_layout.addWidget(self.scatter_plot)
         col2_layout.addWidget(self.line_plot)
 
@@ -74,8 +89,9 @@ class PlaceHolder(QLabel):
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
 
 class RadarPlot(QMainWindow):
-    def __init__(self, csv_features_filepath="output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
+    def __init__(self, mousedata, lineplot):
         super().__init__()
+        self.mousedata = mousedata
 
         self.setWindowTitle("Radar Plot")
         self.setGeometry(100, 100, 800, 600)
@@ -87,21 +103,13 @@ class RadarPlot(QMainWindow):
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
+        self.lineplot = lineplot
 
-        self.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
-        self.df = pd.read_csv(csv_features_filepath)
-        self.radardata = self.df[self.columns]
 
-        self.stimuli_start = stimuli_start
-        self.stimuli_end = stimuli_end
-
-        self.baseline = self.radardata.iloc[:stimuli_start]
-        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline.mean()
-        self.recovery = self.radardata.iloc[stimuli_end:]
         # self.baseline = pd.concat((start,end)).mean(axis=0)
-        self.upper = self.stimulation.mean() + self.stimulation.sem()
-        self.lower = self.stimulation.mean() - self.stimulation.sem()
-        self.sample = self.stimulation.mean()
+        self.upper = mousedata.stimulation.mean() + mousedata.stimulation.sem()
+        self.lower = mousedata.stimulation.mean() - mousedata.stimulation.sem()
+        self.sample = mousedata.stimulation.mean()
         print(self.sample)
         self.init_radar_plot()
 
@@ -111,7 +119,7 @@ class RadarPlot(QMainWindow):
         self.canvas.draw()
 
     def update_radar_plot(self, clicked_index):
-        self.sample = self.radardata.iloc[clicked_index] / self.baseline.mean()
+        self.sample = self.mousedata.radardata.iloc[clicked_index] / self.mousedata.baseline.mean()
         print(self.sample)
         self.ax.clear()
         self.radar_plot()
@@ -119,7 +127,7 @@ class RadarPlot(QMainWindow):
         self.canvas.draw()
 
     def radar_plot(self):
-        rad_linspace = np.linspace(0, 2 * np.pi, len(self.columns), endpoint=False)
+        rad_linspace = np.linspace(0, 2 * np.pi, len(self.mousedata.columns), endpoint=False)
         polygons = [
             Polygon(list(zip(rad_linspace, self.upper)), facecolor='darkgrey', alpha=0.5),
             Polygon(list(zip(rad_linspace, self.lower)), facecolor='white',  alpha=0.7),
@@ -131,7 +139,7 @@ class RadarPlot(QMainWindow):
         self.ax.add_collection(pc)
         self.ax.set_ylim(0.85, 1.15)
         self.ax.set_xticks(rad_linspace)
-        self.ax.set_xticklabels(self.columns)
+        self.ax.set_xticklabels(self.mousedata.columns)
         self.ax.set_yticklabels([])
 
         legend_labels = ['stimulation +- SEM', 'Clicked sample', 'Normalized baseline']
@@ -140,16 +148,25 @@ class RadarPlot(QMainWindow):
                           self.ax.plot([], [], color='blue', linewidth=1)[0],
                           self.ax.plot([], [], color='black', linewidth=1)[0]]
 
-        self.ax.legend(legend_handles, legend_labels, loc='lower left', bbox_to_anchor=(1, 0.7))
+        leg = self.ax.legend(legend_handles, legend_labels, loc='lower left', bbox_to_anchor=(1, 0.7))
+        leg.set_draggable(True)
 
+
+        self.canvas.mpl_connect('button_press_event', self.on_click)
+
+    def on_click(self, event):
+        if event.inaxes == self.figure.axes[0]:
+            theta = ((event.xdata+np.pi/7) % (2 * np.pi))-np.pi/7
+            closest_index = np.argmin(np.abs(np.linspace(0, 2 * np.pi, len(self.mousedata.columns), endpoint=None) - theta))
+            self.lineplot.on_radar_pick(closest_index)
 
 class ScatterPlot(QMainWindow):
-    def __init__(self, radar_plot, mouse_features, line_plot):
+    def __init__(self, mousedata, radar_plot, mouse_features, line_plot):
         super().__init__()
-        self.mouse_features = mouse_features
+        self.mousedata = mousedata
         self.radar_plot = radar_plot
+        self.mouse_features = mouse_features
         self.line_plot = line_plot
-        self.radardata = radar_plot.radardata
 
         self.setWindowTitle("Scatter Plot")
         self.setGeometry(100, 100, 800, 600)
@@ -162,12 +179,13 @@ class ScatterPlot(QMainWindow):
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
 
-        self.features = radar_plot.df
+        self.features = self.mousedata.df
+
         self.umap = self.features[["umap_x", "umap_y"]].values
 
         self.last_clicked_index = None
-        self.stim_start = radar_plot.stimuli_start
-        self.stim_end = radar_plot.stimuli_end
+        self.stim_start = self.mousedata.stimuli_start
+        self.stim_end = self.mousedata.stimuli_end
         self.init_scatter_plot()
 
     def features_in_range(self):
@@ -205,6 +223,7 @@ class ScatterPlot(QMainWindow):
 
         handles, labels = ax.get_legend_handles_labels()
         leg = ax.legend(handles=handles, labels=labels)
+        leg.set_draggable(True)
         [lgd.set_color('black') for lgd in leg.legendHandles]
 
         self.canvas.mpl_connect('pick_event', self.on_pick)
@@ -243,7 +262,7 @@ class ScatterPlot(QMainWindow):
                 
 
                 features = self.features.iloc[self.last_clicked_index]
-                percental_change = features / self.radar_plot.baseline.mean()
+                percental_change = features / self.mousedata.baseline.mean()
                 info_text = f"Eye Opening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
                         f"Ear Opening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
                         f"Ear Angle: {features['ear_angle']:.2f},  {percental_change['ear_angle']:.2%}\n"\
@@ -262,97 +281,51 @@ class ScatterPlot(QMainWindow):
 
 
 class LinePlot(QMainWindow):
-    def __init__(self, radar_plot):
+    def __init__(self, mousedata):
         super().__init__()
-
-        # Set up the main window
+        self.mousedata = mousedata
         self.setWindowTitle("Line Plot")
         self.setGeometry(100, 100, 800, 600)
-
-        # Create central widget and layout
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
-
-        # Create Matplotlib figure and canvas
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
+
         layout.addWidget(self.canvas)
-
-        # Reference to RadarPlot and ScatterPlot instances
-        self.radar_plot = radar_plot
-        # self.scatter_plot = scatter_plot
-
-        # Generate sample data
-        x = np.linspace(0, 10, 100)
-        y = np.sin(x)
-
-        # Initialize the line plot
-        self.init_line_plot(x, y)
-
-        # Enable mplcursors for hover functionality
-
+        self.ax = self.figure.add_subplot(111)
+        self.dot = None
+        self.lines = {}
+        self.init_line_plot()
         self.canvas.draw()
 
-    def init_line_plot(self, x, y):
-        self.ax = self.figure.add_subplot(111)
 
-        # Plot the line
-        # line, = ax.plot(x, y, label='Line Plot', color='red', linestyle='-', alpha=0.5)
-        self.data = self.radar_plot.radardata/self.radar_plot.baseline.mean()
-        # self.line = self.data.plot()
+    def init_line_plot(self):
+        self.data = self.mousedata.radardata/self.mousedata.baseline.mean()
         for col in self.data.columns:
-            self.ax.plot(self.data.index, self.data[col], label=col)
-        # self.line, = ax.plot(self.data.index, self.data, label='Line Plot', color='red', linestyle='-', alpha=0.5)
-        # self.line, = ax.plot(self.data.index, self.dockWidgetAreadata.iloc[:, 0], label='Line Plot', color='red', linestyle='-', alpha=0.5)
-        # self.line, = ax.plot(x, y, label='Line Plot', color='red', linestyle='-', alpha=0.5)
-        # self.radar_plot.radardata/self.radar_plot.baseline.mean()
-        # ax.set_xlabel("X-axis")
-        # ax.set_ylabel("Y-axis")
-        # ax.set_title("Line Plot")
-
-        # Connect the hover event to the on_hover function
-        # mplcursors.cursor(line).connect('add', self.on_hover)
-
-    # def on_hover(self, sel):
-    #     # Get the index of the hovered point
-    #     ind = sel.target.index
-
-    #     # Update the corresponding point in the ScatterPlot
-    #     self.scatter_plot.update_scatter_plot(ind)
-
-
-
-    # def on_hover(self, sel):
-    #     # Get the index of the hovered point
-    #     ind = sel.target.index
-
-    #     # Update the corresponding point in the ScatterPlot
-    #     self.scatter_plot.update_scatter_plot(ind)
+            line, = self.ax.plot(self.data.index, self.data[col], label=col)
+            self.lines[col] = line
+        leg = self.ax.legend()
+        self.ax.set_ylim(0.5, 1.5)
+        leg.set_draggable(True)
 
     def mark_point(self, index):
-        # Add a marker to the corresponding point in the line plot
-        self.ax.clear()
+        if self.dot:
+            self.dot.pop(0).remove()
 
-        for col in self.data.columns:
-            self.ax.plot(self.data.index, self.data[col], label=col)
+        line = self.figure.axes[0].lines[0]
+        x = line.get_xdata()[index]
+        # y = line.get_ydata()[index]
+        y=1
+        self.dot = self.ax.plot(x, y, 'ro', markersize=8)
+        self.canvas.draw()
 
-        for line in self.figure.axes[0].lines:
-            print(line.get_xdata())
-            print("hej")
-            x_data = line.get_xdata()
-            if len(x_data)<=1:
-                return
-            x = x_data[index]
-            y = line.get_ydata()[index]           
-            self.figure.axes[0].plot(x, y, 'ro')  # 'ro' represents a red circle marker
-
-
-        # x = self.line.data[index]
-        # y = self.line.data[index]
-        # self.line.axes.plot(x, y, 'ro')  # 'ro' represents a red circle marker
-
-
+    def on_radar_pick(self, index):
+        label = self.mousedata.columns[index]
+        line = self.lines.get(label)
+        if line:
+            line.set_visible(not line.get_visible())
+            self.canvas.draw()
 
 class UMAPViewer(PlaceHolder):
     def __init__(self):
