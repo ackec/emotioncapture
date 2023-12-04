@@ -46,13 +46,29 @@ def create_project(Project: ProjectData, path: str):
     return
 
 
-#def load_project(Project: ProjectData, path: str):
-#    with open(os.path.join(path, "meta.json"), 'r') as file:
-#        data = json.load(file)
-#    
-#    Project.name = 
-#
-#    pass
+def load_project(Project: ProjectData, path: str):
+    if os.path.exists(os.path.join(path, "meta.json")):
+        with open(os.path.join(path, "meta.json"), 'r') as file:
+            data = json.load(file)
+        
+        Project.name = data["project_name"]
+        Project.path = data["project_path"]
+        for mouse in data["registered_mice"]:
+            m_data = MouseData()
+            m_data.name = mouse["name"]
+            m_data.gender = mouse["gender"]
+            # TODO
+            # Add genotype?
+            Project.mice.append(m_data)
+
+        print("Loaded project with parameters:")
+        print("Project name: ", Project.name)
+        print("Project path: ", Project.path)
+        for mouse in Project.mice:
+            print("Mouse name: ", mouse.name, "     Mouse gender: ", mouse.gender)
+    else:
+        print("Project does not exist")
+    return
 
 def add_mouse(Project: ProjectData, name: str, gender: str, genotype: str):
     project_path = Project.path
