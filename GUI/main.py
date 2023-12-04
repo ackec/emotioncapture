@@ -77,6 +77,13 @@ class MainWindow(QMainWindow):
             lambda: self.new_project_dialog.show()
         )
 
+                # Create new project button
+        newnew = file_menu.addAction("Open Project")
+        newnew.setIcon(icon)
+        newnew.triggered.connect(
+            lambda: open_directory_dialog(self.project)
+        )
+
         # Create Add Mouse to project button
         newnew = file_menu.addAction("Add Mouse to Project")
         newnew.setIcon(icon)
@@ -92,6 +99,8 @@ class MainWindow(QMainWindow):
         new.triggered.connect(
             lambda: self.project_dialog.show(ProjectMode.NEW)
         )
+
+        
 
         # Open edit view (temporary button)
         self.edit = edit_menu.addAction("Edit")
