@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        #self.visualisation_widget = VisualisationWidget("test")
+        self.visualisation_widget = VisualisationWidget()
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -143,15 +143,17 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget)  # index 0
-        # self.modes.addWidget(self.visualisation_widget)  # index 1
+        self.modes.addWidget(self.visualisation_widget)  # index 1
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
 
     def switchwindow(self):
         if self.modes.currentIndex() == 0:
+            print("switch 1")
             self.modes.setCurrentIndex(1)
         elif self.modes.currentIndex() == 1:
+            print("switch 2")
             self.modes.setCurrentIndex(0)
 
     #def show_new_project_dialog(self):

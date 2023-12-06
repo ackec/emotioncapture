@@ -100,7 +100,7 @@ def points_to_features(in_csv_file, out_csv_file):
     print(average_values)
 
     df = pd.DataFrame(mapping_vectors.T)
-    df.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+    df.columns = ['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
 
 
     # data = pd.read_csv(keypoints_csv)
