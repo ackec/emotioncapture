@@ -8,15 +8,16 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader, random_split
 from torch.nn.modules.loss import _Loss
 from torch.optim.optimizer import Optimizer
-from torch.utils.data import DataLoader
 
-from dataset import ProfileDataset
+from dataset import ProfileDataset, get_balanced_sampler
 from model import ProfileDetector
 
 TRAIN_DATA_PATH = './dataset/train'
 SAVE_MODEL_DIR = './trained_models'
 
 # Config
+name = "profile_detector_freeze_val"
+p_neg = 0.9  # Percentage of images that shouldn't be profile in validation
 EPOCHS = 200
 LR = 1e-3
 WD = 1e-4
@@ -140,8 +141,8 @@ if __name__ == '__main__':
                               shuffle=True, generator=generator)
     print(f"Loaded train dataset with {len(train_dataset)} images.")
 
-    val_loader = DataLoader(val_dataset, batch_size=64,
-                            shuffle=True, generator=generator)
+    val_sampler = get_balanced_sampler(val_dataset, dataset.targets, p_neg, generator)
+    val_loader = DataLoader(val_dataset, batch_size=64, sampler=val_sampler, generator=generator)
     print(f"Loaded validation dataset with {len(val_dataset)} images.")
 
     # Load and initialize the network architecture
@@ -156,10 +157,11 @@ if __name__ == '__main__':
 
     # The optimizer used for training the model
     optimizer = torch.optim.Adam([
-        {"params": model.backbone.parameters(), "lr": LR/100},
+        {"params": model.backbone.parameters(), "lr": LR/1000},
         {"params": model.fc.parameters(), "lr": LR},
     ], lr=LR, weight_decay=WD)
 
+    print(f"Parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
     model, loss_log, acc_log = train(model=model,
                                      train_data=train_loader,
                                      val_data=val_loader,
@@ -167,4 +169,4 @@ if __name__ == '__main__':
                                      objective=objective,
                                      use_cuda=use_cuda,
                                      epochs=EPOCHS,
-                                     name="profile_detector_freeze")
+                                     name=name)

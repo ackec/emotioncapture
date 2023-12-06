@@ -2,7 +2,7 @@ from PIL import Image
 from pathlib import Path
 
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, WeightedRandomSampler, Subset
 from torchvision.transforms import (ToTensor, Resize, Normalize, Compose,
                                     RandomHorizontalFlip, RandomRotation)
 
@@ -57,3 +57,15 @@ class ProfileDataset(Dataset):
         target = self.targets[ix]
         image = Image.open(f)
         return self.transform(image), torch.tensor([target]).float()
+
+def get_balanced_sampler(subset: Subset, targets: list, p_neg: float, generator):
+    """ Returns sampler which samples negative with probability of `p_neg`. """
+    num_positive = sum(1 for i in subset.indices if targets[i])
+    num_negative = len(subset) - num_positive
+    wp, wn = 1 / (p_neg * num_positive), 1 / ((1-p_neg) * num_negative)
+    weights = [wp if targets[i] == 1 else wn for i in subset.indices]
+    sampler = WeightedRandomSampler(torch.DoubleTensor(weights),
+                                    num_samples=len(subset),
+                                    replacement=True,
+                                    generator=generator)
+    return sampler
