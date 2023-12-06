@@ -20,7 +20,7 @@ from utilities import *
 import os
 import json
 
-__all__ = ["ProjectDialog", "ProjectMode", "NewProject", "MouseCreator", "NewData"]
+__all__ = ["ProjectDialog", "ProjectMode", "NewProject", "MouseCreator", "NewData", "open_directory_dialog"]
 
 
 
@@ -783,4 +783,19 @@ class MouseCreator(QDialog):
                         print("Mouse with that name already exists, please enter a non existing name")
 
 
+
+def open_directory_dialog(project: ProjectData):
+    # Open the directory dialog
+    dir_dialog = QFileDialog()
     
+    # Set the file mode to show only directories
+    dir_dialog.setDirectory(os.getcwd())
+    dir_dialog.setFileMode(QFileDialog.DirectoryOnly)
+
+    # Show the dialog and get the selected directory
+    selected_directory = dir_dialog.getExistingDirectory(None, 'Select Directory', '', QFileDialog.ShowDirsOnly)
+
+    # Check if a directory was selected
+    if selected_directory:
+        print(f'Selected Directory: {selected_directory}')
+        load_project(project, selected_directory)
