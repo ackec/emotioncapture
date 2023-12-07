@@ -81,8 +81,17 @@ class ImageFileList(QListWidget):
         new_item = QListWidgetItem(icon, name)
 
         self.addItem(new_item)
+        
+    def update_file_list(self):
+        self.pictures = self.main_window.project.images
+        self.clear()
+        for image_data in self.pictures:
+            self.add_to_list(image_data)
 
     def select_list_item(self, item: QListWidgetItem):
+        if self.count() == 0 or item is None:
+            return
+        
         name = item.text()
         # Find image with correct name
         image_data = [
@@ -90,6 +99,7 @@ class ImageFileList(QListWidget):
 
         self.image_viewer.display_image(image_data)
         self.current_index = self.pictures.index(image_data)
+        
 
 
 class ImageViewer(QLabel):
@@ -306,19 +316,39 @@ class ImageMetadataViewer(QLabel):
             ValueError("Value must be either integer or string")
 
     def update_attributes(self, item: QListWidgetItem):
-        return
-        self.current_data = project.images[0]
-        # name = self.file_list.currentItem()
-        # data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
-
-        mouse = self.current_data.mouse
+        if item is None:
+            return
+        #return
+        #self.current_data = project.images[0]
+        
+        name = self.file_list.currentItem().text()
+        print(name,self.file_list.pictures[0].filename)
+        data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
+        print(data)
+        mouse = data.mouse
         self.update_label_row("Mouse", mouse.name)
         self.update_label_row("Gender", mouse.gender)
 
-        self.update_label_row("Filename", self.current_data.filename)
-        self.update_label_row("Path", self.current_data.path)
+        try:
+            self.update_label_row("Filename", data.filename)
+        except:
+            self.update_label_row("Filename", ""),
+        
+        try:
+            self.update_label_row("Path", data.path)
+        except:
+            self.update_label_row("Path", data.path)
 
-        self.update_label_row("Profile Confidence",
-                              self.current_data.profile_conf)
-        self.update_label_row("Key Point Confidence",
-                              self.current_data.key_point_conf)
+        try:
+            self.update_label_row("Profile Confidence",
+                              data.profile_conf)
+        except:
+            self.update_label_row("Profile Confidence",
+                              "")
+            
+        try:
+            self.update_label_row("Key Point Confidence",
+                              data.key_point_conf)
+        except:
+            self.update_label_row("Key Point Confidence",
+                              "")

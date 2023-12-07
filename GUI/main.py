@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         self.file_list = ImageFileList(self,self.image_viewer)
         self.image_metadata_viewer = ImageMetadataViewer(self.file_list)
 
-        self.image_metadata_viewer.update_attributes(self.project)
+        #self.image_metadata_viewer.update_attributes(self.project)
 
         self.image_control = ImageControl(self.file_list)
 
@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        self.visualisation_widget = VisualisationWidget()
+        #self.visualisation_widget = VisualisationWidget()
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget)  # index 0
-        self.modes.addWidget(self.visualisation_widget)  # index 1
+        self.modes.addWidget(QWidget())#self.visualisation_widget)  # index 1
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
@@ -193,8 +193,8 @@ def example_project():
 
     image = MouseImageData()
     image.mouse = mouse
-    image.filename = "F3H-2021-10-01 11-23-58_frame0.jpg"
-    image.path = "output/images/F3H-2021-10-01 11-23-58_frame0.jpg"
+    image.filename = "F3H.jpg"
+    image.path = "F3H.jpg"
     image.key_point_conf = 0.89
     image.profile_conf = 0.97
     project.images = [image]
@@ -213,11 +213,16 @@ def example_project():
     key_points.mouth = (486, 568)
     image.key_points = key_points
 
+    
+    
     return project
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    #example = example_project()
     ex = MainWindow()
+    #ex.project = example
+    #ex.file_list.update_file_list()
     ex.show()
     sys.exit(app.exec())
