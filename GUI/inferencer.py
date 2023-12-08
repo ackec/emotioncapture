@@ -4,6 +4,11 @@ import os
 import cv2
 import numpy as np
 from mmdeploy_runtime import Detector, PoseDetector
+from pathlib import Path
+from data import *
+
+BBOX_MODEL_PATH = "./models/pose/mmdeploy_models/mmdet/ort"
+KEYPOINT_MODEL_PATH = "./models/pose/mmdeploy_models/mmpose/ort"
 
 class BaseInferencer(ABC):
     def __init__(self, input: str, output: str):
@@ -21,20 +26,20 @@ class BaseInferencer(ABC):
         pass
 
 
-
+visualize = True
 #class ProfileInferencer(BaseInferencer):
 #    pass
     
         
 class KeyPointInferencer(BaseInferencer):
     def __init__(self, inputpath: str, outputpath: str):
-        self.Detector = Detector(model_path='./mmdeploy_models/mmdet/ort', device_name='cpu', device_id=0)
-        self.PoseDetector = PoseDetector(model_path='./mmdeploy_models/mmpose/ort', device_name='cpu', device_id=0)
+        self.Detector = Detector(model_path=BBOX_MODEL_PATH, device_name='cpu', device_id=0)
+        self.PoseDetector = PoseDetector(model_path=KEYPOINT_MODEL_PATH, device_name='cpu', device_id=0)
         self.processed_img = None
         super().__init__(input=inputpath, output=outputpath)
 
     def save_results(self, keypoints):
-        with open(self.output_path+'/detected_keypoints.csv', "w", newline="") as csv_file:
+        with open(self.output_path, "w", newline="") as csv_file:
 
             csv_writer = csv.writer(csv_file)
 
@@ -77,25 +82,42 @@ class KeyPointInferencer(BaseInferencer):
         bboxes, _, _ = self.Detector(img)
 
         # Get coordinates and confidence score of bounding box
-        [left, top, right, bottom], score = bboxes[0][0:4].astype(int), bboxes[0][4]
+        [left, top, right, bottom], bbox_score = bboxes[0][0:4].astype(int), bboxes[0][4]
         bbox = np.array((left, top, right, bottom), dtype=int)
 
         # Find keypoints in image inside bounding box
         result = self.PoseDetector(img, bbox)
         _, point_num, _ = result.shape
         points = result[:, :, :2].reshape(point_num, 2)
+        #min_keypoint_score = np.min
+        #print(result)
 
-        return np.rint(points).astype(int), score
+        return points, bbox_score, bbox
     
     def inference(self):
+        print("Starting keypoint inference")
         files = [f for f in os.listdir(self.input_path) if f.lower().endswith('.jpg')]
         keypoints_list = []
         score_list = []
         for file in files:
+            #print(file)
             img = cv2.imread(self.input_path + '/' + file)
-            keypoints, bbox_score = self.forward(img)
+            keypoints, bbox_score, bbox = self.forward(img)
             keypoints_list.append((keypoints, file))
             score_list.append((bbox_score, file))
+
+            if visualize:
+                path = self.input_path+'/vis'
+                if not os.path.exists(path):
+                    os.mkdir(path)
+                name = f'vis_{file}'
+                print(name)
+                cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 10, 10), 2)
+                for [x, y] in keypoints.astype(int):
+                    cv2.circle(img, (x, y), 1, (10, 255, 10), 7)
+                    cv2.imwrite(os.path.join(path, name), img)
+
+
         
         self.save_results(keypoints_list)
         print("saved results")

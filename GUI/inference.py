@@ -207,6 +207,7 @@ class Inferencer():
 
             image_data.mouse = self.project.mice[self.project.active_mouse_index]
             image_data.path = path
+            image_data.filename = file
             image_data.profile_conf = 0.5   # Temp
             image_data.key_point_conf = 0.5     # Temp
 
