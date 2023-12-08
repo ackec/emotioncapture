@@ -15,10 +15,10 @@ def find_keypoints(img_path="output/profiles", csv_out_file="detected_keypoints.
     metainfo = 'keypoint_finder/mouse_skeleton.py'
     result_generator = inferencer(img_path, metainfo=metainfo, out_dir='./output',
                                     draw_bbox=True,
-                                draw_heatmap=False,
+                                draw_heatmap=True,
                                 #   vis_out_dir=False,
-                                return_vis=False,
-                                vis_out_dir=False,
+                                # return_vis=False,
+                                # vis_out_dir=False,
                                 # pred_out_dir=False,
                                 return_datasamples=False,
                                 )

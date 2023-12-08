@@ -53,7 +53,7 @@ def points_to_features(in_csv_file, out_csv_file):
     top_nose = np.array(myFile[["Nose_top_x", "Nose_top_y"]])
     bot_nose = np.array(myFile[["Nose_bottom_x", "Nose_bottom_y"]])
     mouth = np.array(myFile[["Mouth_x", "Mouth_y"]])
-    ear_diff = (bot_ear - top_ear)/2
+    ear_diff = (top_ear - bot_ear)/2
     middle_ear = top_ear - ear_diff
     ear_width = np.linalg.norm(top_ear - bot_ear, 2, 1)
     ear_length = np.linalg.norm(back_ear - front_ear, 2, 1)
@@ -70,8 +70,8 @@ def points_to_features(in_csv_file, out_csv_file):
     new_ear_pos[mask] = ear_pos_cos[mask]
     #print("Ear position: \n", 180 - new_ear_pos)
 
-    ear_angle_sin = np.abs(calc_features_sin(middle_ear, front_ear, back_ear))
-    ear_angle_cos = np.abs(calc_features_cos(middle_ear, back_ear, front_ear))
+    ear_angle_sin = np.abs(calc_features_sin(middle_ear, back_ear, front_ear))
+    ear_angle_cos = np.abs(calc_features_cos(middle_ear, front_ear, back_ear))
 
     #print("Ear angle: \n", 90 + np.abs(ear_angle_sin))
 
@@ -85,8 +85,8 @@ def points_to_features(in_csv_file, out_csv_file):
     #print("Face inclination: \n", 90 - np.abs(face_incl))
 
     ear_pos_vec = 180 - new_ear_pos
-    ear_angle = 90 + np.abs(ear_angle_sin)
-
+    ear_angle = 180 - np.abs(ear_angle_sin)
+    print(ear_angle)
     # Set all ear_angle to 180 degrees where back_ear-front_ear line intersects bot_ear-top_ear line.
     mask = intersect(back_ear,front_ear,bot_ear,top_ear)
     ear_angle[mask] = 180
@@ -100,7 +100,7 @@ def points_to_features(in_csv_file, out_csv_file):
     print(average_values)
 
     df = pd.DataFrame(mapping_vectors.T)
-    df.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+    df.columns = ['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
 
 
     # data = pd.read_csv(keypoints_csv)

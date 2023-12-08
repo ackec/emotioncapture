@@ -21,17 +21,15 @@ def cluster_keypoints(keypoints_csv):
 
     cmap = ['red', 'blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan']
     clustered = (hdbscan_labels >= 0)
-    #s1 = plt.scatter(standard_embedding[~clustered, 0], standard_embedding[~clustered, 1], color=(0.5, 0.5, 0.5), s=10, alpha=0.5)
-    s2 = plt.scatter(standard_embedding[clustered, 0], standard_embedding[clustered, 1], c=[cmap[label] for label in hdbscan_labels[clustered]], s=10)
-    clustered = (hdbscan_labels >= 0)
-
-    #plt.figure()
-    #s1 = plt.scatter(standard_embedding[~clustered, 0], standard_embedding[~clustered, 1], color=(0.5, 0.5, 0.5), s=10, alpha=0.5)
+    clustered_kmeans = (kmeans_labels >= 0)
+    #s2 = plt.scatter(standard_embedding[clustered, 0], standard_embedding[clustered, 1], c=[cmap[label] for label in hdbscan_labels[clustered]], s=10)
+    s3 = plt.scatter(standard_embedding[clustered_kmeans, 0], standard_embedding[clustered_kmeans, 1], c=[cmap[label] for label in kmeans_labels[clustered_kmeans]], s=10)
 
     labels = hdbscan_labels
     color_array = np.where(abs(labels) == 0, "red", labels)
     amount_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
     xlabel = "Amount of clusters:" + str(amount_of_clusters)
+    xlabel = "Amount of clusters:" + str(3)
 
     if len(cmap) > 10:
         print("Too many clusters! Modify parameters or dataset.")
@@ -50,7 +48,7 @@ def cluster_keypoints(keypoints_csv):
 
     labels = hdbscan_labels
 
-    plt.title('UMAP clustering', fontsize=20)
+    plt.title('K-means', fontsize=20)
     plt.xlabel(xlabel)
     plt.show()
 

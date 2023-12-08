@@ -29,8 +29,8 @@ __all__ = ["MouseFeatures",
            "VisualisationWidget", "RadarPlot"]
 
 class MouseData():
-    def __init__(self, csv_features_filepath="output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
-        self.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+    def __init__(self, csv_features_filepath="../Feature_extracion/output3/mouse_features.csv", stimuli_start=70, stimuli_end=150):
+        self.columns = ['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
         self.df = pd.read_csv(csv_features_filepath)
         self.radardata = self.df[self.columns]
         self.stimuli_start = stimuli_start
@@ -189,8 +189,8 @@ class ScatterPlot(QMainWindow):
         self.init_scatter_plot()
 
     def features_in_range(self):
-        self.features["eye_oppening"].between(0.51,0.79)
-        self.features["ear_oppening"].between(1/0.65, 1/0.41)
+        self.features["eye_opening"].between(0.51,0.79)
+        self.features["ear_opening"].between(1/0.65, 1/0.41)
 
         pass
 
@@ -263,8 +263,8 @@ class ScatterPlot(QMainWindow):
 
                 features = self.features.iloc[self.last_clicked_index]
                 percental_change = features / self.mousedata.baseline.mean()
-                info_text = f"Eye Opening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
-                        f"Ear Opening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
+                info_text = f"Eye Opening: {features['eye_opening']:.2f},  {percental_change['eye_opening']:.2%} \n"\
+                        f"Ear Opening: {features['ear_opening']:.2f},  {percental_change['ear_opening']:.2%}\n"\
                         f"Ear Angle: {features['ear_angle']:.2f},  {percental_change['ear_angle']:.2%}\n"\
                         f"Ear Position: {features['ear_pos_vec']:.2f},  {percental_change['ear_pos_vec']:.2%}\n"\
                         f"Snout Position: {features['snout_pos']:.2f},  {percental_change['snout_pos']:.2%}\n"\
@@ -272,6 +272,7 @@ class ScatterPlot(QMainWindow):
                         f"Face inclination: {features['face_incl']:.2f},  {percental_change['face_incl']:.2%}\n"\
                         f"Colour: {self.colous[self.last_clicked_index]}\n"\
                         f"Feeling: Unclear \n"\
+                        f"Image index: {features['Frame_ID']:.2f} \n"\
 
                 self.line_plot.mark_point(self.last_clicked_index)
                 self.mouse_features.setText(info_text)
