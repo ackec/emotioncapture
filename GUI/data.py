@@ -20,6 +20,8 @@ class ProjectData:
     active_mouse_index: int = None
     """ Index that point to which mouse in self.mice is active """
 
+    inference_data: list["str"] = []
+
 
 class MouseData:
     """ Meta data about a specific mouse. """

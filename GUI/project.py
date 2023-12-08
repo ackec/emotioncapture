@@ -2,6 +2,8 @@ import os
 import json
 
 from enum import Enum
+import typing
+from PyQt5 import QtGui
 
 from PyQt5.QtCore import Qt, QSize, QDir
 from PyQt5.QtGui import QMovie, QFont
@@ -19,6 +21,8 @@ from utilities import *
 
 import os
 import json
+
+import time
 
 __all__ = ["ProjectDialog", "ProjectMode", "NewProject", "MouseCreator", "NewData", "open_directory_dialog"]
 
@@ -92,6 +96,12 @@ class ProjectDialog(QDialog):
     def show(self, mode: ProjectMode):
         self.switch(mode)
         super().show()
+
+    # currently not implemented
+    def startInference(self, mode: ProjectMode):
+        self.switch(mode)
+        super().show()
+
 
     def set_default_size(self):
         self.setGeometry(100, 100, DIALOG_WIDTH, DIALOG_HEIGHT)
@@ -172,12 +182,16 @@ class VideoWidget(QWidget):
         # Open file explorer for selecting a directory
         file_names, _ = file_dialog.getOpenFileNames(self, "Select Files", "", file_filter)
         if file_names:
-            print(file_names)
+            #print(file_names)
             self.videopath = file_names
             print("Selected file: ", self.videopath)
             self.show_input()
             if self.project.active_mouse_index:
                 self.start.setEnabled(True)
+            self.videopath = self.videopath[0]
+            #print(self.videopath)
+
+            self.project.inference_data.append(self.videopath)
         else:
             OSError("Video must be a mp4")
 
@@ -565,7 +579,7 @@ class NewData(DialogPlaceHolder):
         # Override the showEvent method to update parameters when the dialog is shown
         #parameter_value = "New Value"  # Replace with your updated parameter value
         #self.update_parameters(parameter_value)
-        print(self.dialog.main.project.mice)
+        #print(self.dialog.main.project.mice)
         self.update_params()
         super().showEvent(event)
 
@@ -601,7 +615,18 @@ class Processing(QWidget):
         self.setLayout(self.main_layout)
 
         self.main = main
-        print("start inference here") 
+
+
+    # TODO
+    # Fix this so that it changes screen before
+    def showEvent(self, event):
+        print("Start inference")
+        super().showEvent(event)
+        time.sleep(2)
+        self.main.inferencer.inference(self.main.project.inference_data)
+        print("inference done")
+        self.close()
+
 
 
 class ProcessingFailed(DialogPlaceHolder):

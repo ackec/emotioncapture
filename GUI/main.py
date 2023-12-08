@@ -2,6 +2,8 @@ import sys
 import os
 from enum import Enum
 
+
+
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
                              QHBoxLayout, QVBoxLayout, QStackedWidget)
 from PyQt5 import QtCore
@@ -14,6 +16,7 @@ from data import *
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
+from inference import *
 
 class GuiMode(Enum):
     """ Possible states of the project management. """
@@ -37,10 +40,9 @@ class MainWindow(QMainWindow):
 
         # TODO
         # Fix this because it gives a circular import
-        #self.inferencer = Inferencer(self)
 
         self.project = ProjectData()
-        self.inferencer = tempInferencer()
+        self.inferencer = Inferencer(self.project)
         #self.project = example_project()
 
         self.setWindowTitle("Mouse")
