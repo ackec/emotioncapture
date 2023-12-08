@@ -29,7 +29,7 @@ __all__ = ["MouseFeatures",
            "VisualisationWidget", "RadarPlot"]
 
 class MouseData():
-    def __init__(self, csv_features_filepath="../Feature_extracion/output/mouse_features.csv", stimuli_start=100, stimuli_end=200):
+    def __init__(self, csv_features_filepath="../Feature_extracion/output3/mouse_features.csv", stimuli_start=70, stimuli_end=150):
         self.columns = ['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
         self.df = pd.read_csv(csv_features_filepath)
         self.radardata = self.df[self.columns]
@@ -272,6 +272,7 @@ class ScatterPlot(QMainWindow):
                         f"Face inclination: {features['face_incl']:.2f},  {percental_change['face_incl']:.2%}\n"\
                         f"Colour: {self.colous[self.last_clicked_index]}\n"\
                         f"Feeling: Unclear \n"\
+                        f"Image index: {features['Frame_ID']:.2f} \n"\
 
                 self.line_plot.mark_point(self.last_clicked_index)
                 self.mouse_features.setText(info_text)
