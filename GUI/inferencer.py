@@ -86,6 +86,8 @@ class KeyPointInferencer(BaseInferencer):
         bbox = np.array((left, top, right, bottom), dtype=int)
 
         # Find keypoints in image inside bounding box
+        if score < 0.8:
+            return
         result = self.PoseDetector(img, bbox)
         _, point_num, _ = result.shape
         points = result[:, :, :2].reshape(point_num, 2)

@@ -130,6 +130,8 @@ class Inferencer():
         for images, f_times in image_batcher(reader, 24):
             #if len(predictions) % (10*frame_rate) == 0:
                 #print(f"Processed: {f_times[-1]}s / {video_len} s")
+            if len(predictions) % (10*frame_rate) == 0:
+                yield f"Processed: {f_times[-1]}s / {video_len} s"
 
             frames = transform(images)
             preds = self.profile_detector(frames).squeeze(1).tolist()

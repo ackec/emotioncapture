@@ -25,7 +25,10 @@ def calc_features_sin(point_arr1, point_arr2, point_arr3):
     len_vec2 = np.linalg.norm(vec2, 2, 1)
     cross_prod = vec1[:,0] * vec2[:,1] - vec2[:,0] * vec1[:,1]
     len_prod = len_vec1*len_vec2
-    sin_arg = np.arcsin(np.divide(cross_prod, len_prod))
+    division = np.divide(cross_prod, len_prod)
+    division[np.isnan(division)] = 0
+
+    sin_arg = np.arcsin(division)
     sin_ang_deg = sin_arg*180/np.pi
     return sin_ang_deg
 

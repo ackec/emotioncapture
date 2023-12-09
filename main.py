@@ -6,12 +6,11 @@ from keypoint_finder.inference_keypoint import find_keypoints
 from Feature_extracion.feature_from_labelpos import points_to_features
 from Feature_extracion.create_clusters2 import cluster_keypoints #, do_umap_projection
 
-
-VIDEO_PATH = 'videos/018757-2023-06-08 08-53-33.mp4'
+VIDEO_PATH = 'converted_videos/002452-2022-05-23 11-21-49.mp4'
 MODEL_PATH = './trained_models/profile_detector_freeze_best'
-OUTPUT_PATH = './output/profiles'
-XY_CSV_FILE = "output/detected_keypoints.csv"
-FEATURE_CSV_FILE = "output/mouse_features.csv"
+OUTPUT_PATH = 'output3/profiles'
+XY_CSV_FILE = "./output3/detected_keypoints.csv"
+FEATURE_CSV_FILE = "output3/mouse_features.csv"
 
 if __name__ == '__main__':
     model_path = Path(MODEL_PATH)

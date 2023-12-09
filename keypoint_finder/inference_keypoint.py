@@ -1,9 +1,9 @@
 from mmpose.apis import MMPoseInferencer
 import csv
 import os
+import re
 
-
-def find_keypoints(img_path="output/profiles", csv_out_file="detected_keypoints.csv"):
+def find_keypoints(img_path="output3/profiles", csv_out_file="output3/detected_keypoints.csv"):
     pose_cfg = 'trained_models/mouse.py'
     pose_checkpoint_path = 'trained_models/epoch_420.pth'
     # det_cfg = "work_dirs/detection_mouse/detection_mouse.py"
@@ -13,9 +13,9 @@ def find_keypoints(img_path="output/profiles", csv_out_file="detected_keypoints.
     inferencer = MMPoseInferencer(pose_cfg, pose_checkpoint_path, device="cuda", det_model=det_model, det_weights=det_weights, det_cat_ids=[0])
 
     metainfo = 'keypoint_finder/mouse_skeleton.py'
-    result_generator = inferencer(img_path, metainfo=metainfo, out_dir='./output',
+    result_generator = inferencer(img_path, metainfo=metainfo, out_dir=img_path + "/..",
                                     draw_bbox=True,
-                                draw_heatmap=True,
+                                # draw_heatmap=True,
                                 #   vis_out_dir=False,
                                 # return_vis=False,
                                 # vis_out_dir=False,
@@ -25,7 +25,7 @@ def find_keypoints(img_path="output/profiles", csv_out_file="detected_keypoints.
     results = [result for result in result_generator]
 
 
-    file_names = sorted(os.scandir(path="./output/profiles"), key=lambda e: int(e.name.split('_')[1].split('.')[0]))
+    file_names = sorted(os.scandir(path=img_path), key=lambda e: int(e.name.split('_')[1].split('.')[0]))
 
     with open(csv_out_file, "w", newline="") as csv_file:
         csv_writer = csv.writer(csv_file)
@@ -39,7 +39,7 @@ def find_keypoints(img_path="output/profiles", csv_out_file="detected_keypoints.
         for i, result in enumerate(results):
             keypoints = result["predictions"][0][0]["keypoints"]
             img_path = file_names[i].name
-            frame_id = i 
+            frame_id = re.search(r'\d+', img_path).group()
 
             ear_back_x, ear_back_y = keypoints[0]
             ear_front_x, ear_front_y = keypoints[1]

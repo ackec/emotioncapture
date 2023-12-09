@@ -167,22 +167,6 @@ class MainWindow(QMainWindow):
             print("switch 2")
             self.modes.setCurrentIndex(0)
 
-    #def show_new_project_dialog(self):
-    #    self.new_project_dialog = NewProject()
-
-        # Show the dialog and get the results
-    #    result = dialog.exec_()
-
-        # Check if the user clicked OK
-    #    if result == QDialog.Accepted:
-    #        project_name = dialog.get_inputs()
-    #        project_path = 
-    #        self.data["registered_mice"].append(new)
-    #        self.dropdown.addItem(self.new_mouse)
-    #        self.dropdown.setCurrentIndex(-1)
-    #        self.update_mouse_data()
-
-
 def example_project():
     project = ProjectData()
     project.name = "Project Example 1"

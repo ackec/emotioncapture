@@ -41,7 +41,6 @@ class MouseData():
         self.recovery = self.radardata.iloc[stimuli_end:]
 
 
-
 class VisualisationWidget(QWidget):
 
     def __init__(self):
@@ -125,6 +124,7 @@ class RadarPlot(QMainWindow):
         self.radar_plot()
         self.ax.set_ylim(self.sample.min()-0.02, self.sample.max()+0.02)
         self.canvas.draw()
+        self.ax.figure.savefig(f"radarplot_{clicked_index}.pdf")
 
     def radar_plot(self):
         rad_linspace = np.linspace(0, 2 * np.pi, len(self.mousedata.columns), endpoint=False)
