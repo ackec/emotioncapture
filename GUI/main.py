@@ -43,15 +43,15 @@ class MainWindow(QMainWindow):
         self.project = ProjectData()
 
         ## TODO remove this ##
-        mouce = MouseData()
-        mouce.name = "mouse1"
-        self.project.mice.append(mouce)
-        self.project.active_mouse_index = 0
-        videopath = "converted_videos/M3N-2021-09-23 10-00-56.mp4"
+        #mouce = MouseData()
+        #mouce.name = "mouse1"
+        #self.project.mice.append(mouce)
+        #self.project.active_mouse_index = 0
+        #videopath = "converted_videos/M3N-2021-09-23 10-00-56.mp4"
         ###########################
         
         ## And move this #########
-        # self.inferencer = Inferencer(self.project)
+        self.inferencer = Inferencer(self.project)
         # self.inferencer.inference(videopath)
         ###########################
 

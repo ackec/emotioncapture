@@ -19,12 +19,14 @@ class ProjectData:
     images: list["MouseImageData"] = []
     """ Images that are part of the project. """
 
-    active_mouse_index: int = None
+    active_mouse_index: int = 0
     """ Index that point to which mouse in self.mice is active """
 
     inference_data: list["str"] = []
 
-    keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
+    #keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
+
+    keypoints: pd.DataFrame()
 
 
 class MouseData:

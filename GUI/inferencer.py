@@ -50,7 +50,7 @@ class KeyPointInferencer():
         self.output_path = outputpath
 
 
-    def save_results(self, keypoints, files, mouse_features):
+    def save_results(self, keypoints, files, mouse_features, orientations, keypoint_scores, profile_scores, warn_flags):
         if not os.path.exists(self.output_path):
             with open(self.output_path, "w", newline="") as csv_file:
                 csv_writer = csv.writer(csv_file)
@@ -58,14 +58,17 @@ class KeyPointInferencer():
                             "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",
                             "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y",
                             "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y", 
-                            "eye_oppening", "ear_oppening", "ear_angle", "ear_pos_vec", "snout_pos", "mouth_pos", "face_incl", "stimuli"]
+                            "eye_oppening", "ear_oppening", "ear_angle", "ear_pos_vec", "snout_pos", "mouth_pos", "face_incl", "stimuli", "orientation",
+                            "keypoint_score", "profile_score", "id_phase_shift", "warn_flag"]
                 csv_writer.writerow(header)
 
         with open(self.output_path, "a", newline="") as csv_file:
             csv_writer = csv.writer(csv_file)
-            for i, (result, img_path, mouse_feature) in enumerate(zip(keypoints, files, mouse_features)):
+            for i, (result, img_path, mouse_feature, orientation, keypoint_score, profile_score, warn_flag) in enumerate(zip(keypoints, files, mouse_features, orientations, keypoint_scores, profile_scores, warn_flags)):
+                img_path = img_path.as_posix()
                 frame_id = re.search(r'\d+', img_path).group()
-                row = [self.mouse_name, self.video_name, os.path.join(self.input_path, img_path), frame_id, *result.ravel(), *mouse_feature, "baseline"]
+                row = [self.mouse_name, self.video_name, img_path, frame_id, *result.ravel(),
+                        *mouse_feature, "baseline", orientation, keypoint_score, profile_score, 0, warn_flag]
                 csv_writer.writerow(row)
         return 
 
@@ -87,10 +90,14 @@ class KeyPointInferencer():
         result = self.PoseDetector(img, bbox)
         _, point_num, _ = result.shape
         points = result[:, :, :2].reshape(point_num, 2)
+        print("keypoint_scores")
+        print(result[:, :, -1])
+
+        scores = result[:,:,-1].T
         #min_keypoint_score = np.min
         #print(result)
 
-        return points, bbox_score, bbox
+        return points, bbox_score, bbox, np.min(scores)
     
     def inference(self):
         print("Starting keypoint inference")

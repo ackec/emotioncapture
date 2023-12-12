@@ -301,7 +301,7 @@ class Processing(QWidget):
     def showEvent(self, event):
         print("Start inference")
         super().showEvent(event)
-        self.main.inferencer.inference(self.main.project.inference_data)
+        self.main.inferencer.inference(self.main.project.inference_data[0])
         self.main.file_list.update_file_list()
         print("inference done")
         #self.close()
