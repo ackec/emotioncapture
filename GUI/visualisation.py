@@ -1,4 +1,5 @@
 from pathlib import Path
+import umap
 import numpy as np
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QMovie
@@ -22,6 +23,7 @@ import sklearn.cluster as cluster
 import matplotlib.colors
 import matplotlib.pyplot as plt
 from validation import ImageFileList, ImageViewer
+from data import ProjectData
 # from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
 # List of packages that are allowed to be imported
@@ -29,21 +31,51 @@ __all__ = ["MouseFeatures",
            "VisualisationWidget", "RadarPlot"]
 
 class MouseData():
-    def __init__(self, csv_features_filepath="../Feature_extracion/output3/mouse_features.csv", stimuli_start=70, stimuli_end=150):
-        self.columns = ['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
-        self.df = pd.read_csv(csv_features_filepath)
+    def __init__(self, project):
+        self.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+        self.df = project.keypoints
+        self.df = pd.read_csv("detected_keypoints.csv")
         self.radardata = self.df[self.columns]
-        self.stimuli_start = stimuli_start
-        self.stimuli_end = stimuli_end
 
-        self.baseline = self.radardata.iloc[:stimuli_start]
-        self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline.mean()
-        self.recovery = self.radardata.iloc[stimuli_end:]
+
+        video_names = self.df['Video_Name'].unique()
+        self.df_mean = pd.DataFrame(columns=self.df.columns)
+
+        for video_name in video_names:
+            video_df = self.df[self.df["Video_Name"] == video_name]
+            stimulis = video_df['Stimuli'].unique()
+            for stimuli in stimulis:
+                index = len(self.df_mean)+1
+                self.df_mean.loc[index] = video_df[video_df["Stimuli"]==stimuli].iloc[0]
+                self.df_mean.loc[index][self.columns] = video_df[video_df["Stimuli"]==stimuli][self.columns].mean()
+
+
+        mice_names = self.df['Mouse_Name'].unique()
+        self.mice_mean_baseline = pd.DataFrame(columns=self.df.columns)
+
+        for mice_name in mice_names:
+            mouse_df = self.df[self.df["Mouse_Name"] == mice_name]
+            stimulis = mouse_df['Stimuli'].unique()
+            index = len(self.mice_mean_baseline)+1
+            self.mice_mean_baseline.loc[index] = video_df[video_df["Stimuli"]==stimuli].iloc[0]
+            self.mice_mean_baseline.loc[index] = mouse_df[mouse_df["Stimuli"] == "baseline"][self.columns].mean()
+
+
+        # self.baseline = self.radardata.iloc[:stimuli_start]
+        # self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline.mean()
+        # self.recovery = self.radardata.iloc[stimuli_end:]
+
+
+        standard_embedding = umap.UMAP(random_state=10).fit_transform(self.df_mean[self.columns].values)
+        self.df_mean["umap_x"]=standard_embedding[:,0]
+        self.df_mean["umap_y"]=standard_embedding[:,1]
+
 
 
 class VisualisationWidget(QWidget):
 
-    def __init__(self):
+    def __init__(self, project):
+        self.project = project
         super().__init__()
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
@@ -55,7 +87,7 @@ class VisualisationWidget(QWidget):
         col2_row2_layout = QHBoxLayout(self)
 
         self.mouse_features = MouseFeatures()
-        self.mousedata = MouseData()
+        self.mousedata = MouseData(self.project)
         self.line_plot = LinePlot(self.mousedata)
         self.radar_plot = RadarPlot(self.mousedata, self.line_plot)
         self.scatter_plot = ScatterPlot(self.mousedata, self.radar_plot, self.mouse_features, self.line_plot)
@@ -181,6 +213,11 @@ class ScatterPlot(QMainWindow):
 
         self.features = self.mousedata.df
 
+        if "umap_x" not in self.features:
+            standard_embedding = umap.UMAP(random_state=10).fit_transform(self.features[self.mousedata.columns])
+            self.features["umap_x"]=standard_embedding[:,0]
+            self.features["umap_y"]=standard_embedding[:,1]
+            self.features.to_csv("output_test.csv")
         self.umap = self.features[["umap_x", "umap_y"]].values
 
         self.last_clicked_index = None
@@ -189,8 +226,8 @@ class ScatterPlot(QMainWindow):
         self.init_scatter_plot()
 
     def features_in_range(self):
-        self.features["eye_opening"].between(0.51,0.79)
-        self.features["ear_opening"].between(1/0.65, 1/0.41)
+        self.features["eye_oppening"].between(0.51,0.79)
+        self.features["ear_oppening"].between(1/0.65, 1/0.41)
 
         pass
 
@@ -263,8 +300,8 @@ class ScatterPlot(QMainWindow):
 
                 features = self.features.iloc[self.last_clicked_index]
                 percental_change = features / self.mousedata.baseline.mean()
-                info_text = f"Eye Opening: {features['eye_opening']:.2f},  {percental_change['eye_opening']:.2%} \n"\
-                        f"Ear Opening: {features['ear_opening']:.2f},  {percental_change['ear_opening']:.2%}\n"\
+                info_text = f"Eye Oppening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
+                        f"Ear Oppening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
                         f"Ear Angle: {features['ear_angle']:.2f},  {percental_change['ear_angle']:.2%}\n"\
                         f"Ear Position: {features['ear_pos_vec']:.2f},  {percental_change['ear_pos_vec']:.2%}\n"\
                         f"Snout Position: {features['snout_pos']:.2f},  {percental_change['snout_pos']:.2%}\n"\

@@ -1,6 +1,5 @@
 import numpy as np
-import pandas as pd
-import umap
+
 
 
 #mouth_pos1 
@@ -49,8 +48,8 @@ def points_to_features(points):
     top_ear = points[:,3]
     back_eye = points[:,4]
     front_eye = points[:,5]
-    top_eye = points[:,6] ## TODO check if bug
-    bot_eye = points[:,7]
+    top_eye = points[:,7] ## TODO check if bug
+    bot_eye = points[:,8]
     top_nose = points[:,8]
     bot_nose = points[:,9]
     mouth = points[:,10]
@@ -98,52 +97,3 @@ def points_to_features(points):
     face_incl = 90 - np.abs(face_incl)
 
     return eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl
-
-def add_features_to_csv(in_csv_file):
-    myFile = pd.read_csv(in_csv_file)
-
-    back_ear = np.array(myFile[["Ear_back_x", "Ear_back_y"]])
-    front_ear = np.array(myFile[["Ear_front_x", "Ear_front_y"]])
-    bot_ear = np.array(myFile[["Ear_bottom_x", "Ear_bottom_y"]])
-    top_ear = np.array(myFile[["Ear_top_x", "Ear_top_y"]])
-    back_eye = np.array(myFile[["Eye_back_x", "Eye_back_y"]])
-    front_eye = np.array(myFile[["Eye_front_x", "Eye_front_y"]])
-    bot_eye = np.array(myFile[["Eye_bottom_x", "Eye_bottom_y"]])
-    top_eye = np.array(myFile[["Eye_top_x", "Eye_top_y"]])
-    top_nose = np.array(myFile[["Nose_top_x", "Nose_top_y"]])
-    bot_nose = np.array(myFile[["Nose_bottom_x", "Nose_bottom_y"]])
-    mouth = np.array(myFile[["Mouth_x", "Mouth_y"]])
-
-    columns = ["Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y","Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y", "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y", "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y"]
-    eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl = points_to_features(myFile[columns].values.reshape(-1, 11,2))
-    mapping_vectors = np.array([eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl])
-    average_values = np.array([np.mean(eye_oppening), np.mean(ear_oppening), np.mean(ear_angle), np.mean(ear_pos_vec), np.mean(snout_pos), np.mean(mouth_pos), np.mean(face_incl)])
-    print(average_values)
-
-    myFile["eye_oppening"] = eye_oppening
-    myFile["ear_oppening"] = ear_oppening
-    myFile["ear_angle"] = ear_angle
-    myFile["ear_pos_vec"] = ear_pos_vec
-    myFile["snout_pos"] = snout_pos
-    myFile["mouth_pos"] = mouth_pos
-    myFile["face_incl"] = face_incl
-
-
-    feature_col = ["eye_oppening", "ear_oppening", "ear_angle", "ear_pos_vec", "snout_pos", "mouth_pos", "face_incl"]
-    myFile = myFile.replace([np.inf, -np.inf], np.nan)
-    myFile = myFile.dropna()
-
-    # data = pd.read_csv(keypoints_csv)
-    # standard_embedding = umap.UMAP(random_state=10).fit_transform(myFile[feature_col].values)
-    # myFile["umap_x"]=standard_embedding[:,0]
-    # myFile["umap_y"]=standard_embedding[:,1]
-    # data.to_csv(keypoints_csv)
-    # return standard_embedding
-
-    # df[["Img_Path", "Frame_ID"]] = myFile[["Img_Path", "Frame_ID"]]
-
-    myFile.to_csv(in_csv_file, index=False)
-    # do_umap_projection(out_csv_file)
-
-if __name__ == "__main__":
-    add_features_to_csv('detected_keypoints.csv')

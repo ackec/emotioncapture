@@ -157,6 +157,8 @@ class ImagePointEditor(QGraphicsView):
         key_points = KeyPoints()
         for name, point in self.points.items():
             setattr(key_points, name, point.get_position())
+        # self.project.keypoints.iloc[image_id] 
+
 
         return key_points
 

@@ -43,6 +43,7 @@ FILE_TYPE = "jpg"
 THRESHOLD = 0.7
 """ Threshold above which a frame is considered a profile.  """
 
+stop_early = True
 
 
 
@@ -57,6 +58,10 @@ def is_image_path(file_path):
 def process_input_paths(paths):
     video_paths = []
     image_paths = []
+    if is_video_path(paths):
+        return [paths], []
+    if is_image_path(paths):
+        return [], [paths]
 
     for path in paths:
         if is_video_path(path):
@@ -73,7 +78,7 @@ def image_batcher(reader: VideoReader, batch_size=8):
     time_stamps: list[float] = []
     i = 0
     for frame in reader:
-        if i >= batch_size:
+        if i >= batch_size and stop_early:
             yield images, time_stamps
             i = 0
             images = None
@@ -96,18 +101,21 @@ def image_batcher(reader: VideoReader, batch_size=8):
 
 class Inferencer():
     def __init__(self, project: ProjectData):
-        
         self.project = project
-
+        
         self.input_path = None
 
-        #print("Created inferencer")
-        #print("input path: ", self.input)
-        #print("output path: ", self.output)
+        self.save_directory = os.path.join(self.project.path, self.project.mice[self.project.active_mouse_index].name)
+
+
+        self.profile_detector = ProfileDetector(pretrained=True, freeze_backbone=True)
+        self.profile_detector.load_state_dict(torch.load(PROFILE_MODEL_PATH, map_location=torch.device('cpu')))
+
+        print("Created inferencer")
 
     def video_detect_profiles(self, video_path, save_plot=True):
         video_path = Path(video_path)
-        output_path = Path(self.input)
+        output_path = Path(self.input_path)
         output_path.mkdir(parents=True, exist_ok=True)
 
         reader = VideoReader(str(video_path.absolute()), "video")
@@ -127,11 +135,13 @@ class Inferencer():
         # Best frame found of last second
         prev_saved = {"path": "", "time": -10.0, "score": 0}
 
-        for images, f_times in image_batcher(reader, 24):
+        for images, f_times in image_batcher(reader, 1):
+            if f_times[-1] > 10:
+                return
             #if len(predictions) % (10*frame_rate) == 0:
-                #print(f"Processed: {f_times[-1]}s / {video_len} s")
+            #   yield f"Processed: {f_times[-1]}s / {video_len} s"
             if len(predictions) % (10*frame_rate) == 0:
-                yield f"Processed: {f_times[-1]}s / {video_len} s"
+                print(f"Processed: {f_times[-1]}s / {video_len} s")
 
             frames = transform(images)
             preds = self.profile_detector(frames).squeeze(1).tolist()
@@ -145,7 +155,7 @@ class Inferencer():
                 f_index = len(predictions) + i
                 path = output_path / (f'img_{f_index}.{FILE_TYPE}')
 
-                if f_times[i] < prev_saved["time"] + 0.5 :
+                if f_times[i] < prev_saved["time"] + 1 :
                     # Less than one second since last save
                     if prev_saved["score"] > pred:
                         # Last saved was better, skip to next
@@ -172,81 +182,87 @@ class Inferencer():
         pass
 
     def find_keypoints(self):
-        self.keypoint_detector.inference()
+        self.project.keypoints = self.keypoint_detector.inference()
         return
     
     def inference(self, path):
-        self.save_directory = os.path.join(self.project.path, self.project.mice[self.project.active_mouse_index].name)
 
-        self.input = os.path.join(self.save_directory, "images")
-        self.output = os.path.join(self.save_directory, "detected_keypoints.csv")
-
-        self.profile_detector = ProfileDetector(pretrained=True, freeze_backbone=True)
-        self.profile_detector.load_state_dict(torch.load(PROFILE_MODEL_PATH, map_location=torch.device('cpu')))
-        self.keypoint_detector = KeyPointInferencer(self.input, self.output)
-
-        #print("Start inference")
+        # #print("Start inference")
         video, images = process_input_paths(path)
         assert(len(video) < 2)
         
+        self.input_path =  os.path.join(self.save_directory, os.path.splitext(os.path.basename(path))[0])
+        self.output = os.path.join(self.project.path, "detected_keypoints.csv")
+
         self.video_detect_profiles(video[0])
-
-        # TODO
-        #if len(images > 1):
-        #     self.image_detect_profiles(self)
-        files = [f for f in os.listdir(self.input) if f.lower().endswith('.jpg')]
-        keypoints_list = []
-        bbox_score_list = []
-        keypoint_score_list = []
-        for file in files:
-            image_data = MouseImageData()
-            kp = KeyPoints()
-            path = self.input + '/' + file
-            img = cv2.imread(path)
-            keypoints, bbox_score, bbox = self.keypoint_detector.forward(img)
-            keypoints_list.append((keypoints, file))
-            bbox_score_list.append(bbox_score)
-
-            image_data.mouse = self.project.mice[self.project.active_mouse_index]
-            image_data.path = path
-            image_data.filename = file
-            image_data.profile_conf = 0.5   # Temp
-            image_data.key_point_conf = 0.5     # Temp
-
-            [ear_back_x, ear_back_y] = keypoints[0]
-            [ear_front_x, ear_front_y] = keypoints[1]
-            [ear_bottom_x, ear_bottom_y] = keypoints[2]
-            [ear_top_x, ear_top_y] = keypoints[3]
-            [eye_back_x, eye_back_y] = keypoints[4]
-            [eye_front_x, eye_front_y] = keypoints[5]
-            [eye_bottom_x, eye_bottom_y] = keypoints[6]
-            [eye_top_x, eye_top_y] = keypoints[7]
-            [nose_top_x, nose_top_y] = keypoints[8]
-            [nose_bottom_x, nose_bottom_y] = keypoints[9]
-            [mouth_x, mouth_y] = keypoints[10]
-
-            kp.ear_back = (ear_back_x, ear_back_y)
-            kp.ear_front = (ear_front_x, ear_front_y)
-            kp.ear_bottom = (ear_bottom_x, ear_bottom_y)
-            kp.ear_top = (ear_top_x, ear_top_y)
-            kp.eye_back = (eye_back_x, eye_back_y)
-            kp.eye_front = (eye_front_x, eye_front_y)
-            kp.eye_bottom = (eye_bottom_x, eye_bottom_y)
-            kp.eye_top = (eye_top_x, eye_top_y)
-            kp.nose_top = (nose_top_x, nose_top_y)
-            kp.nose_bottom = (nose_bottom_x, nose_bottom_y)
-            kp.mouth = (mouth_x, mouth_y)
-
-            image_data.key_points = kp
-
-            self.project.images.append(image_data)
         
-        self.keypoint_detector.save_results(keypoints_list)
+        # # TODO
+        # #if len(images > 1):
+        # #     self.image_detect_profiles(self)
+
+        # print(files)
+
+        # print("input path: ", self.input)
+        # print("output path: ", self.output)
+
+        self.keypoint_detector = KeyPointInferencer(self.input_path, self.output)
+        self.find_keypoints()
+        # self.project.keypoints = self.keypoint_detector.inference()
+
+        # files = [f for f in os.listdir(self.input) if f.lower().endswith('.jpg')]
+        # keypoints_list = []
+        # bbox_score_list = []
+        # keypoint_score_list = []
+        # for file in files:
+        #     image_data = MouseImageData()
+        #     kp = KeyPoints()
+        #     path = self.input + '/' + file
+        #     img = cv2.imread(path)
+        #     keypoints, bbox_score, bbox = self.keypoint_detector.forward(img)
+        #     keypoints_list.append((keypoints, file))
+        #     bbox_score_list.append(bbox_score)
+
+        #     image_data.mouse = self.project.mice[self.project.active_mouse_index]
+        #     image_data.path = path
+        #     image_data.filename = file
+        #     image_data.profile_conf = 0.5   # Temp
+        #     image_data.key_point_conf = 0.5     # Temp
+
+        #     [ear_back_x, ear_back_y] = keypoints[0]
+        #     [ear_front_x, ear_front_y] = keypoints[1]
+        #     [ear_bottom_x, ear_bottom_y] = keypoints[2]
+        #     [ear_top_x, ear_top_y] = keypoints[3]
+        #     [eye_back_x, eye_back_y] = keypoints[4]
+        #     [eye_front_x, eye_front_y] = keypoints[5]
+        #     [eye_bottom_x, eye_bottom_y] = keypoints[6]
+        #     [eye_top_x, eye_top_y] = keypoints[7]
+        #     [nose_top_x, nose_top_y] = keypoints[8]
+        #     [nose_bottom_x, nose_bottom_y] = keypoints[9]
+        #     [mouth_x, mouth_y] = keypoints[10]
+
+        #     kp.ear_back = (ear_back_x, ear_back_y)
+        #     kp.ear_front = (ear_front_x, ear_front_y)
+        #     kp.ear_bottom = (ear_bottom_x, ear_bottom_y)
+        #     kp.ear_top = (ear_top_x, ear_top_y)
+        #     kp.eye_back = (eye_back_x, eye_back_y)
+        #     kp.eye_front = (eye_front_x, eye_front_y)
+        #     kp.eye_bottom = (eye_bottom_x, eye_bottom_y)
+        #     kp.eye_top = (eye_top_x, eye_top_y)
+        #     kp.nose_top = (nose_top_x, nose_top_y)
+        #     kp.nose_bottom = (nose_bottom_x, nose_bottom_y)
+        #     kp.mouth = (mouth_x, mouth_y)
+
+        #     image_data.key_points = kp
+
+        #     self.project.images.append(image_data)
         
-        #for image in self.project.images:
-        #    print(image.path)
+        # self.keypoint_detector.save_results(keypoints_list)
+        
+        # #for image in self.project.images:
+        # #    print(image.path)
             
 
 
-        #print(files)
-        #self.find_keypoints()
+
+if __name__ == "__name__":
+    inferencer = Inferencer()

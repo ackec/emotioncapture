@@ -1,8 +1,7 @@
 import sys
 import os
 from enum import Enum
-
-
+# os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = '/usr/lib/x86_64-linux-gnu/qt5/plugins'
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
                              QHBoxLayout, QVBoxLayout, QStackedWidget)
@@ -42,7 +41,20 @@ class MainWindow(QMainWindow):
         # Fix this because it gives a circular import
 
         self.project = ProjectData()
-        self.inferencer = Inferencer(self.project)
+
+        ## TODO remove this ##
+        mouce = MouseData()
+        mouce.name = "mouse1"
+        self.project.mice.append(mouce)
+        self.project.active_mouse_index = 0
+        videopath = "converted_videos/M3N-2021-09-23 10-00-56.mp4"
+        ###########################
+        
+        ## And move this #########
+        # self.inferencer = Inferencer(self.project)
+        # self.inferencer.inference(videopath)
+        ###########################
+
         #self.project = example_project()
 
         self.setWindowTitle("Mouse")
@@ -137,7 +149,7 @@ class MainWindow(QMainWindow):
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        #self.visualisation_widget = VisualisationWidget()
+        self.visualisation_widget = VisualisationWidget(self.project)
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -154,7 +166,7 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget)  # index 0
-        self.modes.addWidget(QWidget())#self.visualisation_widget)  # index 1
+        self.modes.addWidget(self.visualisation_widget)  # index 1
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
@@ -172,7 +184,7 @@ def example_project():
     project.name = "Project Example 1"
     project.path = "project_path"
 
-    mouse = MouseData()
+    mouse = MouseData(project)
     mouse.gender = "male"
     mouse.name = "Anonymouse"
     project.mice = [mouse]
@@ -185,19 +197,19 @@ def example_project():
     image.profile_conf = 0.97
     project.images = [image]
 
-    key_points = KeyPoints()
-    key_points.ear_back = (815, 334)
-    key_points.ear_front = (722, 461)
-    key_points.ear_bottom = (791, 427)
-    key_points.ear_top = (727, 372)
-    key_points.eye_back = (590, 458)
-    key_points.eye_front = (544, 459)
-    key_points.eye_bottom = (566, 478)
-    key_points.eye_top = (571, 436)
-    key_points.nose_top = (417, 473)
-    key_points.nose_bottom = (423, 506)
-    key_points.mouth = (486, 568)
-    image.key_points = key_points
+    # key_points = KeyPoints()
+    # key_points.ear_back = (815, 334)
+    # key_points.ear_front = (722, 461)
+    # key_points.ear_bottom = (791, 427)
+    # key_points.ear_top = (727, 372)
+    # key_points.eye_back = (590, 458)
+    # key_points.eye_front = (544, 459)
+    # key_points.eye_bottom = (566, 478)
+    # key_points.eye_top = (571, 436)
+    # key_points.nose_top = (417, 473)
+    # key_points.nose_bottom = (423, 506)
+    # key_points.mouth = (486, 568)
+    # image.key_points = key_points
 
     
     

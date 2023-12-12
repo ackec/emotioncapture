@@ -1,3 +1,5 @@
+import pandas as pd
+from config import *
 # List of packages that are allowed to be imported
 __all__ = ["ProjectData", "MouseData", "KeyPoints", "MouseImageData"]
 
@@ -5,10 +7,10 @@ __all__ = ["ProjectData", "MouseData", "KeyPoints", "MouseImageData"]
 class ProjectData:
     """ Meta data about an entire project. """
 
-    name: str = ""
+    name: str = BASE_PROJECT_DIRECTORY_PATH + "Example_project"
     """ Name of project. """
 
-    path: str = ""
+    path: str = BASE_PROJECT_DIRECTORY_PATH + "Example_project/"
     """ Path to project directory. """
 
     mice: list["MouseData"] = []
@@ -22,6 +24,8 @@ class ProjectData:
 
     inference_data: list["str"] = []
 
+    keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
+
 
 class MouseData:
     """ Meta data about a specific mouse. """
@@ -31,6 +35,9 @@ class MouseData:
 
     gender: str = ""
     """ Gender of mouse. """
+
+    # videos: list["str"] = []
+    # """ Filepath to videos belonging to the mouce. """
 
 
 class KeyPoints:

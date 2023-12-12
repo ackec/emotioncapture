@@ -6,70 +6,66 @@ import numpy as np
 from mmdeploy_runtime import Detector, PoseDetector
 from pathlib import Path
 from data import *
+import re
 
-BBOX_MODEL_PATH = "./models/pose/mmdeploy_models/mmdet/ort"
-KEYPOINT_MODEL_PATH = "./models/pose/mmdeploy_models/mmpose/ort"
+import pandas as pd
+import numpy as np
+from calc_mouse_features import points_to_features
 
-class BaseInferencer(ABC):
-    def __init__(self, input: str, output: str):
-        self.config = None
-        self.input_path = input
-        self.output_path = output
-        super().__init__()
+BBOX_MODEL_PATH = "models/pose/mmdeploy_models/mmdet/ort"
+KEYPOINT_MODEL_PATH = "models/pose/mmdeploy_models/mmpose/ort"
 
-    @abstractmethod
-    def inference(self, input):
-        pass
+# class BaseInferencer(ABC):
+#     def __init__(self, input: str, output: str):
+#         self.config = None
+#         self.input_path = input
+#         self.output_path = output
+#         super().__init__()
 
-    @abstractmethod
-    def save_results(self):
-        pass
+#     @abstractmethod
+#     def inference(self, input):
+#         pass
+
+#     @abstractmethod
+#     def save_results(self):
+#         pass
 
 
-visualize = True
+visualize = False
+
 #class ProfileInferencer(BaseInferencer):
 #    pass
     
         
-class KeyPointInferencer(BaseInferencer):
+class KeyPointInferencer():
     def __init__(self, inputpath: str, outputpath: str):
         self.Detector = Detector(model_path=BBOX_MODEL_PATH, device_name='cpu', device_id=0)
         self.PoseDetector = PoseDetector(model_path=KEYPOINT_MODEL_PATH, device_name='cpu', device_id=0)
         self.processed_img = None
-        super().__init__(input=inputpath, output=outputpath)
+        self.video_name = os.path.basename(inputpath)
+        self.mouse_name = os.path.basename(os.path.dirname(inputpath))
+        
+        self.config = None
+        self.input_path = inputpath
+        self.output_path = outputpath
 
-    def save_results(self, keypoints):
-        with open(self.output_path, "w", newline="") as csv_file:
 
+    def save_results(self, keypoints, files, mouse_features):
+        if not os.path.exists(self.output_path):
+            with open(self.output_path, "w", newline="") as csv_file:
+                csv_writer = csv.writer(csv_file)
+                header = ["Mouse_Name", "Video_Name", "Img_Path", "Frame_ID", "Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
+                            "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",
+                            "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y",
+                            "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y", 
+                            "eye_oppening", "ear_oppening", "ear_angle", "ear_pos_vec", "snout_pos", "mouth_pos", "face_incl", "stimuli"]
+                csv_writer.writerow(header)
+
+        with open(self.output_path, "a", newline="") as csv_file:
             csv_writer = csv.writer(csv_file)
-
-            header = ["Img_Path", "Frame_ID", "Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
-                        "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",
-                        "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y",
-                        "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y"]
-            csv_writer.writerow(header)
-
-            for i, (result, img_path) in enumerate(keypoints):
-                
-                frame_id = i 
-
-                [ear_back_x, ear_back_y] = result[0]
-                [ear_front_x, ear_front_y] = result[1]
-                [ear_bottom_x, ear_bottom_y] = result[2]
-                [ear_top_x, ear_top_y] = result[3]
-                [eye_back_x, eye_back_y] = result[4]
-                [eye_front_x, eye_front_y] = result[5]
-                [eye_bottom_x, eye_bottom_y] = result[6]
-                [eye_top_x, eye_top_y] = result[7]
-                [nose_top_x, nose_top_y] = result[8]
-                [nose_bottom_x, nose_bottom_y] = result[9]
-                [mouth_x, mouth_y] = result[10]
-
-                row = [img_path, frame_id, ear_back_x, ear_back_y, ear_front_x, ear_front_y, ear_bottom_x,
-                        ear_bottom_y, ear_top_x, ear_top_y, eye_back_x, eye_back_y, eye_front_x, eye_front_y,
-                        eye_bottom_x, eye_bottom_y, eye_top_x, eye_top_y, nose_top_x, nose_top_y, nose_bottom_x,
-                        nose_bottom_y, mouth_x, mouth_y]
-
+            for i, (result, img_path, mouse_feature) in enumerate(zip(keypoints, files, mouse_features)):
+                frame_id = re.search(r'\d+', img_path).group()
+                row = [self.mouse_name, self.video_name, os.path.join(self.input_path, img_path), frame_id, *result.ravel(), *mouse_feature, "baseline"]
                 csv_writer.writerow(row)
         return 
 
@@ -86,8 +82,8 @@ class KeyPointInferencer(BaseInferencer):
         bbox = np.array((left, top, right, bottom), dtype=int)
 
         # Find keypoints in image inside bounding box
-        if score < 0.8:
-            return
+        # if bbox_score < 0.8:
+        #     return -1
         result = self.PoseDetector(img, bbox)
         _, point_num, _ = result.shape
         points = result[:, :, :2].reshape(point_num, 2)
@@ -105,8 +101,8 @@ class KeyPointInferencer(BaseInferencer):
             #print(file)
             img = cv2.imread(self.input_path + '/' + file)
             keypoints, bbox_score, bbox = self.forward(img)
-            keypoints_list.append((keypoints, file))
-            score_list.append((bbox_score, file))
+            keypoints_list.append(keypoints)
+            score_list.append(bbox_score)
 
             if visualize:
                 path = self.input_path+'/vis'
@@ -120,14 +116,19 @@ class KeyPointInferencer(BaseInferencer):
                     cv2.imwrite(os.path.join(path, name), img)
 
 
-        
-        self.save_results(keypoints_list)
+        mouse_features = points_to_features(np.array(keypoints_list))
+
+        self.save_results(keypoints_list, files, np.array(mouse_features).T)
+        df = pd.read_csv(self.output_path)
         print("saved results")
-        return
+        return df
+    
+
+
 
 def main():
-    input = "./inputs_test"
-    output = "./output_test"
+    input = "output/profiles"
+    output = "output_test.csv"
     Model = KeyPointInferencer(input, output)
     Model.inference()
 
