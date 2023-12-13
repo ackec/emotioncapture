@@ -1,7 +1,4 @@
-from PyQt5.QtWidgets import (QLabel, QSizePolicy, QFrame, QListView,
-                             QListWidget, QWidget, QHBoxLayout, QStyle,
-                             QGridLayout, QListWidgetItem, QToolButton,
-                             QPushButton)
+from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, QSize
 import tkinter
@@ -28,7 +25,6 @@ class PlaceHolder(QLabel):
         self.setText(name)
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
 
-
 class ImageFileList(QListWidget):
     def __init__(self, main,image_viewer):
         super().__init__()  # "Image File list"
@@ -51,7 +47,7 @@ class ImageFileList(QListWidget):
         self.setUniformItemSizes(True)
 
     def select_folder(self):
-        """ Browse and select folder to display images from. """
+        ##Browse and select folder to display images from.
         tkinter.Tk().withdraw()
         folder_path = filedialog.askdirectory()
 
@@ -87,8 +83,6 @@ class ImageFileList(QListWidget):
         name = image_data.filename
         icon = QIcon(image_data.path)
         new_item = QListWidgetItem(icon, name) 
-        #print(name,frame_id)
-        #new_item.setData(Qt.InitialSortOrderRole,frame_id)
         
         self.addItem(new_item)
         
@@ -115,18 +109,7 @@ class ImageFileList(QListWidget):
 
         self.image_viewer.display_image(image_data)
         self.current_index = self.pictures.index(image_data)
-    """
-    def __lt__(self, other):
-        try:
-            self_number = int(re.findall(r'\d+', self.text)[0])
-            other_number = int(re.findall(r'\d+', other.text)[0])
-            print(self_number,other_number)
-            return self_number < other_number
-        except Exception:
-            return QListWidgetItem.__lt__(self, other)
-    """
-
-
+    
 class ImageViewer(QLabel):
     def __init__(self):
         super().__init__()  # "Image viewer"
@@ -182,6 +165,7 @@ class ImageControl(QWidget):
         # button_layout.addStretch()
 
         back_button = QToolButton()
+        back_button.setToolTip("Browse backward in list")
         back_button.setArrowType(Qt.LeftArrow)
         back_button.setFixedSize(30, 30)
         back_button.clicked.connect(self.browse_backward)
@@ -194,10 +178,11 @@ class ImageControl(QWidget):
         current_index = self.file_list.current_index
         items = len(self.file_list.pictures)
         self.image_index.setText("{} / {}".format(current_index, items))
-        self.file_list.currentItemChanged.connect(self.update_index)
+        #self.file_list.currentItemChanged.connect(self.update_index)
         button_layout.addWidget(self.image_index)
 
         forward_button = QToolButton()
+        forward_button.setToolTip("Browse forward in list")
         forward_button.setArrowType(Qt.RightArrow)
         forward_button.setFixedSize(30, 30)
         forward_button.clicked.connect(self.browse_forward)
@@ -207,6 +192,7 @@ class ImageControl(QWidget):
                                 Qt.AlignmentFlag.AlignVCenter)
 
         trash_button = QPushButton()
+        trash_button.setToolTip("Discard current selected frame")
         trash_button.setFixedSize(30, 30)
         pixmapi = QStyle.StandardPixmap.SP_TrashIcon
         icon = self.style().standardIcon(pixmapi)
@@ -218,6 +204,7 @@ class ImageControl(QWidget):
                                 Qt.AlignmentFlag.AlignVCenter)
 
         edit_button = QPushButton()
+        edit_button.setToolTip("Edit current selected frame")
         edit_button.setFixedSize(30, 30)
         pixmapi = QStyle.StandardPixmap.SP_DialogResetButton
         icon = self.style().standardIcon(pixmapi)  
@@ -291,7 +278,7 @@ class ImageMetadataViewer(QLabel):
         super().__init__()
 
         self.file_list = file_list
-        self.file_list.currentItemChanged.connect(self.update_attributes)
+        #self.file_list.currentItemChanged.connect(self.update_attributes)
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
