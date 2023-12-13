@@ -5,7 +5,7 @@ from enum import Enum
 import typing
 from PyQt5 import QtGui
 
-from PyQt5.QtCore import Qt, QSize, QDir
+from PyQt5.QtCore import Qt, QSize, QDir, QThread, pyqtSignal
 from PyQt5.QtGui import QMovie, QFont
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget,
@@ -262,6 +262,21 @@ class NewData(DialogPlaceHolder):
         self.update_params()
         super().showEvent(event)
 
+
+class WorkerThread(QThread):
+    finished_signal = pyqtSignal()
+
+    def __init__(self, main):
+        super().__init__()
+        self.main = main
+
+    def run(self):
+        self.main.inferencer.inference(self.main.project.inference_data[0])
+        self.finished_signal.emit()
+
+
+
+
 class Processing(QWidget):
     def __init__(self, main: MainWindow):
         super().__init__()
@@ -283,13 +298,13 @@ class Processing(QWidget):
         icon_animation.setScaledSize(QSize(160, 160))
 
         # Text beneath GIF
-        text = QLabel()
-        text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.text = QLabel()
+        self.text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont('Arial', 12)
-        text.setStyleSheet("color: #404040")
-        text.setFont(font)
-        text.setText("Processing...")
-        self.main_layout.addWidget(text)
+        self.text.setStyleSheet("color: #404040")
+        self.text.setFont(font)
+        self.text.setText("Processing...")
+        self.main_layout.addWidget(self.text)
 
         self.setLayout(self.main_layout)
 
@@ -301,10 +316,27 @@ class Processing(QWidget):
     def showEvent(self, event):
         print("Start inference")
         super().showEvent(event)
-        self.main.inferencer.inference(self.main.project.inference_data[0])
-        self.main.file_list.update_file_list()
-        print("inference done")
+        self.start_inference()
+        #self.main.inferencer.inference(self.main.project.inference_data[0])
+        #self.main.file_list.update_file_list()
+        #print("inference done")
         #self.close()
+
+    def start_inference(self):
+        self.thread = WorkerThread(self.main)
+
+        self.thread.finished_signal.connect(self.thread_finished)
+
+        self.thread.start()
+
+    def thread_finished(self):
+
+        self.text.setText("Done")
+
+        self.main.file_list.update_file_list()
+
+        print("inference done")
+        
 
 
 
