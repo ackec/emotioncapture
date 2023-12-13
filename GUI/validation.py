@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen
 from PyQt5.QtCore import Qt, QSize
 import tkinter
 from tkinter import filedialog
@@ -120,31 +120,39 @@ class ImageViewer(QLabel):
                            QSizePolicy.Policy.Expanding)
         self.setScaledContents(True)
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        
+        self.COLORS = [
+        Qt.GlobalColor.red,
+        Qt.GlobalColor.green,
+        Qt.GlobalColor.blue,
+        ]
+        
 
-    def display_image(self, image_data: MouseImageData):
+    def display_image(self, image_data: MouseImageData, size=16):
 
         pixmap = QPixmap(image_data.path)
-        # pixmap = pixmap.scaledToWidth(self.width())
+        
+        painter = QPainter()
+        painter.begin(pixmap)
+        try:
+            for name, pt in image_data.key_points:
+                color = None
+                if "ear" in name:
+                    color = self.COLORS[0]
+                elif "eye" in name:
+                    color = self.COLORS[1]
+                else:
+                    color = self.COLORS[2]
+                
+                painter.setBrush(color or Qt.GlobalColor.red)
+                painter.drawEllipse(pt[0] - size / 2,pt[1] - size / 2,size,size)
+                
+        except: ## No keypoints
+            pass
+        
+        painter.end()
+        
         self.setPixmap(pixmap)
-
-    """ 
-    def hasHeightForWidth(self):
-        return self.pixmap() is not None
-
-    def heightForWidth(self, w):
-        if self.pixmap():
-            return int(w * (self.pixmap().height() / self.pixmap().width()))
-      
-    def resizeEvent(self, resize_event):
-        size = resize_event.size()
-        w = size.width()
-        h = self.heightForWidth(w)
-        p = self.pixmap()
-        if p != None:
-            scaledPix = p.scaled(w,h) #, Qt.KeepAspectRatio)   #, transformMode = Qt.SmoothTransformation)
-            self.setPixmap(scaledPix)
-    """
-
 
 class ImageControl(QWidget):
     def __init__(self, file_list):
