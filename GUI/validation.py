@@ -267,11 +267,9 @@ class ImageControl(QWidget):
     def remove_current_image(self):
         name = self.file_list.currentItem().text()
         image_data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
+        #os.remove(image_data.path)
         self.file_list.pictures.remove(image_data)  ##Remove from pictures list
         self.file_list.takeItem(self.file_list.current_index)   #remove from widget
-
-        #self.file_list.image_viewer.setPixmap(QtGui.QPixmap()) ##Not required. new selected image in list -> update image viewer
-        #self.file_list.current_index -= 1
 
         self.update_index()
 
