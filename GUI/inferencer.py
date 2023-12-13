@@ -90,8 +90,8 @@ class KeyPointInferencer():
         result = self.PoseDetector(img, bbox)
         _, point_num, _ = result.shape
         points = result[:, :, :2].reshape(point_num, 2)
-        print("keypoint_scores")
-        print(result[:, :, -1])
+        #print("keypoint_scores")
+        #print(result[:, :, -1])
 
         scores = result[:,:,-1].T
         #min_keypoint_score = np.min

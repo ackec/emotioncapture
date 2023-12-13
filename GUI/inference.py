@@ -72,7 +72,7 @@ def check_feature_ranges(features):
 
 def is_video_path(file_path):
     video_extensions = ['.mp4']  # Add more video extensions if needed
-    print(file_path)
+    #print(file_path)
     #return any(file_path.lower().endswith(ext) for ext in video_extensions)
     return any(file_path.lower().endswith(ext) for ext in video_extensions)
 
@@ -146,7 +146,7 @@ class Inferencer():
         reader = VideoReader(str(self.video_path.absolute()), "video")
         video_len = reader.get_metadata()["video"]["duration"][0]
         frame_rate = reader.get_metadata()["video"]["fps"][0]
-        print(video_len)
+        #print(video_len)
         transform = Compose([
             Resize((IMG_HEIGHT, IMG_WIDTH), antialias=True),
             Normalize((0.485, 0.456, 0.406),
@@ -175,7 +175,7 @@ class Inferencer():
         fids_to_save: list[float] = []
 
 
-        print("Fetched all predictions")
+        #print("Fetched all predictions")
             # Save best frame of last second
         prev_saved = {"time": -10.0, "score": 0}
         for i, pred in enumerate(predictions):
@@ -184,7 +184,7 @@ class Inferencer():
             if pred < THRESHOLD:
                     continue
                 #path = output_path / (f'img_{f_index}.{FILE_TYPE}')
-            print(i, pred)
+            #print(i, pred)
             if f_time < prev_saved["time"] + 1 :
                     # Less than one second since last save
                 if prev_saved["score"] > pred:
@@ -236,8 +236,8 @@ class Inferencer():
             except StopIteration:
                 break
         
-        print(self.img_paths)
-        print(self.img_preds)
+        #print(self.img_paths)
+        #print(self.img_preds)
         
 
 
