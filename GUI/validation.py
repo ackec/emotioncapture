@@ -7,6 +7,8 @@ from PyQt5.QtCore import Qt, QSize
 import tkinter
 from tkinter import filedialog
 import os
+import regex as re
+import numpy as np
 
 from data import *
 
@@ -35,6 +37,8 @@ class ImageFileList(QListWidget):
         self.current_index = 0
         self.pictures = []
 
+       # self.setSortingEnabled(True)
+ 
         # Allowed file extensions for loading images
         # Find better way to check if image or not (?)
         self.image_extensions = [".jpg", ".png"]
@@ -71,22 +75,34 @@ class ImageFileList(QListWidget):
 
         self.current_index = 0
         self.image_viewer.display_image(self.pictures[self.current_index])
-
+        
+        frame_ids = [int(re.findall(r'\d+', item.filename)[-1]) for item in self.pictures]
+        sorting = np.argsort(frame_ids)
+        self.pictures = [self.pictures[index] for index in sorting]
+        
         for image_data in self.pictures:
             self.add_to_list(image_data)
 
     def add_to_list(self, image_data: MouseImageData):
         name = image_data.filename
         icon = QIcon(image_data.path)
-        new_item = QListWidgetItem(icon, name)
-
+        new_item = QListWidgetItem(icon, name) 
+        #print(name,frame_id)
+        #new_item.setData(Qt.InitialSortOrderRole,frame_id)
+        
         self.addItem(new_item)
         
     def update_file_list(self):
         self.pictures = self.main_window.project.images
+        
+        frame_ids = [int(re.findall(r'\d+', item.filename)[-1]) for item in self.pictures]
+        sorting = np.argsort(frame_ids)
+        self.pictures = [self.pictures[index] for index in sorting]
+        
         self.clear()
         for image_data in self.pictures:
             self.add_to_list(image_data)
+        
 
     def select_list_item(self, item: QListWidgetItem):
         if self.count() == 0 or item is None:
@@ -99,7 +115,16 @@ class ImageFileList(QListWidget):
 
         self.image_viewer.display_image(image_data)
         self.current_index = self.pictures.index(image_data)
-        
+    """
+    def __lt__(self, other):
+        try:
+            self_number = int(re.findall(r'\d+', self.text)[0])
+            other_number = int(re.findall(r'\d+', other.text)[0])
+            print(self_number,other_number)
+            return self_number < other_number
+        except Exception:
+            return QListWidgetItem.__lt__(self, other)
+    """
 
 
 class ImageViewer(QLabel):
@@ -236,7 +261,7 @@ class ImageControl(QWidget):
             return
 
         if index == 0:
-            self.file_list.current_index = len(self.pictures)-1
+            self.file_list.current_index = len(pictures)-1
         else:
             self.file_list.current_index -= 1
 
@@ -322,9 +347,7 @@ class ImageMetadataViewer(QLabel):
         #self.current_data = project.images[0]
         
         name = self.file_list.currentItem().text()
-        print(name,self.file_list.pictures[0].filename)
         data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
-        print(data)
         mouse = data.mouse
         self.update_label_row("Mouse", mouse.name)
         self.update_label_row("Gender", mouse.gender)
