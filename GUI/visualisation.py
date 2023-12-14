@@ -237,27 +237,29 @@ class RadarPlot(QMainWindow):
     def update_radar_plot_file(self, file_name):
         clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
         if len(clicked_data) > 0:
-            clicked_data = self.mousedata.df.loc[clicked_data.index[0]][self.mousedata.columns]
+            clicked_data = self.mousedata.df.loc[clicked_data.index[0]]
+            #print(clicked_data)
             mouse_name = clicked_data["Mouse_Name"]
-            normalized_data = clicked_data / self.mousedata.mice_mean_baseline["Mouse_Name" == mouse_name][self.mousedata.columns]
-            self.sample = normalized_data
+
+            normalized_data = clicked_data[self.mousedata.columns] / self.mousedata.mice_mean_baseline[self.mousedata.mice_mean_baseline["Mouse_Name"] == mouse_name][self.mousedata.columns]
+            self.sample = normalized_data.loc[0]
             # self.sample = self.mousedata.df[self.mousedata.df["Mouse_Name"] == clicked_data["Mouse_Name"]]
-            print(self.sample)
+            #print(self.sample)
             self.ax.clear()
             self.radar_plot()
             # self.ax.set_ylim(self.sample.min()-0.2, self.sample.max()+0.2)
-            self.ax.set_ylim(0, 1)
-
-            info_text = f"Eye Oppening: {clicked_data['eye_oppening']:.2f},  {normalized_data['eye_oppening']:.2%} \n"\
-                f"Ear Oppening: {clicked_data['ear_oppening']:.2f},  {normalized_data['ear_oppening']:.2%}\n"\
-                f"Ear Angle: {clicked_data['ear_angle']:.2f},  {normalized_data['ear_angle']:.2%}\n"\
-                f"Ear Position: {clicked_data['ear_pos_vec']:.2f},  {normalized_data['ear_pos_vec']:.2%}\n"\
-                f"Snout Position: {clicked_data['snout_pos']:.2f},  {normalized_data['snout_pos']:.2%}\n"\
-                f"Mouth Position: {clicked_data['mouth_pos']:.2f},  {normalized_data['mouth_pos']:.2%}\n"\
-                f"Face inclination: {clicked_data['face_incl']:.2f},  {normalized_data['face_incl']:.2%}\n"
-                # f"Colour: {self.colous[self.last_clicked_index]}\n"\
-                # f"Video Name: {self.features['Video_Name'][self.last_clicked_index]} \n"\
-                # f"Image index: {file_name} \n"\
+            self.ax.set_ylim(0, 2)
+            #print(normalized_data)
+            info_text = f"Eye Opening: {clicked_data['eye_oppening']:.2f},  {self.sample['eye_oppening']:.2%} \n"\
+                f"Ear Opening: {clicked_data['ear_oppening']:.2f},  {self.sample['ear_oppening']:.2%}\n"\
+                f"Ear Angle: {clicked_data['ear_angle']:.2f},  {self.sample['ear_angle']:.2%}\n"\
+                f"Ear Position: {clicked_data['ear_pos_vec']:.2f},  {self.sample['ear_pos_vec']:.2%}\n"\
+                f"Snout Position: {clicked_data['snout_pos']:.2f},  {self.sample['snout_pos']:.2%}\n"\
+                f"Mouth Position: {clicked_data['mouth_pos']:.2f},  {self.sample['mouth_pos']:.2%}\n"\
+                f"Face inclination: {clicked_data['face_incl']:.2f},  {self.sample['face_incl']:.2%}\n"\
+                f"Video Name: {clicked_data['Video_Name']} \n"\
+                f"File Name: {file_name} \n"\
+                f"Stimuli: {clicked_data['Stimuli']}\n"\
 
             self.mouse_features.setText(info_text)
 
@@ -426,8 +428,8 @@ class ScatterPlot(QMainWindow):
                 features = self.mousedata.df_mean.loc[self.last_clicked_index]
                 # features = self.features.iloc[self.last_clicked_index]
                 # percental_change = features / self.mousedata.baseline.mean()
-                info_text = f"Eye Oppening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
-                        f"Ear Oppening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
+                info_text = f"Eye Opening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
+                        f"Ear Opening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
                         f"Ear Angle: {features['ear_angle']:.2f},  {percental_change['ear_angle']:.2%}\n"\
                         f"Ear Position: {features['ear_pos_vec']:.2f},  {percental_change['ear_pos_vec']:.2%}\n"\
                         f"Snout Position: {features['snout_pos']:.2f},  {percental_change['snout_pos']:.2%}\n"\
