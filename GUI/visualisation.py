@@ -22,7 +22,7 @@ import hdbscan
 import sklearn.cluster as cluster
 import matplotlib.colors
 import matplotlib.pyplot as plt
-from validation import ImageFileList, ImageViewer
+from validation import ImageViewer
 from data import ProjectData
 # from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
@@ -92,7 +92,7 @@ class MouseData():
 
 class VisualisationWidget(QWidget):
 
-    def __init__(self, project):
+    def __init__(self, project,file_list):
         self.project = project
         super().__init__()
 
@@ -128,6 +128,8 @@ class VisualisationWidget(QWidget):
         self.setLayout(self.main_layout)
         # name = index.model().fileName(index)
 
+    def blablabla(self,index):
+        pass
 class PlaceHolder(QLabel):
     """ Placeholder widget while app is being developed """
 

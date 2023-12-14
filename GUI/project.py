@@ -333,7 +333,7 @@ class Processing(QWidget):
 
         self.text.setText("Done")
 
-        self.main.file_list.update_file_list()
+        #self.main.file_list.update_file_list()
 
         print("inference done")
         

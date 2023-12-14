@@ -77,13 +77,13 @@ class ImageEditorDialog(QDialog):
         y_pos = self.height() - self.controls.height() - 32
         self.controls.move(x_pos, y_pos)
 
-    def show(self, image: MouseImageData):
+    def show(self,image_name:str,image_path:str,data_row): #image: MouseImageData):
         """ Display edit window with `image`. Image data is edited in-place. """
-        if image is None:
+        if image_path is None or image_name is None:
             return
 
-        self.image_data = image
-        self.point_editor.set_image(image)
+        self.image_name = image_name
+        self.point_editor.set_image(image_name,image_path,data_row)
         super().show()
 
 
@@ -121,6 +121,11 @@ class ImagePointEditor(QGraphicsView):
 
         self.points: dict[str, MovablePoint] = {}
         self.image = QPixmap()
+        
+        self.key_columns = ["Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
+                            "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",
+                            "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y",
+                            "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y"]
 
     def wheelEvent(self, event):
         pass  # Do nothing on scroll
@@ -131,26 +136,32 @@ class ImagePointEditor(QGraphicsView):
         trans.scale(scale, scale)
         self.setTransform(trans)
 
-    def set_image(self, image: MouseImageData):
+    def set_image(self,  image_name:str, image_path:str, data_row=None): #image: MouseImageData):
         """ Load image and points and add to scene.  """
         self.points = {}
         self.scene().clear()
 
-        self.image = QPixmap(image.path)
+        self.image = QPixmap(image_path)
         self.scene().addPixmap(self.image)
-
-        for name, pt in image.key_points:
+        
+        key_points = data_row[self.key_columns]
+        
+        for i in range(len(key_points)):
+            j = 2*i
+            name = self.key_columns[j]
+            pt = (key_points[j],key_points[j+1])
+            
             color = None
             if "ear" in name:
-                color = MovablePoint.COLORS[0]
+                color = self.COLORS[0]
             elif "eye" in name:
-                color = MovablePoint.COLORS[1]
+                color = self.COLORS[1]
             else:
-                color = MovablePoint.COLORS[2]
-
+                color = self.COLORS[2]
+            
             point = MovablePoint(*pt, color=color)
             self.points[name] = point
-            self.scene().addItem(point)
+            self.scene().addItem(point)            
 
     def save_points(self):
         """ Extract coordinates from scene and save in new Keypoints instance. """

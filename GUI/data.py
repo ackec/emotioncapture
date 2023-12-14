@@ -26,7 +26,17 @@ class ProjectData:
 
     # keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
 
-    keypoints: pd.DataFrame()
+    project_data_frame: pd.DataFrame()
+    
+    keypoints = pd.DataFrame()
+    
+    ## Columns for dataframe:
+    # "Mouse_Name", "Video_Name", "Img_Path", "Frame_ID", "Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
+    # "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",
+    # "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y",
+    # "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y", 
+    # "eye_oppening", "ear_oppening", "ear_angle", "ear_pos_vec", "snout_pos", "mouth_pos", "face_incl", "stimuli", "orientation",
+    # "keypoint_score", "profile_score", "id_phase_shift", "warn_flag"
 
 
 class MouseData:

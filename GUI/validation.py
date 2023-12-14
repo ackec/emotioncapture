@@ -1,17 +1,17 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QItemSelectionModel
 import tkinter
 from tkinter import filedialog
 import os
 import  re
 import numpy as np
-
+import time
 from data import *
 
 # List of packages that are allowed to be imported
 __all__ = ["ImageMetadataViewer", "ImageControl",
-           "ImageViewer", "ImageFileList"]
+           "ImageViewer"]
 
 
 class PlaceHolder(QLabel):
@@ -25,90 +25,6 @@ class PlaceHolder(QLabel):
         self.setText(name)
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
 
-class ImageFileList(QListWidget):
-    def __init__(self, main,image_viewer):
-        super().__init__()  # "Image File list"
-        self.main_window = main
-        self.image_viewer = image_viewer
-        self.current_index = 0
-        self.pictures = []
-
-       # self.setSortingEnabled(True)
- 
-        # Allowed file extensions for loading images
-        # Find better way to check if image or not (?)
-        self.image_extensions = [".jpg", ".png"]
-
-        self.currentItemChanged.connect(self.select_list_item)
-        self.setViewMode(QListView.ViewMode.IconMode)
-        self.setIconSize(QSize(150, 100))
-        self.setFixedWidth(550)
-        self.setSpacing(5)
-        self.setUniformItemSizes(True)
-
-    def select_folder(self):
-        ##Browse and select folder to display images from.
-        tkinter.Tk().withdraw()
-        folder_path = filedialog.askdirectory()
-
-        if folder_path == None or folder_path == "":
-            return
-
-        files = os.listdir(folder_path)
-
-        mouse = MouseData()
-        mouse.gender = "None"
-        mouse.name = "Anonymouse"
-        for image_name in files:
-            # Remove non picture files
-            if os.path.splitext(image_name)[1].lower() in self.image_extensions:
-                image_data = MouseImageData()
-                image_data.mouse = mouse
-                image_data.filename = image_name
-                image_data.path = folder_path + "/" + image_name
-
-                self.pictures.append(image_data)
-
-        self.current_index = 0
-        self.image_viewer.display_image(self.pictures[self.current_index])
-        
-        frame_ids = [int(re.findall(r'\d+', item.filename)[-1]) for item in self.pictures]
-        sorting = np.argsort(frame_ids)
-        self.pictures = [self.pictures[index] for index in sorting]
-        
-        for image_data in self.pictures:
-            self.add_to_list(image_data)
-
-    def add_to_list(self, image_data: MouseImageData):
-        name = image_data.filename
-        icon = QIcon(image_data.path)
-        new_item = QListWidgetItem(icon, name) 
-        
-        self.addItem(new_item)
-        
-    def update_file_list(self):
-        self.pictures = self.main_window.project.images
-        
-        frame_ids = [int(re.findall(r'\d+', item.filename)[-1]) for item in self.pictures]
-        sorting = np.argsort(frame_ids)
-        self.pictures = [self.pictures[index] for index in sorting]
-        
-        self.clear()
-        for image_data in self.pictures:
-            self.add_to_list(image_data)
-        
-
-    def select_list_item(self, item: QListWidgetItem):
-        if self.count() == 0 or item is None:
-            return
-        
-        name = item.text()
-        # Find image with correct name
-        image_data = [
-            image_data for image_data in self.pictures if image_data.filename == name][0]
-
-        self.image_viewer.display_image(image_data)
-        self.current_index = self.pictures.index(image_data)
     
 class ImageViewer(QLabel):
     def __init__(self):
@@ -126,16 +42,33 @@ class ImageViewer(QLabel):
         Qt.GlobalColor.green,
         Qt.GlobalColor.blue,
         ]
+    
+        self.key_columns = ["Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
+                            "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",
+                            "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y",
+                            "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y"]
         
-
-    def display_image(self, image_data: MouseImageData, size=16):
-
-        pixmap = QPixmap(image_data.path)
         
-        painter = QPainter()
-        painter.begin(pixmap)
+        
+    def display_image(self, image_path: str, data_row=None, size=16):
+        #print(image_path)
+        if image_path == "":
+            pixmap = QPixmap()
+            self.setPixmap(pixmap)
+            return
+        
+        pixmap = QPixmap(image_path)
         try:
-            for name, pt in image_data.key_points:
+            painter = QPainter()
+            painter.begin(pixmap)
+            key_points = data_row[self.key_columns]
+        
+            for i in range(len(key_points)):
+                j = 2*i
+                name = self.key_columns[j]
+                x = key_points[j]
+                y = key_points[j+1]
+                
                 color = None
                 if "ear" in name:
                     color = self.COLORS[0]
@@ -145,14 +78,15 @@ class ImageViewer(QLabel):
                     color = self.COLORS[2]
                 
                 painter.setBrush(color or Qt.GlobalColor.red)
-                painter.drawEllipse(pt[0] - size / 2,pt[1] - size / 2,size,size)
+                painter.drawEllipse(x - size / 2,y - size / 2,size,size)
                 
+            painter.end()
         except: ## No keypoints
-            pass
+            painter.end()
         
-        painter.end()
         
         self.setPixmap(pixmap)
+        
 
 class ImageControl(QWidget):
     def __init__(self, file_list):
@@ -166,7 +100,8 @@ class ImageControl(QWidget):
 
         self.file_list = file_list
         self.main_layout = QHBoxLayout()
-
+        self.items = 0
+        
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(8, 0, 8, 0)
         button_layout.setSpacing(4)
@@ -183,10 +118,9 @@ class ImageControl(QWidget):
                                 Qt.AlignmentFlag.AlignVCenter)
 
         self.image_index = QLabel()
-        current_index = self.file_list.current_index
-        items = len(self.file_list.pictures)
-        self.image_index.setText("{} / {}".format(current_index, items))
-        #self.file_list.currentItemChanged.connect(self.update_index)
+        self.image_index.setText("{} / {}".format(0, 0))
+        
+        self.file_list.tree_view.clicked.connect(self.update_index)        
         button_layout.addWidget(self.image_index)
 
         forward_button = QToolButton()
@@ -231,52 +165,89 @@ class ImageControl(QWidget):
 
     def update_index(self):
         current_index = self.file_list.current_index
-        items = self.file_list.count()
-        self.image_index.setText("{} / {}".format(current_index+1,items))
+        row = current_index.row()
+        self.items = self.file_list.siblings
+        self.image_index.setText("{} / {}".format(row+1,self.items))
 
     def browse_forward(self):
-        pictures = self.file_list.pictures
-        index = self.file_list.current_index
-        if (pictures == None or len(pictures) == 0 or index == None):
-            return
-
-        if index == len(pictures)-1:
-            self.file_list.current_index = 0
-        else:
-            self.file_list.current_index += 1
-
-        if self.file_list.count() != 0:
-            item = self.file_list.item(self.file_list.current_index)
-            self.file_list.setCurrentItem(item)  # Also calls selectListItem
-
-    def browse_backward(self):
-        pictures = self.file_list.pictures
-        index = self.file_list.current_index
-        if pictures == None or len(pictures) == 0 or index == None:
-            return
-
-        if index == 0:
-            self.file_list.current_index = len(pictures)-1
-        else:
-            self.file_list.current_index -= 1
-
-        if self.file_list.count() != 0:
-            item = self.file_list.item(self.file_list.current_index)
-            self.file_list.setCurrentItem(item)   ##Also calls selectListItem
         
-    def remove_current_image(self):
-        name = self.file_list.currentItem().text()
-        image_data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
-        #os.remove(image_data.path)
-        self.file_list.pictures.remove(image_data)  ##Remove from pictures list
-        self.file_list.takeItem(self.file_list.current_index)   #remove from widget
+        index = self.file_list.current_index
+        row = index.row()
+        if row == self.file_list.siblings-1:
+            row = 0
+        else:
+            row += 1
 
+        new_index = index.siblingAtRow(row)
+        self.file_list.current_index = new_index
+        self.file_list.tree_view.setCurrentIndex(new_index)
+        self.file_list.select_item(new_index)
         self.update_index()
 
+    def browse_backward(self):
+        index = self.file_list.current_index
+        row = index.row()
+        if row == 0:
+            row = self.file_list.siblings-1
+        else:
+            row -= 1
+
+        new_index = index.siblingAtRow(row)
+        self.file_list.current_index = new_index
+        self.file_list.tree_view.setCurrentIndex(new_index)
+        self.file_list.select_item(new_index)
+        self.update_index()
+        
+        
+    def remove_current_image(self):
+        
+        index = self.file_list.current_index
+        if index is None:
+            return
+        
+        parent = index.parent()
+        path = index.model().filePath(index)
+        
+        row = index.row()
+        
+        if row == 0:
+            new_index = index.siblingAtRow(row+1)
+            new_row = 1
+        else:
+            new_index = index.siblingAtRow(row-1)
+            new_row = row
+        
+        self.items -= 1
+        self.image_index.setText("{} / {}".format(new_row,self.items))
+        
+        if index.model().fileName(index) == new_index.model().fileName(new_index):
+                new_index = parent.child(1,0)
+                
+        if new_index.isValid():
+            self.file_list.select_item(new_index)
+            self.file_list.tree_view.setCurrentIndex(new_index)
+            self.file_list.tree_view.selectionModel().select(new_index,QItemSelectionModel.ClearAndSelect)
+            
+        else:
+            self.file_list.current_index = None
+            self.file_list.image_viewer.display_image("")
+            self.image_index.setText("{} / {}".format(0,0))
+            
+        try:
+            self.file_list.tree_view.model().remove(index)
+        except:
+            pass
+        
+
     def edit_picture(self):
-        name = self.file_list.currentItem().text()
-        image_data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
-        self.file_list.main_window.editor_dialog.show(image_data)
+        indexes = self.tree_view.selectedIndexes()
+        ind = indexes[0]
+        name = ind.model().fileName(ind)
+        path = ind.model().filePath(ind)
+        
+        data_row = self.file_list.data[self.file_list.data["Img_Name"] == name]
+        
+        self.file_list.main_window.editor_dialog.show(name,path,data_row)
 
 
 class ImageMetadataViewer(QLabel):

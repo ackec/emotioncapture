@@ -12,6 +12,7 @@ from project import *
 from editor import *
 from visualisation import VisualisationWidget
 from data import *
+from tree_view import *
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
@@ -137,7 +138,7 @@ class MainWindow(QMainWindow):
 
         # Components
         self.image_viewer = ImageViewer()
-        self.file_list = ImageFileList(self,self.image_viewer)
+        self.file_list = FileList(self,self.image_viewer)
         self.image_metadata_viewer = ImageMetadataViewer(self.file_list)
 
         #self.image_metadata_viewer.update_attributes(self.project)
@@ -149,7 +150,7 @@ class MainWindow(QMainWindow):
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        self.visualisation_widget = VisualisationWidget(self.project)
+        self.visualisation_widget = QWidget()#VisualisationWidget(self.project,self.file_list)
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
