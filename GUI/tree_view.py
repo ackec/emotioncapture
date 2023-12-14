@@ -25,24 +25,23 @@ class IconProvider(QFileIconProvider):
         if fn.endswith(accepted_types):
             a = QPixmap(ICON_SIZE)
             a.load(fn)
+        
+            ## Add warning triangle
+            warning = QPixmap()
+            warning.load("GUI/res/warning.png")
             
-            if True:    ##Add check of scores
-                ## Add warning triangle
-                warning = QPixmap()
-                warning.load("warning.png")
-                
-                try: ## Get dataframe
-                    data = self.file_list.main.project.project_data
-                    warn_flag = data[data["Img_Path"] == fn]["warn_flag"]
-                except: ## No dataframe found
-                    warn_flag = False
+            try: ## Get dataframe
+                data = self.file_list.main.project.project_data
+                warn_flag = data[data["Img_Path"] == fn]["warn_flag"]
+            except: ## No dataframe found
+                warn_flag = False
 
-                if warn_flag:
-                    painter = QPainter()
-                    painter.begin(a)
-                    painter.drawPixmap(QPoint(),warning)
-                    painter.end()
-            
+            if warn_flag:
+                painter = QPainter()
+                painter.begin(a)
+                painter.drawPixmap(QPoint(),warning)
+                painter.end()
+        
             return QIcon(a)
         else:
             return super().icon(type)
