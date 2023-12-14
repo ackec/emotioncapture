@@ -24,7 +24,7 @@ class ProjectData:
 
     inference_data: list["str"] = []
 
-    #keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
+    # keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
 
     keypoints: pd.DataFrame()
 

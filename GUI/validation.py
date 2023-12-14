@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QSize
 import tkinter
 from tkinter import filedialog
 import os
-import regex as re
+import  re
 import numpy as np
 
 from data import *

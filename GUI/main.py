@@ -43,11 +43,11 @@ class MainWindow(QMainWindow):
         self.project = ProjectData()
 
         ## TODO remove this ##
-        #mouce = MouseData()
-        #mouce.name = "mouse1"
-        #self.project.mice.append(mouce)
-        #self.project.active_mouse_index = 0
-        #videopath = "converted_videos/M3N-2021-09-23 10-00-56.mp4"
+        mouce = MouseData()
+        mouce.name = "mouse1"
+        self.project.mice.append(mouce)
+        self.project.active_mouse_index = 0
+        videopath = "converted_videos/M3N-2021-09-23 10-00-56.mp4"
         ###########################
         
         ## And move this #########
@@ -149,7 +149,7 @@ class MainWindow(QMainWindow):
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        #self.visualisation_widget = VisualisationWidget(self.project)
+        self.visualisation_widget = VisualisationWidget(self.project)
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -166,7 +166,7 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget)  # index 0
-        #self.modes.addWidget(self.visualisation_widget)  # index 1
+        self.modes.addWidget(self.visualisation_widget)  # index 1
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
@@ -178,6 +178,9 @@ class MainWindow(QMainWindow):
         elif self.modes.currentIndex() == 1:
             print("switch 2")
             self.modes.setCurrentIndex(0)
+            self.mouse.init_visualisation(self.project)
+            self.lineinit_line_plot()
+
 
 def example_project():
     project = ProjectData()
