@@ -255,7 +255,7 @@ class ImageMetadataViewer(QLabel):
         super().__init__()
 
         self.file_list = file_list
-        #self.file_list.currentItemChanged.connect(self.update_attributes)
+        self.file_list.tree_view.clicked.connect(self.update_attributes)
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
@@ -274,14 +274,14 @@ class ImageMetadataViewer(QLabel):
     def create_labels(self):
         self.attr_to_label_map = {}
 
-        self.create_label_row("Mouse", "", 0)
-        self.create_label_row("Gender", "", 1)
+        self.create_label_row("Mouse", "Anonymouse", 0)
+        self.create_label_row("Gender", "NaN", 1)
+        self.create_label_row("GenoType", "Something", 2)
 
-        self.create_label_row("Filename", "", 2)
-        self.create_label_row("Path", "", 3)
+        self.create_label_row("Filename", "placeholder.jpg", 3)
 
-        self.create_label_row("Profile Confidence", "", 4)
-        self.create_label_row("Key Point Confidence", "", 5)
+        self.create_label_row("Profile Confidence", 0, 4)
+        self.create_label_row("Key Point Confidence", 0, 5)
 
     def create_label_row(self, description: str, value, row: int):
         if isinstance(value, (int, str)):
@@ -307,35 +307,26 @@ class ImageMetadataViewer(QLabel):
     def update_attributes(self, item: QListWidgetItem):
         if item is None:
             return
-        #return
-        #self.current_data = project.images[0]
         
-        name = self.file_list.currentItem().text()
-        data = [image_data for image_data in self.file_list.pictures if image_data.filename == name][0]
-        mouse = data.mouse
-        self.update_label_row("Mouse", mouse.name)
-        self.update_label_row("Gender", mouse.gender)
-
-        try:
-            self.update_label_row("Filename", data.filename)
-        except:
-            self.update_label_row("Filename", ""),
+        indexes = self.file_list.tree_view.selectedIndexes()
+        ind = indexes[0]
+        file_name = ind.model().fileName(ind)
         
         try:
-            self.update_label_row("Path", data.path)
+            data = self.file_list.main.project.project_data
+            data_row = data[data["Img_Name"] == file_name]
+                      
         except:
-            self.update_label_row("Path", data.path)
+            data = None
+            return
+        
+        current_name = data_row["Mouse_Name"]
+        mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name][0]
+        
+        self.update_label_row("Mouse", mouse_data.name)
+        self.update_label_row("Gender", mouse_data.gender)
 
-        try:
-            self.update_label_row("Profile Confidence",
-                              data.profile_conf)
-        except:
-            self.update_label_row("Profile Confidence",
-                              "")
-            
-        try:
-            self.update_label_row("Key Point Confidence",
-                              data.key_point_conf)
-        except:
-            self.update_label_row("Key Point Confidence",
-                              "")
+        self.update_label_row("Filename", data_row["Img_Path"])
+        
+        self.update_label_row("ProfileConfidence", data_row["profile_score"])
+        self.update_label_row("KeypointConfidence",data_row["keypoint_score"])
