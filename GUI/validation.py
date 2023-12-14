@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, pyqtSignal
 import tkinter
 from tkinter import filedialog
 import os
@@ -114,12 +114,14 @@ class ImageViewer(QLabel):
     def __init__(self):
         super().__init__()  # "Image viewer"
         # self.setText("Image viewer")
+        pixmapClicked = pyqtSignal()
 
         self.setMinimumSize(640, 320)
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
         self.setScaledContents(True)
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        self.setMouseTracking(True) 
         
         self.COLORS = [
         Qt.GlobalColor.red,
@@ -154,6 +156,12 @@ class ImageViewer(QLabel):
         
         self.setPixmap(pixmap)
 
+    def mousePressEvent(self, event):
+        print("CLICK!")
+        if event.button() == Qt.LeftButton:
+            self.pixmapClicked.emit()
+            
+        
 class ImageControl(QWidget):
     def __init__(self, file_list):
         super().__init__()  # "Image controls"
