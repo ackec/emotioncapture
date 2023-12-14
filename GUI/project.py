@@ -19,6 +19,8 @@ from main import MainWindow
 
 from utilities import *
 
+import pandas as pd
+
 import os
 import json
 
@@ -266,12 +268,15 @@ class NewData(DialogPlaceHolder):
 class WorkerThread(QThread):
     finished_signal = pyqtSignal()
 
-    def __init__(self, main):
+    def __init__(self, main, statustext):
         super().__init__()
         self.main = main
+        self.statustext = statustext
 
     def run(self):
-        self.main.inferencer.inference(self.main.project.inference_data[0])
+
+        for status in self.main.inferencer.inference(self.main.project.inference_data[0]):
+            self.statustext.setText(status)
         self.finished_signal.emit()
 
 
@@ -296,6 +301,8 @@ class Processing(QWidget):
         icon_label.setScaledContents(True)
         icon_animation.start()
         icon_animation.setScaledSize(QSize(160, 160))
+        #icon_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
 
         # Text beneath GIF
         self.text = QLabel()
@@ -304,6 +311,7 @@ class Processing(QWidget):
         self.text.setStyleSheet("color: #404040")
         self.text.setFont(font)
         self.text.setText("Processing...")
+        self.text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.main_layout.addWidget(self.text)
 
         self.setLayout(self.main_layout)
@@ -323,7 +331,7 @@ class Processing(QWidget):
         #self.close()
 
     def start_inference(self):
-        self.thread = WorkerThread(self.main)
+        self.thread = WorkerThread(self.main, self.text)
 
         self.thread.finished_signal.connect(self.thread_finished)
 
@@ -334,6 +342,10 @@ class Processing(QWidget):
         self.text.setText("Done")
 
         self.main.file_list.update_file_list()
+
+        self.main.project.project_data = pd.read_csv(self.main.project.path + '/detected_keypoints.csv')
+
+        print(self.main.project.project_data.iloc[:, :5])
 
         print("inference done")
         
@@ -498,6 +510,8 @@ class MouseCreator(QDialog):
         for mouse in registered_mice:
             if mouse.name == name:
                 return False
+        
+        return True
     
 
 
@@ -513,6 +527,7 @@ class MouseCreator(QDialog):
                 name, gender, genotype = self.get_inputs()
                 #print("project name: ", project_name)
                 if name != "" and gender != "" and genotype != "":
+                    print(name, gender, genotype)
                     if self.check_validity_of_name(name):
                         add_mouse(self.mainwindow.project, name, gender, genotype)
                     else:

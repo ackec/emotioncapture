@@ -26,7 +26,7 @@ class ProjectData:
 
     # keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
 
-    keypoints: pd.DataFrame()
+    project_data: pd.DataFrame() = None
 
 
 class MouseData:

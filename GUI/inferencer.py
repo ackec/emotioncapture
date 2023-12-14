@@ -12,8 +12,8 @@ import pandas as pd
 import numpy as np
 from calc_mouse_features import points_to_features
 
-BBOX_MODEL_PATH = "trained_models/pose/mmdeploy_models/mmdet/ort"
-KEYPOINT_MODEL_PATH = "trained_models/pose/mmdeploy_models/mmpose/ort"
+BBOX_MODEL_PATH = "models/pose/mmdeploy_models/mmdet/ort"
+KEYPOINT_MODEL_PATH = "models/pose/mmdeploy_models/mmpose/ort"
 
 # class BaseInferencer(ABC):
 #     def __init__(self, input: str, output: str):
