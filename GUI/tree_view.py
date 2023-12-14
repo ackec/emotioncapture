@@ -41,9 +41,16 @@ class IconProvider(QFileIconProvider):
         
 class TreeView(QWidget):
 
-    def __init__(self):
+    def __init__(self, main=None,image_viewer=None):
     
         QWidget.__init__(self)
+        
+        self.current_index = 0
+        self.image_viewer = image_viewer
+        if main is not None:
+            self.main = main
+            self.data = self.main.project.project_data_frame
+        
         
         
         self.tree_view = QTreeView()
@@ -53,9 +60,10 @@ class TreeView(QWidget):
         
         # Creating a QFileSystemModel
         self.model = QFileSystemModel()
-        self.model.setIconProvider(IconProvider(self))
+        provider = IconProvider(self)
+        self.model.setIconProvider(provider)
         current = os.getcwd() + "/Projects/test_project" ##BASE_PROJECT_DIRECTORY_PATH
-        print(current)
+        
         self.model.setRootPath(current)  # Set the root path to display the entire filesystem
         
         self.tree_view.setModel(self.model)
@@ -77,12 +85,24 @@ class TreeView(QWidget):
         self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree_view.customContextMenuRequested.connect(self.openMenu)
         
+        self.tree_view.clicked.connect(self.select_item)
+        
         layout = QVBoxLayout()
         layout.addWidget(QLabel("{}".format(project_name)))
         layout.addWidget(self.tree_view)
         self.setLayout(layout)
         
         self.create_label_menu()
+    
+    def select_item(self, index: QModelIndex):
+        self.current_index = index.row()
+        path = index.model().filePath(index)
+        name = index.model().fileName(index)
+        
+        data_row = self.data[self.data["Img_Name"] == name]
+        
+        self.image_viewer.display_image(path,data_row)
+        
         
     def create_label_menu(self):
         self.label_menu = QMenu()
@@ -104,9 +124,12 @@ class TreeView(QWidget):
             while index.parent().isValid() and index.parent() != self.tree_view.rootIndex():
                 index = index.parent()
                 level += 1
-                
-        if level == 2:
+        
+        if level == 1:
             self.label_menu.exec_(self.tree_view.viewport().mapToGlobal(position))
+        elif level == 2:
+            self.label_menu.exec_(self.tree_view.viewport().mapToGlobal(position))
+            
    
     def create_label(self):
         label_dialog = LabelDialog()
@@ -122,12 +145,12 @@ class TreeView(QWidget):
         if len(indexes) > 1:
             for ind in indexes:
                 item = ind.model().fileName(ind)
-                print(item)
+                print(ind.model().filePath(ind))
                 
         elif len(indexes) == 1:
             indexes = indexes[0]
             item = indexes.model().fileName(indexes)
-            print(item)
+            print(indexes.model().filePath(indexes))
         else:
             return
     
@@ -135,7 +158,8 @@ class TreeView(QWidget):
         path = "C/Mouse"
         # Creating a QFileSystemModel
         self.model = QFileSystemModel()
-        self.model.setIconProvider(IconProvider())
+        provider = IconProvider()
+        self.model.setIconProvider()
         #current = os.getcwd() + "/Projects/test_project" ##BASE_PROJECT_DIRECTORY_PATH
         #print(current)
         self.model.setRootPath(path)  # Set the root path to display the entire filesystem
