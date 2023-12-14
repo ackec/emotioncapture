@@ -65,9 +65,9 @@ def check_feature_ranges(features):
 
     for idx, val in enumerate(features):
         if is_in_range(val, lower[idx], upper[idx]):
-            return 1
+            return 0
     
-    return 0
+    return 1
 
 
 def is_video_path(file_path):

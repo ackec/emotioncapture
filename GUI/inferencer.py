@@ -66,6 +66,7 @@ class KeyPointInferencer():
             csv_writer = csv.writer(csv_file)
             for i, (result, img_path, mouse_feature, orientation, keypoint_score, profile_score, warn_flag) in enumerate(zip(keypoints, files, mouse_features, orientations, keypoint_scores, profile_scores, warn_flags)):
                 img_path = img_path.as_posix()
+                img_path = os.path.basename(img_path)
                 frame_id = re.search(r'\d+', img_path).group()
                 row = [self.mouse_name, self.video_name, img_path, frame_id, *result.ravel(),
                         *mouse_feature, "baseline", orientation, keypoint_score, profile_score, 0, warn_flag]
