@@ -14,9 +14,9 @@ project_name = "Test Project"
 
 class IconProvider(QFileIconProvider):
 
-    def __init__(self,widget) -> None:
+    def __init__(self,file_list) -> None:
         super().__init__()
-        self.widget = widget
+        self.file_list = file_list
         
     def icon(self, type: QFileIconProvider.IconType):
 
@@ -31,10 +31,17 @@ class IconProvider(QFileIconProvider):
                 warning = QPixmap()
                 warning.load("warning.png")
                 
-                painter = QPainter()
-                painter.begin(a)
-                painter.drawPixmap(QPoint(),warning)
-                painter.end()
+                try: ## Get dataframe
+                    data = self.file_list.main.project.project_data
+                    warn_flag = data[data["Img_Path"] == fn]["warn_flag"]
+                except: ## No dataframe found
+                    warn_flag = False
+
+                if warn_flag:
+                    painter = QPainter()
+                    painter.begin(a)
+                    painter.drawPixmap(QPoint(),warning)
+                    painter.end()
             
             return QIcon(a)
         else:
@@ -54,9 +61,6 @@ class FileList(QWidget):
         if main is not None:
             self.main = main
             
-        
-        
-        
         self.tree_view = QTreeView()
         self.tree_view.setUniformRowHeights(False)
         #self.tree_view.setItemDelegate
@@ -103,11 +107,14 @@ class FileList(QWidget):
         path = index.model().filePath(index)
         name = index.model().fileName(index)
         
-        print(self.data.head())
+        #print(self.data.head())
         ext = os.path.splitext(name)[-1]
         if ext in accepted_types:
-            data_row = self.data[self.data["Img_Path"] == name]
-            
+            try:
+                data_row = self.data[self.data["Img_Path"] == name]
+            except:
+                data_row = None
+                
             self.siblings = self.tree_view.model().rowCount(index.parent())
             self.image_viewer.display_image(path,data_row)
         
