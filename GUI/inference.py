@@ -13,7 +13,7 @@ from torchvision.io import VideoReader
 from torchvision.utils import save_image
 from torchvision.transforms import Resize, Normalize, Compose
 
-
+import time
 from pathlib import Path
 
 # Add the parent directory to sys.path
@@ -165,8 +165,9 @@ class Inferencer():
             #    return
             #if len(predictions) % (10*frame_rate) == 0:
             #   yield f"Processed: {f_times[-1]}s / {video_len} s"
-            if len(predictions) % (10*frame_rate) == 0:
-                print(f"Processed: {f_times[-1]}s / {video_len} s")
+            #if len(predictions) % (10*frame_rate) == 0:
+            yield f"Processed: {f_times[-1]}s / {video_len} s"
+                #print(f"Processed: {f_times[-1]}s / {video_len} s")
 
             frames = transform(images)
             preds = self.profile_detector(frames).squeeze(1).tolist()
@@ -174,7 +175,7 @@ class Inferencer():
             time_stamps.extend(f_times)
         fids_to_save: list[float] = []
 
-
+        yield f"Finalizing Profile Detection Step"
         #print("Fetched all predictions")
             # Save best frame of last second
         prev_saved = {"time": -10.0, "score": 0}
@@ -224,8 +225,9 @@ class Inferencer():
                 path = output_path / (f'img_{fid}_time_{mins}_{secs}_{temp}.{FILE_TYPE}')
                 temp += 1
 
-            print("Saving: ", path)
+            #print("Saving: ", path)
             save_image(image, path)
+            yield f"Saving image , {os.path.basename(path)}"
             self.img_paths.append(path)
             self.img_preds.append(predictions[fid])
 
@@ -260,7 +262,8 @@ class Inferencer():
         self.input_path =  os.path.join(self.save_directory, os.path.splitext(os.path.basename(path))[0])
         self.output = os.path.join(self.project.path, "detected_keypoints.csv")
 
-        self.video_detect_profiles(video[0])
+        for status in self.video_detect_profiles(video[0]):
+            yield status
         
         # # TODO Image inference
         # #if len(images > 1):
@@ -268,6 +271,11 @@ class Inferencer():
 
 
         self.keypoint_detector = KeyPointInferencer(self.input_path, self.output)
+
+        yield "Starting Keypoint Detection..."
+
+        time.sleep(3)
+
 
         keypoints_list = []
         keypoint_scores = []
@@ -278,6 +286,8 @@ class Inferencer():
         warn_flags = []
         orientations = []
         for i, file in enumerate(self.img_paths):
+
+            yield f"Processed: {i}/{len(files)} images"
             img = cv2.imread(file.absolute().as_posix())
             kp, _, _, min_keypoints_score = self.keypoint_detector.forward(img)
 
@@ -304,6 +314,9 @@ class Inferencer():
             mouse_features.append(mouse_feature)
             warn_flags.append(warn_flag)
 
+        yield "Saving Results..."
+
+        time.sleep(2)
         self.keypoint_detector.save_results(keypoints_list, files, mouse_features,
                                             orientations, keypoint_scores, profile_scores,
                                             warn_flags)

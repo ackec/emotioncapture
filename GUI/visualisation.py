@@ -27,8 +27,8 @@ from data import ProjectData
 # from config import DIALOG_WIDTH, DIALOG_HEIGHT, PROCESSING_GIF_PATH
 
 # List of packages that are allowed to be imported
-__all__ = ["MouseFeatures",
-           "VisualisationWidget", "RadarPlot"]
+__all__ = ["MouseFeatures", "VisualisationWidget2",
+           "VisualisationWidget1", "RadarPlot"]
 
 class MouseData():
     def __init__(self, project):
@@ -49,9 +49,9 @@ class MouseData():
             video_df = self.df[self.df["Video_Name"] == video_name]
             stimulis = video_df['Stimuli'].unique()
             for stimuli in stimulis:
-                index = len(self.df_mean)+1
+                index = len(self.df_mean)
                 self.df_mean.loc[index] = video_df[video_df["Stimuli"]==stimuli].iloc[0]
-                self.df_mean.loc[index][self.columns] = video_df[video_df["Stimuli"]==stimuli][self.columns].mean()
+                self.df_mean.loc[index, self.columns] = video_df[video_df["Stimuli"]==stimuli][self.columns].mean()
 
 
         mice_names = self.df['Mouse_Name'].unique()
@@ -60,15 +60,15 @@ class MouseData():
         for mice_name in mice_names:
             mouse_df = self.df[self.df["Mouse_Name"] == mice_name]
             stimulis = mouse_df['Stimuli'].unique()
-            index = len(self.mice_mean_baseline)+1
+            index = len(self.mice_mean_baseline)
             self.mice_mean_baseline.loc[index] =  mouse_df[mouse_df["Stimuli"]==stimuli].iloc[0]
-            self.mice_mean_baseline.loc[index][self.columns] = mouse_df[mouse_df["Stimuli"] == "baseline"][self.columns].mean()
+            self.mice_mean_baseline.loc[index, self.columns] = mouse_df[mouse_df["Stimuli"] == "baseline"][self.columns].mean()
 
 
         self.baseline = self.mice_mean_baseline
         # self.stimulation = self.radardata.iloc[stimuli_start: stimuli_end]/self.baseline.mean()
         # self.recovery = self.radardata.iloc[stimuli_end:]
-
+        
 
         self.baseline_derivation = pd.DataFrame()
         for mouse_name in mice_names:
@@ -80,7 +80,7 @@ class MouseData():
 
         
 
-        self.umap = umap.UMAP(random_state=10).fit_transform(self.df_mean[self.columns].values)
+        self.umap = umap.UMAP().fit_transform(self.df_mean[self.columns].values)
         self.baseline_derivation["umap_x"]=self.umap[:,0]
         self.baseline_derivation["umap_y"]=self.umap[:,1]
 
@@ -90,7 +90,7 @@ class MouseData():
 
 
 
-class VisualisationWidget(QWidget):
+class VisualisationWidget1(QWidget):
 
     def __init__(self, project,file_list):
         self.project = project
@@ -99,7 +99,9 @@ class VisualisationWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
         
-        # self.file_list.clicked.connect(self.blabla)
+        # self.file_list.clicked.connect(self.clicked_image)
+        self.file_list = file_list
+        self.file_list.currentItemChanged.connect(self.clicked_image1)
         self.main_layout = QHBoxLayout(self)
         col1_layout = QHBoxLayout()
         col2_layout = QVBoxLayout(self)
@@ -108,8 +110,8 @@ class VisualisationWidget(QWidget):
         self.mouse_features = MouseFeatures()
         self.mousedata = MouseData(self.project)
         self.line_plot = LinePlot(self.mousedata)
-        self.radar_plot = RadarPlot(self.mousedata, self.line_plot)
-        self.scatter_plot = ScatterPlot(self.mousedata, self.radar_plot, self.mouse_features, self.line_plot)
+        self.radar_plot = RadarPlot(self.mousedata, self.line_plot, self.mouse_features)
+        self.scatter_plot = ScatterPlot(self.mousedata, self.radar_plot, self.mouse_features, self.line_plot, plot_nr = 0)
         self.image_viewer = ImageViewer()
 
         col2_row2_layout.addWidget(self.radar_plot)
@@ -127,6 +129,58 @@ class VisualisationWidget(QWidget):
 
         self.setLayout(self.main_layout)
         # name = index.model().fileName(index)
+    
+    def clicked_image1(self):
+        item = self.file_list.currentItem()
+        file_name = item.text()
+        #self.df["Img_Name"]
+        print(f"CLICK: {file_name}")
+        self.radar_plot.update_radar_plot_file(file_name)
+
+class VisualisationWidget2(QWidget):
+
+    def __init__(self, project, file_list):
+        self.project = project
+        super().__init__()
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        self.file_list = file_list
+        # self.file_list.clicked.connect(self.blabla)
+        self.file_list.currentItemChanged.connect(self.clicked_image2)
+        self.main_layout = QHBoxLayout(self)
+        col1_layout = QHBoxLayout()
+        col2_layout = QVBoxLayout(self)
+        col2_row2_layout = QHBoxLayout(self)
+
+        self.mouse_features = MouseFeatures()
+        self.mousedata = MouseData(self.project)
+        self.line_plot = LinePlot(self.mousedata)
+        self.radar_plot = RadarPlot(self.mousedata, self.line_plot, self.mouse_features)
+        self.scatter_plot = ScatterPlot(self.mousedata, self.radar_plot, self.mouse_features, self.line_plot, plot_nr = 1)
+        self.image_viewer = ImageViewer()
+
+        col2_row2_layout.addWidget(self.radar_plot)
+        col2_row2_layout.addWidget(self.mouse_features)
+
+        # col1_layout.addWidget(ImageFileList(self.image_viewer))
+        col2_layout.addWidget(self.scatter_plot)
+        col2_layout.addWidget(self.line_plot)
+
+        col2_layout.addLayout(col2_row2_layout)
+
+        self.main_layout.addLayout(col1_layout)
+        self.main_layout.addLayout(col2_layout)
+        self.main_layout.addLayout(col2_row2_layout)
+
+        self.setLayout(self.main_layout)
+    
+    def clicked_image2(self):
+        item = self.file_list.currentItem()
+        file_name = item.text()
+        #self.df["Img_Name"]
+        print(f"CLICK: {file_name}")
+        self.radar_plot.update_radar_plot_file(file_name)
 
     def blablabla(self,index):
         pass
@@ -142,10 +196,10 @@ class PlaceHolder(QLabel):
         self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
 
 class RadarPlot(QMainWindow):
-    def __init__(self, mousedata, lineplot):
+    def __init__(self, mousedata, lineplot, mouse_features):
         super().__init__()
         self.mousedata = mousedata
-
+        self.mouse_features = mouse_features
         self.setWindowTitle("Radar Plot")
         self.setGeometry(100, 100, 800, 600)
 
@@ -180,7 +234,40 @@ class RadarPlot(QMainWindow):
         self.ax.set_ylim(0, 2)
 
         self.canvas.draw()
-        self.ax.figure.savefig(f"radarplot_{clicked_index}.pdf")
+        #self.ax.figure.savefig(f"radarplot_{clicked_index}.pdf")
+    
+    def update_radar_plot_file(self, file_name):
+        clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
+        if len(clicked_data) > 0:
+            clicked_data = self.mousedata.df.loc[clicked_data.index[0]]
+            #print(clicked_data)
+            mouse_name = clicked_data["Mouse_Name"]
+
+            normalized_data = clicked_data[self.mousedata.columns] / self.mousedata.mice_mean_baseline[self.mousedata.mice_mean_baseline["Mouse_Name"] == mouse_name][self.mousedata.columns]
+            self.sample = normalized_data.loc[0]
+            # self.sample = self.mousedata.df[self.mousedata.df["Mouse_Name"] == clicked_data["Mouse_Name"]]
+            #print(self.sample)
+            self.ax.clear()
+            self.radar_plot()
+            # self.ax.set_ylim(self.sample.min()-0.2, self.sample.max()+0.2)
+            self.ax.set_ylim(0, 2)
+            #print(normalized_data)
+            info_text = f"Eye Opening: {clicked_data['eye_oppening']:.2f},  {self.sample['eye_oppening']:.2%} \n"\
+                f"Ear Opening: {clicked_data['ear_oppening']:.2f},  {self.sample['ear_oppening']:.2%}\n"\
+                f"Ear Angle: {clicked_data['ear_angle']:.2f},  {self.sample['ear_angle']:.2%}\n"\
+                f"Ear Position: {clicked_data['ear_pos_vec']:.2f},  {self.sample['ear_pos_vec']:.2%}\n"\
+                f"Snout Position: {clicked_data['snout_pos']:.2f},  {self.sample['snout_pos']:.2%}\n"\
+                f"Mouth Position: {clicked_data['mouth_pos']:.2f},  {self.sample['mouth_pos']:.2%}\n"\
+                f"Face inclination: {clicked_data['face_incl']:.2f},  {self.sample['face_incl']:.2%}\n"\
+                f"Video Name: {clicked_data['Video_Name']} \n"\
+                f"File Name: {file_name} \n"\
+                f"Stimuli: {clicked_data['Stimuli']}\n"\
+
+            self.mouse_features.setText(info_text)
+
+            self.canvas.draw()
+
+
 
     def radar_plot(self):
         rad_linspace = np.linspace(0, 2 * np.pi, len(self.mousedata.columns), endpoint=False)
@@ -217,7 +304,7 @@ class RadarPlot(QMainWindow):
             self.lineplot.on_radar_pick(closest_index)
 
 class ScatterPlot(QMainWindow):
-    def __init__(self, mousedata, radar_plot, mouse_features, line_plot):
+    def __init__(self, mousedata, radar_plot, mouse_features, line_plot, plot_nr):
         super().__init__()
         self.mousedata = mousedata
         self.radar_plot = radar_plot
@@ -247,7 +334,7 @@ class ScatterPlot(QMainWindow):
         self.last_clicked_index = None
         # self.stim_start = self.mousedata.stimuli_start
         # self.stim_end = self.mousedata.stimuli_end
-        self.init_scatter_plot()
+        self.init_scatter_plot(plot_nr)
 
     def features_in_range(self):
         self.features["eye_oppening"].between(0.51,0.79)
@@ -263,14 +350,21 @@ class ScatterPlot(QMainWindow):
         # Mouth position: 28-39 (degrees)
         # Face inclination: 62-75 (degrees)
 
-    def init_scatter_plot(self):
-        hdbscan_labels = hdbscan.HDBSCAN(min_samples=1, min_cluster_size=3).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
-        # kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(self.mousedata.umap)
-
-        cmap = ['blue', 'green', 'pink', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan', 'red']
+    def init_scatter_plot(self, plot_nr):
+        
+        cmap = ['blue', 'green', 'purple', 'orange', 'brown', 'teal', 'darkgreen', 'chocolate', 'cyan', 'red', 'pink']
         # clustered = (hdbscan_labels >= 0)
+        #plot = 1
         ax = self.figure.add_subplot(111)
-        self.colous = np.array([cmap[label] for label in hdbscan_labels])
+        if plot_nr == 0:
+            hdbscan_labels = hdbscan.HDBSCAN(min_samples=1, min_cluster_size=3).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
+            self.colous = np.array([cmap[label] for label in hdbscan_labels])
+        elif plot_nr == 1:
+            kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(self.mousedata.umap)
+            self.colous = np.array([cmap[label] for label in kmeans_labels])
+
+        
+        
         is_baseline = self.mousedata.df_mean["Stimuli"] == "baseline"
         is_experiment = self.mousedata.df_mean["Stimuli"] == "experiment"
         is_recovery = self.mousedata.df_mean["Stimuli"] == "recovery"
@@ -300,8 +394,8 @@ class ScatterPlot(QMainWindow):
                 closest_index = np.argmin(distances)
 
                 if self.last_clicked_index is not None:
-                    last_stimuli = self.mousedata.df_mean.loc[self.last_clicked_index+1]["Stimuli"]
-                    old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == last_stimuli].index.get_loc(self.last_clicked_index+1)
+                    last_stimuli = self.mousedata.df_mean.loc[self.last_clicked_index]["Stimuli"]
+                    old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == last_stimuli].index.get_loc(self.last_clicked_index)
 
                     if last_stimuli == "baseline":
                     # if self.last_clicked_index < self.stim_start:
@@ -314,7 +408,7 @@ class ScatterPlot(QMainWindow):
                     
                 # category = self.mousedata.df_mean.iloc[closest_index-1]['Stimuli']
                 clicked_stimuli = self.mousedata.df_mean.iloc[closest_index]["Stimuli"]
-                old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == clicked_stimuli].index.get_loc(closest_index+1)
+                old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == clicked_stimuli].index.get_loc(closest_index)
 
                 if clicked_stimuli == "baseline":
                     self.scatter1._facecolors[old_index_in_category] = (0, 1, 0, 1)
@@ -333,26 +427,23 @@ class ScatterPlot(QMainWindow):
                 print(f"Clicked Point: ({x_clicked:.2f}, {y_clicked:.2f}), from frame {self.features['Frame_ID'][self.last_clicked_index]}, and with path: {self.features['Img_Path'][self.last_clicked_index]}")
                 
                 percental_change = self.mousedata.baseline_derivation.iloc[self.last_clicked_index]
-                features = self.mousedata.df_mean.loc[self.last_clicked_index+1]
+                features = self.mousedata.df_mean.loc[self.last_clicked_index]
                 # features = self.features.iloc[self.last_clicked_index]
                 # percental_change = features / self.mousedata.baseline.mean()
-                info_text = f"Eye Oppening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
-                        f"Ear Oppening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
+                info_text = f"Eye Opening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
+                        f"Ear Opening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
                         f"Ear Angle: {features['ear_angle']:.2f},  {percental_change['ear_angle']:.2%}\n"\
                         f"Ear Position: {features['ear_pos_vec']:.2f},  {percental_change['ear_pos_vec']:.2%}\n"\
                         f"Snout Position: {features['snout_pos']:.2f},  {percental_change['snout_pos']:.2%}\n"\
                         f"Mouth Position: {features['mouth_pos']:.2f},  {percental_change['mouth_pos']:.2%}\n"\
                         f"Face inclination: {features['face_incl']:.2f},  {percental_change['face_incl']:.2%}\n"\
                         f"Colour: {self.colous[self.last_clicked_index]}\n"\
-                        f"Feeling: Unclear \n"\
+                        f"Video Name: {self.features['Video_Name'][self.last_clicked_index]} \n"\
                         f"Image index: {features['Frame_ID']:.2f} \n"\
 
                 self.line_plot.mark_point(self.last_clicked_index)
                 self.mouse_features.setText(info_text)
             self.canvas.draw()
-
-
-
 
 class LinePlot(QMainWindow):
     def __init__(self, mousedata):

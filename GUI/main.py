@@ -2,7 +2,6 @@ import sys
 import os
 from enum import Enum
 # os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = '/usr/lib/x86_64-linux-gnu/qt5/plugins'
-
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
                              QHBoxLayout, QVBoxLayout, QStackedWidget)
 from PyQt5 import QtCore
@@ -10,7 +9,7 @@ from PyQt5 import QtCore
 from validation import *
 from project import *
 from editor import *
-from visualisation import VisualisationWidget
+from visualisation import VisualisationWidget1, VisualisationWidget2
 from data import *
 from tree_view import *
 
@@ -44,11 +43,11 @@ class MainWindow(QMainWindow):
         self.project = ProjectData()
 
         ## TODO remove this ##
-        mouce = MouseData()
-        mouce.name = "mouse1"
-        self.project.mice.append(mouce)
-        self.project.active_mouse_index = 0
-        videopath = "converted_videos/M3N-2021-09-23 10-00-56.mp4"
+        #mouce = MouseData()
+        #mouce.name = "mouse1"
+        #self.project.mice.append(mouce)
+        #self.project.active_mouse_index = 0
+        #videopath = "converted_videos/M3N-2021-09-23 10-00-56.mp4"
         ###########################
         
         ## And move this #########
@@ -125,12 +124,26 @@ class MainWindow(QMainWindow):
         self.edit.triggered.connect(
             lambda: self.editor_dialog.show(self.project.images[0]))
 
-        # Switch window to visualisation
-        self.visualisation = visualisation_menu.addAction("Visualisation")
+        # Switch window to visualisation HDBSCAN
+        self.visualisation = visualisation_menu.addAction("Visualisation HDBSCAN")
         pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
         icon = self.style().standardIcon(pixmapi)
         self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.switchwindow)
+        self.visualisation.triggered.connect(self.switchwindowHDBSCAN)
+
+        # Switch window to visualisation Kmeans
+        self.visualisation = visualisation_menu.addAction("Visualisation kmeans")
+        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        icon = self.style().standardIcon(pixmapi)
+        self.visualisation.setIcon(icon)
+        self.visualisation.triggered.connect(self.switchwindowKmeans)
+
+        # Switch window to main
+        self.visualisation = visualisation_menu.addAction("Main")
+        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        icon = self.style().standardIcon(pixmapi)
+        self.visualisation.setIcon(icon)
+        self.visualisation.triggered.connect(self.switchwindowMain)
 
 
     def create_widgets(self):
@@ -150,7 +163,10 @@ class MainWindow(QMainWindow):
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        self.visualisation_widget = QWidget()#VisualisationWidget(self.project,self.file_list)
+        self.visualisation_widget = QWidget()
+        
+        #self.visualisation_widget1 = VisualisationWidget1(self.project,self.file_list)
+        #self.visualisation_widget2 = VisualisationWidget2(self.project, self.file_list)
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -167,20 +183,44 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget)  # index 0
-        self.modes.addWidget(self.visualisation_widget)  # index 1
+        self.modes.addWidget(self.visualisation_widget1)  # index 1
+        self.modes.addWidget(self.visualisation_widget2)  # index 2
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
 
-    def switchwindow(self):
+    def switchwindowHDBSCAN(self):
         if self.modes.currentIndex() == 0:
             print("switch 1")
             self.modes.setCurrentIndex(1)
+        elif self.modes.currentIndex() == 2:
+            print("switch 2")
+            self.modes.setCurrentIndex(1)
+
+    def switchwindowKmeans(self):
+        if self.modes.currentIndex() == 0:
+            print("switch 1")
+            self.modes.setCurrentIndex(2)
         elif self.modes.currentIndex() == 1:
             print("switch 2")
+            self.modes.setCurrentIndex(2)
+    
+    def switchwindowMain(self):
+        if self.modes.currentIndex() == 1:
+            print("switch 1")
             self.modes.setCurrentIndex(0)
-            self.mouse.init_visualisation(self.project)
-            self.lineinit_line_plot()
+        elif self.modes.currentIndex() == 2:
+            print("switch 2")
+            self.modes.setCurrentIndex(0)
+        
+        #if self.modes.currentIndex() == 0:
+        #    print("switch 1")
+        #    self.modes.setCurrentIndex(1)
+        #elif self.modes.currentIndex() == 1:
+        #    print("switch 2")
+        #    self.modes.setCurrentIndex(0)
+            #self.mouse.init_visualisation(self.project)
+            #self.lineinit_line_plot()
 
 
 def example_project():

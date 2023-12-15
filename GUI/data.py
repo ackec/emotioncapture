@@ -24,11 +24,7 @@ class ProjectData:
 
     inference_data: list["str"] = []
 
-    # keypoints: pd.DataFrame() = pd.read_csv("output_test.csv")
-
-    project_data_frame: pd.DataFrame()
-    
-    keypoints = pd.DataFrame()
+    project_data: pd.DataFrame() = None
     
     ## Columns for dataframe:
     # "Mouse_Name", "Video_Name", "Img_Path", "Frame_ID", "Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
