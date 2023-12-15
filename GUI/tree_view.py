@@ -3,13 +3,11 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import sys, os
-from config import BASE_PROJECT_DIRECTORY_PATH
+from config import BASE_PROJECT_DIRECTORY_PATH,ACCEPTED_TYPES,ICON_SIZE
 
 # List of packages that are allowed to be imported
 __all__ = ["FileList"]
 
-accepted_types = (".jpg",".tiff",".png",".exr",".psd")
-ICON_SIZE = QSize(64,64)
 project_name = "Test Project"
 
 class IconProvider(QFileIconProvider):
@@ -22,8 +20,8 @@ class IconProvider(QFileIconProvider):
 
         fn = type.filePath()
 
-        if fn.endswith(accepted_types):
-            a = QPixmap(ICON_SIZE)
+        if fn.endswith(ACCEPTED_TYPES):
+            a = QPixmap(QSize(ICON_SIZE,ICON_SIZE))
             a.load(fn)
         
             ## Add warning triangle
@@ -66,7 +64,7 @@ class FileList(QWidget):
         self.tree_view = QTreeView()
         self.tree_view.setUniformRowHeights(False)
         #self.tree_view.setItemDelegate
-        self.tree_view.setIconSize(ICON_SIZE)
+        self.tree_view.setIconSize(QSize(ICON_SIZE,ICON_SIZE))
         
         # Creating a QFileSystemModel
         self.model = QFileSystemModel()
@@ -96,11 +94,24 @@ class FileList(QWidget):
         self.tree_view.clicked.connect(self.select_item)
         
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("{}".format(project_name)))
+        self.title_label = QLabel("")
+        layout.addWidget(self.title_label)
         layout.addWidget(self.tree_view)
         self.setLayout(layout)
         
         self.create_label_menu()
+        self.tree_view.hide()
+        
+    def show_file_list(self):
+        project_name = self.main.project.name
+        project_path = self.main.project.path
+        
+        self.title_label.setText(project_name)
+        self.model.setRootPath(project_path)  # Set the root path to display the entire filesystem
+        self.tree_view.setRootIndex(self.model.index(project_path))
+        
+        self.tree_view.show()
+        pass
 
     def select_item(self, index: QModelIndex):
         try:
@@ -113,7 +124,7 @@ class FileList(QWidget):
         name = index.model().fileName(index)
         
         ext = os.path.splitext(name)[-1]
-        if ext in accepted_types:   ##Check if selected item is an image (not folder))
+        if ext in ACCEPTED_TYPES:   ##Check if selected item is an image (not folder))
             try:
                 data_row = self.data[self.data["Img_Path"] == name]
             except:
@@ -136,8 +147,8 @@ class FileList(QWidget):
         rec = self.label.addAction("Recovery")
         rec.triggered.connect(lambda: self.assign_label(rec.text()))
         
-        self.new_label = self.label_menu.addAction(self.tr("Create new label"))
-        self.new_label.triggered.connect(self.create_label)
+        # self.new_label = self.label_menu.addAction(self.tr("Create new label"))
+        # self.new_label.triggered.connect(self.create_label)
     
     def openMenu(self, position):
     
@@ -152,7 +163,7 @@ class FileList(QWidget):
                 index = index.parent()
                 level += 1
         
-        if level > 1:
+        if level >= 1:
             self.label_menu.exec_(self.tree_view.viewport().mapToGlobal(position))
    
     def create_label(self):
@@ -162,8 +173,13 @@ class FileList(QWidget):
             temp.triggered.connect(lambda: self.assign_label(temp.text()))
     
     def assign_label(self,label):
-        #print(label)
-        ##TODO assign the label
+        print(self.main.project.name)
+        try:
+            self.data = self.main.project.project_data
+        except: ##no data found
+            self.data = None     
+            return
+        
         indexes = self.tree_view.selectedIndexes()
         
         if len(indexes) > 1:
@@ -171,53 +187,34 @@ class FileList(QWidget):
                 name = ind.model().fileName(ind)
                 
                 ext = os.path.splitext(name)[-1]
-                if ext in accepted_types:   ##Check if image
-                    data_row = None #self.data[self.data["Img_Name"] == name]
-                    print(ind.model().fileName(ind))
+                if ext in ACCEPTED_TYPES:   ##Check if image
+                    #data_row = self.data[self.data["Img_Name"] == name]
+                    #stimuli
+                    self.data.loc[self.data["Img_Path"] == name,"stimuli"] = label
                     
                 else:   ##Its a folder
                     for i in range(self.tree_view.model().rowCount(ind)):
                         child_index = ind.child(i,0)    ##Every picture in folder
-                        print(child_index.model().fileName(child_index))
-                        pass
+                        child_name = child_index.model().fileName(child_index)
+                        self.data.loc[self.data["Img_Path"] == child_name,"stimuli"] = label
                 
         elif len(indexes) == 1:
             ind = indexes[0]
             name = ind.model().fileName(ind)
                 
             ext = os.path.splitext(name)[-1]
-            if ext in accepted_types:   ##Check if image
-                data_row = None #self.data[self.data["Img_Name"] == name]
-                print(ind.model().fileName(ind))
+            if ext in ACCEPTED_TYPES:   ##Check if image
+                self.data.loc[self.data["Img_Path"] == name,"stimuli"] = label
                 
             else:   ##Its a folder
                 for i in range(self.tree_view.model().rowCount(ind)):
                     child_index = ind.child(i,0)    ##Every picture in folder
-                    print(child_index.model().fileName(child_index))
-                    pass
+                    child_name = child_index.model().fileName(child_index)
+                    self.data.loc[self.data["Img_Path"] == child_name,"stimuli"] = label
         else:
             return
-    
-    def select_folder(self):
-        path = "C/Mouse"
-        # Creating a QFileSystemModel
-        self.model = QFileSystemModel()
-        provider = IconProvider()
-        self.model.setIconProvider(provider)
-        self.model.setRootPath(path)  # Set the root path to display the entire filesystem
-        
-        self.tree_view.setModel(self.model)
-        self.tree_view.setRootIndex(self.model.index(path))
-        
-        #Filter the files shown in the view
-        filters = ['*.png', '*.jpg', '*.jpeg', '*.gif']  # Add more image formats if needed
-        self.model.setNameFilters(filters)
-        self.model.setNameFilterDisables(False)
         
         
-        for i in range(1, self.tree_view.model().columnCount()):
-            self.tree_view.header().hideSection(i)
-
 class LabelDialog(QDialog):
     def __init__(self):
         QDialog.__init__(self)

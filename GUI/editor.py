@@ -48,8 +48,12 @@ class ImageEditorDialog(QDialog):
         self.setLayout(self.main_layout)
 
     def save_points(self):
-        """ Save new points to mouse image data instance. """
-        self.image_data.key_points = self.point_editor.save_points()
+        """ Save new points to dataframe instance. """
+        
+        for names, point in self.point_editor.points.items():
+            self.data.loc[self.data_row.index,names] = point.get_position()
+            #setattr(key_points, name, point.get_position())
+        
         self.hide()
 
     def _zoom(self, amount: float):
@@ -77,22 +81,21 @@ class ImageEditorDialog(QDialog):
         y_pos = self.height() - self.controls.height() - 32
         self.controls.move(x_pos, y_pos)
 
-    def show(self,image_name:str,image_path:str,data_row): #image: MouseImageData):
+    def show(self,image_name:str,image_path:str,data): #image: MouseImageData):
         """ Display edit window with `image`. Image data is edited in-place. """
         if image_path is None or image_name is None:
             return
-
+        
+        self.data = data
+        self.data_row = self.data.loc[self.data["Img_Path"] == image_name]
         self.image_name = image_name
-        self.point_editor.set_image(image_name,image_path,data_row)
+        
+        self.point_editor.set_image(image_name,image_path,self.data_row)
         super().show()
 
 
 class MovablePoint(QGraphicsEllipseItem):
-    COLORS = [
-        Qt.GlobalColor.red,
-        Qt.GlobalColor.green,
-        Qt.GlobalColor.blue,
-    ]
+    
 
     def __init__(self, x, y, size=8, color=None):
         super(MovablePoint, self).__init__(0, 0, size, size)
@@ -127,6 +130,12 @@ class ImagePointEditor(QGraphicsView):
                             "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y",
                             "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y"]
 
+        self.COLORS = [
+            Qt.GlobalColor.red,
+            Qt.GlobalColor.green,
+            Qt.GlobalColor.blue,
+        ]
+            
     def wheelEvent(self, event):
         pass  # Do nothing on scroll
 
@@ -144,34 +153,28 @@ class ImagePointEditor(QGraphicsView):
         self.image = QPixmap(image_path)
         self.scene().addPixmap(self.image)
         
-        key_points = data_row[self.key_columns]
+        self.data_row = data_row
+        #self.data_row = data_row.values
+        self.key_points = data_row[self.key_columns]
         
-        for i in range(len(key_points)):
+        for i in range(self.key_points.size//2):
             j = 2*i
-            name = self.key_columns[j]
-            pt = (key_points[j],key_points[j+1])
+            
+            names = (self.key_columns[j],self.key_columns[j+1])
+            
+            pt = (self.key_points.iloc[0,j],self.key_points.iloc[0,j+1])
             
             color = None
-            if "ear" in name:
+            if "ear" in names[0].lower():
                 color = self.COLORS[0]
-            elif "eye" in name:
+            elif "eye" in names[0].lower():
                 color = self.COLORS[1]
             else:
                 color = self.COLORS[2]
             
             point = MovablePoint(*pt, color=color)
-            self.points[name] = point
+            self.points[names] = point
             self.scene().addItem(point)            
-
-    def save_points(self):
-        """ Extract coordinates from scene and save in new Keypoints instance. """
-        key_points = KeyPoints()
-        for name, point in self.points.items():
-            setattr(key_points, name, point.get_position())
-        # self.project.keypoints.iloc[image_id] 
-
-
-        return key_points
 
 
 class OverlayControls(QWidget):

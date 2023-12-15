@@ -8,6 +8,7 @@ import  re
 import numpy as np
 import time
 from data import *
+from config import ACCEPTED_TYPES
 
 # List of packages that are allowed to be imported
 __all__ = ["ImageMetadataViewer", "ImageControl",
@@ -51,6 +52,43 @@ class ImageViewer(QLabel):
         
         
         
+    def update_image(self,data, size=16):
+        pixmap = QPixmap(self.image_path)
+        
+        name = os.path.basename(self.image_path)
+        print(name)
+        data_row = data[data["Img_Path"]==name]
+        
+        try:
+            painter = QPainter()
+            painter.begin(pixmap)
+            key_points = data_row[self.key_columns]
+            
+            for i in range(key_points.size//2):
+                j = 2*i
+                name = self.key_columns[j]
+                
+                x = key_points.iloc[0,j]
+                y = key_points.iloc[0,j+1]
+                
+                color = None
+                if "ear" in name.lower():
+                    color = self.COLORS[0]
+                elif "eye" in name.lower():
+                    color = self.COLORS[1]
+                else:
+                    color = self.COLORS[2]
+                
+                painter.setBrush(color or Qt.GlobalColor.red)
+                painter.drawEllipse(x - size / 2,y - size / 2,size,size)
+                
+            painter.end()
+        except: ## No keypoints
+            painter.end()
+        
+        self.setPixmap(pixmap)
+    
+        
     def display_image(self, image_path: str, data_row=None, size=16):
         #print(image_path)
         if image_path == "":
@@ -58,46 +96,41 @@ class ImageViewer(QLabel):
             self.setPixmap(pixmap)
             return
         
+        self.image_path = image_path
         pixmap = QPixmap(image_path)
-        #try:
-        painter = QPainter()
-        painter.begin(pixmap)
-        key_points = data_row[self.key_columns]
         
-        for i in range(key_points.size//2):
-            j = 2*i
-            name = self.key_columns[j]
+        try:
+            painter = QPainter()
+            painter.begin(pixmap)
+            key_points = data_row[self.key_columns]
             
-            x = key_points.iloc[0,j]
-            y = key_points.iloc[0,j+1]
-            
-            color = None
-            if "ear" in name or "Ear" in name:
-                color = self.COLORS[0]
-            elif "eye" in name or "Eye" in name:
-                color = self.COLORS[1]
-            else:
-                color = self.COLORS[2]
-            
-            painter.setBrush(color or Qt.GlobalColor.red)
-            painter.drawEllipse(x - size / 2,y - size / 2,size,size)
-            
-        painter.end()
-        #except: ## No keypoints
-        #    painter.end()
-        
+            for i in range(key_points.size//2):
+                j = 2*i
+                name = self.key_columns[j]
+                
+                x = key_points.iloc[0,j]
+                y = key_points.iloc[0,j+1]
+                
+                color = None
+                if "ear" in name.lower():
+                    color = self.COLORS[0]
+                elif "eye" in name.lower():
+                    color = self.COLORS[1]
+                else:
+                    color = self.COLORS[2]
+                
+                painter.setBrush(color or Qt.GlobalColor.red)
+                painter.drawEllipse(x - size / 2,y - size / 2,size,size)
+                
+            painter.end()
+        except: ## No keypoints
+            painter.end()
         
         self.setPixmap(pixmap)
-        
-
-    def mousePressEvent(self, event):
-        print("CLICK!")
-        if event.button() == Qt.LeftButton:
-            self.pixmapClicked.emit()
-            
+    
         
 class ImageControl(QWidget):
-    def __init__(self, file_list):
+    def __init__(self, file_list,data_viewer):
         super().__init__()  # "Image controls"
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
@@ -107,6 +140,7 @@ class ImageControl(QWidget):
         # self.setFixedWidth(500)
 
         self.file_list = file_list
+        self.data_viewer = data_viewer
         self.main_layout = QHBoxLayout()
         self.items = 0
         
@@ -191,6 +225,8 @@ class ImageControl(QWidget):
         self.file_list.tree_view.setCurrentIndex(new_index)
         self.file_list.select_item(new_index)
         self.update_index()
+        self.data_viewer.update_attributes(new_index)
+        
 
     def browse_backward(self):
         index = self.file_list.current_index
@@ -205,6 +241,7 @@ class ImageControl(QWidget):
         self.file_list.tree_view.setCurrentIndex(new_index)
         self.file_list.select_item(new_index)
         self.update_index()
+        self.data_viewer.update_attributes(new_index)
         
         
     def remove_current_image(self):
@@ -235,6 +272,7 @@ class ImageControl(QWidget):
             self.file_list.select_item(new_index)
             self.file_list.tree_view.setCurrentIndex(new_index)
             self.file_list.tree_view.selectionModel().select(new_index,QItemSelectionModel.ClearAndSelect)
+            self.data_viewer.update_attributes(new_index)
             
         else:
             self.file_list.current_index = None
@@ -246,16 +284,17 @@ class ImageControl(QWidget):
         except:
             pass
         
+        
 
     def edit_picture(self):
-        indexes = self.tree_view.selectedIndexes()
+        indexes = self.file_list.tree_view.selectedIndexes()
         ind = indexes[0]
         name = ind.model().fileName(ind)
         path = ind.model().filePath(ind)
         
-        data_row = self.file_list.data[self.file_list.data["Img_Name"] == name]
         
-        self.file_list.main_window.editor_dialog.show(name,path,data_row)
+        self.file_list.main.editor_dialog.show(name,path,self.file_list.data)
+        #self.file_list.image_viewer.update_image(self.file_list.data)
 
 
 class ImageMetadataViewer(QLabel):
@@ -287,9 +326,10 @@ class ImageMetadataViewer(QLabel):
         self.create_label_row("GenoType", "Something", 2)
 
         self.create_label_row("Filename", "placeholder.jpg", 3)
-
-        self.create_label_row("Profile Confidence", 0, 4)
-        self.create_label_row("Key Point Confidence", 0, 5)
+        self.create_label_row("Label", "Baseline", 4)
+        
+        self.create_label_row("ProfileConfidence", 0, 5)
+        self.create_label_row("KeypointConfidence", 0, 6)
 
     def create_label_row(self, description: str, value, row: int):
         if isinstance(value, (int, str)):
@@ -306,35 +346,47 @@ class ImageMetadataViewer(QLabel):
             ValueError("Value must be either integer or string")
 
     def update_label_row(self, description: str, value):
-        if isinstance(value, (int, str)):
+        if isinstance(value, (float,np.float64, str)):
             value_widget = self.attr_to_label_map[description+"_value"]
             value_widget.setText("{}".format(value))
         else:
             ValueError("Value must be either integer or string")
 
-    def update_attributes(self, item: QListWidgetItem):
-        if item is None:
-            return
+    def update_attributes(self, index=None):
+        if index is None:
+            self.clear_attributes()
         
-        indexes = self.file_list.tree_view.selectedIndexes()
-        ind = indexes[0]
-        file_name = ind.model().fileName(ind)
+        file_name = index.model().fileName(index)
+        
+        #try:
+        ext = os.path.splitext(file_name)[-1]
+        if ext not in ACCEPTED_TYPES:   ##Check if selected item is an image (not folder))
+            return
         
         try:
             data = self.file_list.main.project.project_data
-            data_row = data[data["Img_Name"] == file_name]
-                      
-        except:
-            data = None
+            data_row = data[data["Img_Path"] == file_name]
+        except: ## No data found
             return
         
-        current_name = data_row["Mouse_Name"]
-        mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name][0]
+        current_name = data_row["Mouse_Name"].values[0]
+        self.update_label_row("Mouse", current_name)
         
-        self.update_label_row("Mouse", mouse_data.name)
-        self.update_label_row("Gender", mouse_data.gender)
+        #mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
+        #self.update_label_row("Gender", mouse_data.gender)
 
-        self.update_label_row("Filename", data_row["Img_Path"])
+        self.update_label_row("Filename", data_row["Img_Path"].values[0])
+        self.create_label_row("Label", data_row["stimuli"].values[0], 4)
         
-        self.update_label_row("ProfileConfidence", data_row["profile_score"])
-        self.update_label_row("KeypointConfidence",data_row["keypoint_score"])
+        self.update_label_row("ProfileConfidence", round(data_row["profile_score"].values[0],3))
+        self.update_label_row("KeypointConfidence",round(data_row["keypoint_score"].values[0],3))
+        
+    def clear_attributes(self):
+        self.update_label_row("Mouse", "")
+        
+        self.update_label_row("Filename", "")
+        self.create_label_row("Label", "")
+        
+        self.update_label_row("ProfileConfidence", "")
+        self.update_label_row("KeypointConfidence","")
+        

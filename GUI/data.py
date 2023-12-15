@@ -7,7 +7,7 @@ __all__ = ["ProjectData", "MouseData", "KeyPoints", "MouseImageData"]
 class ProjectData:
     """ Meta data about an entire project. """
 
-    name: str = BASE_PROJECT_DIRECTORY_PATH + "Example_project"
+    name: str = "Example_project"
     """ Name of project. """
 
     path: str = BASE_PROJECT_DIRECTORY_PATH + "Example_project/"
@@ -24,8 +24,9 @@ class ProjectData:
 
     inference_data: list["str"] = []
 
-    project_data: pd.DataFrame() = None
+    #project_data: pd.DataFrame() = None
     
+    project_data = pd.DataFrame() #pd.read_csv("Projects/new/detected_keypoints.csv")
     ## Columns for dataframe:
     # "Mouse_Name", "Video_Name", "Img_Path", "Frame_ID", "Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
     # "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",

@@ -18,3 +18,7 @@ ZOOM_RANGE = (0.25, 4)
 
 BASE_PROJECT_DIRECTORY_PATH = "Projects/"
 """ Path to base project folder. """
+
+ACCEPTED_TYPES = (".jpg",".tiff",".png",".exr",".psd")
+
+ICON_SIZE = 64
