@@ -405,10 +405,11 @@ class Processing(QWidget):
         if os.path.exists(self.main.project.path + '/detected_keypoints.csv'):
             self.text.setText("Done")
 
-            self.main.file_list.update_file_list()
+            #self.main.file_list.update_file_list()
             self.main.project.project_data = pd.read_csv(self.main.project.path + '/detected_keypoints.csv')
 
         #print(self.main.project.project_data.iloc[:, :5])
+        #self.main.file_list.update_file_list()
 
             #print("inference done")
 

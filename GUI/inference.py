@@ -1,17 +1,17 @@
 import sys
 import os
 
-
-#sys.path.append('../profile_detector')
-from pathlib import Path
-from matplotlib import pyplot as plt
-
 import torch
 import torch.nn as nn
 
 from torchvision.io import VideoReader
 from torchvision.utils import save_image
 from torchvision.transforms import Resize, Normalize, Compose
+
+#sys.path.append('../profile_detector')
+from pathlib import Path
+from matplotlib import pyplot as plt
+
 
 import time
 from pathlib import Path
