@@ -10,7 +10,7 @@ from PyQt5.QtGui import QMovie, QFont
 from PyQt5.QtWidgets import (QLabel, QSizePolicy, QDialog, QWidget,
                              QVBoxLayout, QPushButton, QStackedWidget,
                              QLineEdit, QHBoxLayout, QFileDialog, QInputDialog,
-                             QComboBox)
+                             QComboBox, QGridLayout)
 
 from config import (DIALOG_WIDTH, DIALOG_HEIGHT, RESOURCE_PATH,
                     BASE_PROJECT_DIRECTORY_PATH)
@@ -121,6 +121,10 @@ class VideoWidget(QWidget):
 
         self.videopath = None
 
+        self.project.inference_data = []
+
+        
+
         layout = QHBoxLayout()
         # Create two QLineEdit widgets
         label = QLabel("Select video or images")
@@ -136,6 +140,8 @@ class VideoWidget(QWidget):
         layout.addWidget(self.input1_line_edit)
         layout.addWidget(browsebtn)
 
+        
+
     def get_video_path(self):
         options = QFileDialog.Options()
         options |= QFileDialog.Option.DontUseNativeDialog
@@ -144,27 +150,84 @@ class VideoWidget(QWidget):
 
         file_dialog.setDirectory(os.getcwd())
 
-        file_filter = "Video Files (*.mp4);;Image Files (*.png *.jpg *.jpeg)"
+        file_filter = "Files (*.png *.jpg *.jpeg *.mp4)"
 
         # Open file explorer for selecting a directory
         file_names, _ = file_dialog.getOpenFileNames(self, "Select Files", "", file_filter)
+
+        if len(file_names) == 0:
+            print("No file selected")
+            return
+
+        if os.path.isdir(file_names[0]):
+            print(len(file_names))
+            assert len(file_names) == 1
+            desired_endings = [".mp4", ".jpg", ".png", ".jpeg"]
+
+            matching_files = []
+
+            files_in_directory = os.listdir(file_names[0])
+
+            absolute_paths = [os.path.join(file_names[0], file_name) for file_name in files_in_directory]
+
+            for file in absolute_paths:
+                if any(file.endswith(endings) for endings in desired_endings):
+                    matching_files.append(file)
+
+            if len(matching_files) > 0:
+                self.videopath = matching_files
+                self.show_input()
+                #if self.project.active_mouse_index:
+                #    self.start.setEnabled(True)
+                for file in self.videopath:
+                    self.project.inference_data.append(file)
+
+                if self.project.active_mouse_index:
+                    self.start.setEnabled(True)
+
+            return
+
+
+
+
         if file_names:
+
+            #print(len(file_names))
             #print(file_names)
             self.videopath = file_names
-            print("Selected file: ", self.videopath)
+            #print("Selected file: ", self.videopath)
             self.show_input()
+            #if self.project.active_mouse_index:
+            #    self.start.setEnabled(True)
+            #self.videopath = self.videopath[0]
+            #print(self.videopath)
+            for file in self.videopath:
+                self.project.inference_data.append(file)
+
             if self.project.active_mouse_index:
                 self.start.setEnabled(True)
-            self.videopath = self.videopath[0]
-            #print(self.videopath)
 
-            self.project.inference_data.append(self.videopath)
+            return
         else:
-            OSError("Video must be a mp4")
+            OSError("Video must be a mp4, jpg, png or jpeg or directory containing any of those")
+        
+        return
 
     def show_input(self):
         if self.videopath:
-            self.input1_line_edit.setText(self.videopath[0])
+            length = len(self.videopath)
+            if length > 1:
+                self.input1_line_edit.setText(self.videopath[0] + " and {length} others")
+            else:
+                self.input1_line_edit.setText(self.videopath[0])
+
+        
+        
+    def showEvent(self, event):
+
+        self.input1_line_edit.setText("")
+        self.project.inference_data = []
+        super().showEvent(event)
 
 
 
@@ -274,8 +337,8 @@ class WorkerThread(QThread):
         self.statustext = statustext
 
     def run(self):
-
-        for status in self.main.inferencer.inference(self.main.project.inference_data[0]):
+        #print(self.main.project.inference_data)
+        for status in self.main.inferencer.inference(self.main.project.inference_data):
             self.statustext.setText(status)
         self.finished_signal.emit()
 
@@ -312,6 +375,7 @@ class Processing(QWidget):
         self.text.setFont(font)
         self.text.setText("Processing...")
         self.text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.text.setWordWrap(True)
         self.main_layout.addWidget(self.text)
 
         self.setLayout(self.main_layout)
@@ -338,16 +402,19 @@ class Processing(QWidget):
         self.thread.start()
 
     def thread_finished(self):
+        if os.path.exists(self.main.project.path + '/detected_keypoints.csv'):
+            self.text.setText("Done")
 
-        self.text.setText("Done")
+            self.main.file_list.update_file_list()
+            self.main.project.project_data = pd.read_csv(self.main.project.path + '/detected_keypoints.csv')
 
-        self.main.file_list.update_file_list()
+        #print(self.main.project.project_data.iloc[:, :5])
 
-        self.main.project.project_data = pd.read_csv(self.main.project.path + '/detected_keypoints.csv')
+            #print("inference done")
 
-        print(self.main.project.project_data.iloc[:, :5])
+        else: 
+            self.text.setText("Something went wrong")
 
-        print("inference done")
         
 
 
@@ -439,44 +506,94 @@ class MouseCreator(QDialog):
         self.setWindowTitle("Add new mouse")
         self.set_size()
 
-        text = QLabel("Add new mouse to project by filling the inputs below")
+        text = QLabel("Add new mouse to project by providing the information below.")
+        font = QFont('Arial', 11)
+        text.setStyleSheet("color: #404040")
+        text.setFont(font)
+        text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        text.setWordWrap(True)
 
-        text_name = QLabel("Mouse name: ")
+        text_name = QLabel("Mouse Name: ")
         self.input_name = QLineEdit()
         #text_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         #text_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        text_gender = QLabel("Mouse gender: ")
+        text_gender = QLabel("Mouse Gender: ")
         self.input_gender = QLineEdit()
         #text_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         #text_gender.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        text_genotype = QLabel("Mouse genotype")
+        text_genotype = QLabel("Mouse Genotype: ")
         self.input_genotype = QLineEdit()
         #text_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         #text_genotype.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        text_weight = QLabel("Mouse Weight: ")
+        self.input_weight = QLineEdit()
+
+        text_age = QLabel("Mouse Age: ")
+        self.input_age = QLineEdit()
         
         accept_button = QPushButton("Add Mouse", self)
         accept_button.clicked.connect(self.accept)
 
         layout = QVBoxLayout()
-        layout_name = QHBoxLayout()
-        layout_gender = QHBoxLayout()
-        layout_genotype = QHBoxLayout()
+        #layout_name = QHBoxLayout()
+        #layout_gender = QHBoxLayout()
+        #layout_genotype = QHBoxLayout()
+        #layout_weight = QHBoxLayout()
+        #layout_age = QHBoxLayout()
+        grid_layout = QGridLayout()
 
-        layout_name.addWidget(text_name)
-        layout_name.addWidget(self.input_name)
+        #layout_name.addWidget(text_name)
+        #layout_name.addWidget(self.input_name)
+        #layout_name.setStretch(1, 1)
 
-        layout_gender.addWidget(text_gender)
-        layout_gender.addWidget(self.input_gender)
+        #layout_gender.addWidget(text_gender)
+        #layout_gender.addWidget(self.input_gender)
+        #layout_gender.setStretch(1, 1)
 
-        layout_genotype.addWidget(text_genotype)
-        layout_genotype.addWidget(self.input_genotype)
 
+        #layout_genotype.addWidget(text_genotype)
+        #layout_genotype.addWidget(self.input_genotype)
+        #layout_genotype.setStretch(1, 1)
+
+        #layout_weight.addWidget(text_weight)
+        #layout_weight.addWidget(self.input_weight)
+        #layout_weight.setStretch(1, 1)
+
+        #layout_age.addWidget(text_age)
+        #layout_age.addWidget(self.input_age)
+        #layout_age.setStretch(1, 1)
+
+        grid_layout.addWidget(text_name, 0, 0)
+        grid_layout.addWidget(self.input_name, 0, 1)
+
+        grid_layout.addWidget(text_gender, 1, 0)
+        grid_layout.addWidget(self.input_gender, 1, 1)
+
+        grid_layout.addWidget(text_genotype, 2, 0)
+        grid_layout.addWidget(self.input_genotype, 2, 1)
+
+        grid_layout.addWidget(text_weight, 3, 0)
+        grid_layout.addWidget(self.input_weight, 3, 1)
+
+        grid_layout.addWidget(text_age, 4, 0)
+        grid_layout.addWidget(self.input_age, 4, 1)
+
+        #layout.addLayout(grid_layout)
+
+
+        #layout.setContentsMargins(0, 0, 0, 0)
+        #layout.addStretch(1)
         layout.addWidget(text)
-        layout.addLayout(layout_name)
-        layout.addLayout(layout_gender)
-        layout.addLayout(layout_genotype)
+
+        layout.addLayout(grid_layout)
+        #layout.addLayout(layout_name)
+        #layout.addLayout(layout_gender)
+        #layout.addLayout(layout_genotype)
+        #layout.addLayout(layout_weight)
+        #layout.addLayout(layout_age)
         layout.addWidget(accept_button)
 
         self.setLayout(layout)
@@ -486,15 +603,15 @@ class MouseCreator(QDialog):
         """
             Set window geometry
         """
-        self.setGeometry(100, 100, 200, 300)
-        self.setMinimumSize(200, 300)
+        self.setGeometry(100, 100, 400, 200)
+        self.setMinimumSize(400, 300)
         self.setMaximumSize(200, 300)
 
     def get_inputs(self):
         """
             Get user input texts from QLineEdit
         """
-        return self.input_name.text(), self.input_gender.text(), self.input_genotype.text()
+        return self.input_name.text(), self.input_gender.text(), self.input_genotype.text(), self.input_weight.text(), self.input_age.text()
     
     def check_if_project(self):
         if self.mainwindow.project.name != "":
@@ -524,12 +641,12 @@ class MouseCreator(QDialog):
         if self.mainwindow.project.name != "":
             result = self.exec_()
             if result == QDialog.Accepted:
-                name, gender, genotype = self.get_inputs()
+                name, gender, genotype, weight, age = self.get_inputs()
                 #print("project name: ", project_name)
-                if name != "" and gender != "" and genotype != "":
+                if name != "" and gender != "" and genotype != "" and weight != "" and age != "":
                     print(name, gender, genotype)
                     if self.check_validity_of_name(name):
-                        add_mouse(self.mainwindow.project, name, gender, genotype)
+                        add_mouse(self.mainwindow.project, name, gender, genotype, weight, age)
                     else:
                         print("Mouse with that name already exists, please enter a non existing name")
 

@@ -2,6 +2,7 @@ from data import *
 from config import BASE_PROJECT_DIRECTORY_PATH
 import os
 import json
+import pandas as pd
 
 
 def init_project(name: str, path: str):
@@ -53,10 +54,15 @@ def load_project(Project: ProjectData, path: str):
         
         Project.name = data["project_name"]
         Project.path = data["project_path"]
+        # Reset
+        Project.mice = []
         for mouse in data["registered_mice"]:
             m_data = MouseData()
             m_data.name = mouse["name"]
             m_data.gender = mouse["gender"]
+            m_data.genotype = mouse["genotype"]
+            m_data.weight = mouse["weight"]
+            m_data.age = mouse["age"]
             # TODO
             # Add genotype?
             Project.mice.append(m_data)
@@ -64,13 +70,18 @@ def load_project(Project: ProjectData, path: str):
         print("Loaded project with parameters:")
         print("Project name: ", Project.name)
         print("Project path: ", Project.path)
-        for mouse in Project.mice:
-            print("Mouse name: ", mouse.name, "     Mouse gender: ", mouse.gender)
+        #for mouse in Project.mice:
+        #    print("Mouse name: ", mouse.name, "     Mouse gender: ", mouse.gender)
+
+        if os.path.exists(os.path.join(path, "detected_keypoints.csv")):
+            Project.project_data = pd.read_csv(os.path.join(path, "detected_keypoints.csv"))
+        else:
+            Project.project_data = None
     else:
         print("Project does not exist")
     return
 
-def add_mouse(Project: ProjectData, name: str, gender: str, genotype: str):
+def add_mouse(Project: ProjectData, name: str, gender: str, genotype: str, weight: str, age: str):
     project_path = Project.path
 
 
@@ -82,7 +93,9 @@ def add_mouse(Project: ProjectData, name: str, gender: str, genotype: str):
     print(list(data.keys()))
 
     new = {"name": '{name}'.format(name=name), "gender": '{gender}'.format(gender=gender),
-               "genotype": '{genotype}'.format(genotype=genotype)}
+               "genotype": '{genotype}'.format(genotype=genotype),
+               "weight": '{weight}'.format(weight=weight),
+               "age": '{age}'.format(age=age)}
 
     data["registered_mice"].append(new)
 
@@ -94,7 +107,9 @@ def add_mouse(Project: ProjectData, name: str, gender: str, genotype: str):
     mouse = MouseData()
     mouse.name = name
     mouse.gender = gender
-    #mouse.genotype = genotype
+    mouse.genotype = genotype
+    mouse.weight = weight
+    mouse.age = age
 
     Project.mice.append(mouse)
 

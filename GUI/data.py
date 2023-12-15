@@ -41,6 +41,12 @@ class MouseData:
     # videos: list["str"] = []
     # """ Filepath to videos belonging to the mouce. """
 
+    genotype: str = ""
+
+    weight: str = ""
+
+    age: str = ""
+
 
 class KeyPoints:
     """ Key points as (x, y) coordinates for an image. """

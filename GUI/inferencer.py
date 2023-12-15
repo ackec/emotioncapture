@@ -117,7 +117,7 @@ class KeyPointInferencer():
                 if not os.path.exists(path):
                     os.mkdir(path)
                 name = f'vis_{file}'
-                print(name)
+                #print(name)
                 cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 10, 10), 2)
                 for [x, y] in keypoints.astype(int):
                     cv2.circle(img, (x, y), 1, (10, 255, 10), 7)

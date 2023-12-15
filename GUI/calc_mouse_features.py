@@ -87,7 +87,7 @@ def points_to_features(points):
 
     ear_pos_vec = 180 - new_ear_pos
     ear_angle = 180 - np.abs(ear_angle_sin)
-    print(ear_angle)
+    #print(ear_angle)
     # Set all ear_angle to 180 degrees where back_ear-front_ear line intersects bot_ear-top_ear line.
     mask = intersect(back_ear,front_ear,bot_ear,top_ear)
     ear_angle[mask] = 180
