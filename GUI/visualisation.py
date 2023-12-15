@@ -140,6 +140,14 @@ class VisualisationWidget1(QWidget):
         
     def clicked_tree1(self,index):
         file_name = index.model().fileName(index)
+        
+        """ 
+        ## Use this to check if the selected item was an image
+        ext = os.path.splitext(file_name)[-1]
+        if ext not in ACCEPTED_TYPES:   ##Check if selected item is an image (not folder))
+            return
+        """
+        
         #self.df["Img_Name"]
         print(f"CLICK: {file_name}")
         self.radar_plot.update_radar_plot_file(file_name)
@@ -193,6 +201,13 @@ class VisualisationWidget2(QWidget):
     
     def clicked_tree2(self,index):
         file_name = index.model().fileName(index)
+        """ 
+        ## Use this to check if the selected item was an image
+        ext = os.path.splitext(file_name)[-1]
+        if ext not in ACCEPTED_TYPES:   ##Check if selected item is an image (not folder))
+            return
+        """
+        
         #self.df["Img_Name"]
         print(f"CLICK: {file_name}")
         self.radar_plot.update_radar_plot_file(file_name)

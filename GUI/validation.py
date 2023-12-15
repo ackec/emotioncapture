@@ -56,12 +56,13 @@ class ImageViewer(QLabel):
         pixmap = QPixmap(self.image_path)
         
         name = os.path.basename(self.image_path)
-        print(name)
         data_row = data[data["Img_Path"]==name]
         
-        try:
-            painter = QPainter()
-            painter.begin(pixmap)
+        
+        painter = QPainter()
+        painter.begin(pixmap)
+        
+        if data is not None:
             key_points = data_row[self.key_columns]
             
             for i in range(key_points.size//2):
@@ -81,10 +82,10 @@ class ImageViewer(QLabel):
                 
                 painter.setBrush(color or Qt.GlobalColor.red)
                 painter.drawEllipse(x - size / 2,y - size / 2,size,size)
-                
-            painter.end()
-        except: ## No keypoints
-            painter.end()
+            
+        painter.end()
+        # except: ## No keypoints
+        #     painter.end()
         
         self.setPixmap(pixmap)
     
@@ -99,11 +100,11 @@ class ImageViewer(QLabel):
         self.image_path = image_path
         pixmap = QPixmap(image_path)
         
-        try:
-            painter = QPainter()
-            painter.begin(pixmap)
+        painter = QPainter()
+        painter.begin(pixmap)
+        
+        if data_row is not None:
             key_points = data_row[self.key_columns]
-            
             for i in range(key_points.size//2):
                 j = 2*i
                 name = self.key_columns[j]
@@ -121,10 +122,10 @@ class ImageViewer(QLabel):
                 
                 painter.setBrush(color or Qt.GlobalColor.red)
                 painter.drawEllipse(x - size / 2,y - size / 2,size,size)
-                
-            painter.end()
-        except: ## No keypoints
-            painter.end()
+        
+        painter.end()
+        # except: ## No keypoints
+        #     painter.end()
         
         self.setPixmap(pixmap)
     
@@ -160,6 +161,7 @@ class ImageControl(QWidget):
                                 Qt.AlignmentFlag.AlignVCenter)
 
         self.image_index = QLabel()
+        self.image_index.setToolTip("Current selected image")
         self.image_index.setText("{} / {}".format(0, 0))
         
         self.file_list.tree_view.clicked.connect(self.update_index)        
@@ -355,7 +357,6 @@ class ImageMetadataViewer(QLabel):
     def update_attributes(self, index=None):
         if index is None:
             self.clear_attributes()
-        
         file_name = index.model().fileName(index)
         
         #try:
@@ -363,17 +364,19 @@ class ImageMetadataViewer(QLabel):
         if ext not in ACCEPTED_TYPES:   ##Check if selected item is an image (not folder))
             return
         
+        data = self.file_list.main.project.project_data
         try:
-            data = self.file_list.main.project.project_data
             data_row = data[data["Img_Path"] == file_name]
+            
         except: ## No data found
             return
         
         current_name = data_row["Mouse_Name"].values[0]
         self.update_label_row("Mouse", current_name)
         
-        #mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
-        #self.update_label_row("Gender", mouse_data.gender)
+        mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
+        if mouse_data > 0:
+            self.update_label_row("Gender", mouse_data.gender)
 
         self.update_label_row("Filename", data_row["Img_Path"].values[0])
         self.create_label_row("Label", data_row["stimuli"].values[0], 4)
