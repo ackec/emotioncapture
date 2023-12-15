@@ -68,8 +68,6 @@ class FileList(QWidget):
         
         # Creating a QFileSystemModel
         self.model = QFileSystemModel()
-        provider = IconProvider(self)
-        self.model.setIconProvider(provider)
         
         project_path = os.getcwd() + "/" + BASE_PROJECT_DIRECTORY_PATH # + "/" + project.name
         
@@ -106,6 +104,8 @@ class FileList(QWidget):
         project_name = self.main.project.name
         project_path = self.main.project.path
         
+        provider = IconProvider(self)
+        self.model.setIconProvider(provider)
         self.title_label.setText(project_name)
         self.model.setRootPath(project_path)  # Set the root path to display the entire filesystem
         self.tree_view.setRootIndex(self.model.index(project_path))

@@ -268,7 +268,7 @@ class ImageControl(QWidget):
         self.image_index.setText("{} / {}".format(new_row,self.items))
         
         if index.model().fileName(index) == new_index.model().fileName(new_index):
-                new_index = parent.child(1,0)
+            new_index = parent.child(1,0)
                 
         if new_index.isValid():
             self.file_list.select_item(new_index)
@@ -283,6 +283,10 @@ class ImageControl(QWidget):
             
         try:
             self.file_list.tree_view.model().remove(index)
+            name = index.model().fileName(index)
+            data = self.file_list.main.project.project_data
+            data_row =  self.data.loc[self.data["Img_Path"] == name]
+            data.drop(data_row.index)
         except:
             pass
         
@@ -375,7 +379,7 @@ class ImageMetadataViewer(QLabel):
         self.update_label_row("Mouse", current_name)
         
         mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
-        if mouse_data > 0:
+        if len(mouse_data) > 0:
             self.update_label_row("Gender", mouse_data.gender)
 
         self.update_label_row("Filename", data_row["Img_Path"].values[0])
