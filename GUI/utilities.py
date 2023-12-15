@@ -3,7 +3,7 @@ from config import BASE_PROJECT_DIRECTORY_PATH
 import os
 import json
 import pandas as pd
-
+from tree_view import FileList
 
 def init_project(name: str, path: str):
 
@@ -29,7 +29,7 @@ def init_project(name: str, path: str):
         json.dump(data, file, indent=2)
 
 
-def create_project(Project: ProjectData, path: str):
+def create_project(Project: ProjectData, path: str, file_list = FileList):
     try:
         # Create the directory
         os.makedirs(path)
@@ -44,10 +44,11 @@ def create_project(Project: ProjectData, path: str):
 
     init_project(Project.name, Project.path)
     
+    file_list.show_file_list()
     return
 
 
-def load_project(Project: ProjectData, path: str):
+def load_project(Project: ProjectData, path: str, filelist: FileList):
     if os.path.exists(os.path.join(path, "meta.json")):
         with open(os.path.join(path, "meta.json"), 'r') as file:
             data = json.load(file)
@@ -77,6 +78,8 @@ def load_project(Project: ProjectData, path: str):
             Project.project_data = pd.read_csv(os.path.join(path, "detected_keypoints.csv"))
         else:
             Project.project_data = None
+        
+        filelist.show_file_list()
     else:
         print("Project does not exist")
     return

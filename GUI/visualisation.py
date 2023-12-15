@@ -322,10 +322,10 @@ class ScatterPlot(QMainWindow):
         #plot = 1
         ax = self.figure.add_subplot(111)
         if plot_nr == 0:
-            hdbscan_labels = hdbscan.HDBSCAN(min_samples=1, min_cluster_size=3).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
+            hdbscan_labels = hdbscan.HDBSCAN(min_samples=1, min_cluster_size=2).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
             self.colous = np.array([cmap[label] for label in hdbscan_labels])
         elif plot_nr == 1:
-            kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(self.mousedata.umap)
+            kmeans_labels = cluster.KMeans(n_clusters=2).fit_predict(self.mousedata.umap)
             self.colous = np.array([cmap[label] for label in kmeans_labels])
 
 

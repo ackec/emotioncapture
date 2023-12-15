@@ -84,19 +84,19 @@ class MainWindow(QMainWindow):
         newnew.triggered.connect(
             lambda: self.new_project_dialog.show()
         )
-        newnew.triggered.connect(
-            lambda: self.file_list.show_file_list()
-        )
+        #newnew.triggered.connect(
+        #    lambda: self.file_list.show_file_list()
+        #)
 
                 # Create new project button
         newnew = file_menu.addAction("Open Project")
         newnew.setIcon(icon)
         newnew.triggered.connect(
-            lambda: open_directory_dialog(self.project)
+            lambda: open_directory_dialog(self.project, self.file_list)
         )
-        newnew.triggered.connect(
-            lambda: self.file_list.show_file_list()
-        )
+        #newnew.triggered.connect(
+        #    lambda: self.file_list.show_file_list()
+        #)
         
         # Create Add Mouse to project button
         newnew = file_menu.addAction("Add Mouse to Project")
@@ -160,7 +160,7 @@ class MainWindow(QMainWindow):
 
         # Dialogs
         self.project_dialog = ProjectDialog(self)
-        self.new_project_dialog = NewProject(self)
+        self.new_project_dialog = NewProject(self, self.file_list)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
         self.visualisation_widget = VisualisationWidget(self.file_list)

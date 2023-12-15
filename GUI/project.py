@@ -26,6 +26,8 @@ import json
 
 import time
 
+from tree_view import FileList
+
 __all__ = ["ProjectDialog", "ProjectMode", "NewProject", "MouseCreator", "NewData", "open_directory_dialog"]
 
 
@@ -427,12 +429,12 @@ class ProcessingFailed(DialogPlaceHolder):
 
 
 class NewProject(QDialog):
-    def __init__(self, main: MainWindow):
+    def __init__(self, main: MainWindow, filelist: FileList):
         super().__init__()
 
         # 
         self.mainwindow = main
-
+        self.file_list = filelist
         #print(self.mainwindow.Project)
 
         # Set window parameters
@@ -493,8 +495,9 @@ class NewProject(QDialog):
                 if os.path.exists(project_path):
                     print("Project with that name already exists")
                 else:
-                    create_project(self.mainwindow.project, project_path)
+                    create_project(self.mainwindow.project, project_path, self.file_list)
                     print("Created new project at: ", project_path)
+
 
     
 class MouseCreator(QDialog):
@@ -653,7 +656,7 @@ class MouseCreator(QDialog):
 
 
 
-def open_directory_dialog(project: ProjectData):
+def open_directory_dialog(project: ProjectData, filelist: FileList):
     # Open the directory dialog
     dir_dialog = QFileDialog()
     
@@ -667,4 +670,4 @@ def open_directory_dialog(project: ProjectData):
     # Check if a directory was selected
     if selected_directory:
         print(f'Selected Directory: {selected_directory}')
-        load_project(project, selected_directory)
+        load_project(project, selected_directory, filelist)

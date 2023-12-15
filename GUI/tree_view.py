@@ -103,7 +103,7 @@ class FileList(QWidget):
     def show_file_list(self):
         project_name = self.main.project.name
         project_path = self.main.project.path
-        
+        print("hej")
         provider = IconProvider(self)
         self.model.setIconProvider(provider)
         self.title_label.setText(project_name)
@@ -138,13 +138,13 @@ class FileList(QWidget):
         self.label_menu = QMenu()
         self.label = self.label_menu.addMenu(self.tr("Assign label"))
         
-        base = self.label.addAction("Baseline")
+        base = self.label.addAction("baseline")
         base.triggered.connect(lambda: self.assign_label(base.text()))
         
-        stim = self.label.addAction("Stimulation")
+        stim = self.label.addAction("experiment")
         stim.triggered.connect(lambda: self.assign_label(stim.text()))
         
-        rec = self.label.addAction("Recovery")
+        rec = self.label.addAction("recovery")
         rec.triggered.connect(lambda: self.assign_label(rec.text()))
         
         # self.new_label = self.label_menu.addAction(self.tr("Create new label"))
@@ -190,13 +190,13 @@ class FileList(QWidget):
                 if ext in ACCEPTED_TYPES:   ##Check if image
                     #data_row = self.data[self.data["Img_Name"] == name]
                     #stimuli
-                    self.data.loc[self.data["Img_Path"] == name,"stimuli"] = label
+                    self.data.loc[self.data["Img_Path"] == name,"Stimuli"] = label
                     
                 else:   ##Its a folder
                     for i in range(self.tree_view.model().rowCount(ind)):
                         child_index = ind.child(i,0)    ##Every picture in folder
                         child_name = child_index.model().fileName(child_index)
-                        self.data.loc[self.data["Img_Path"] == child_name,"stimuli"] = label
+                        self.data.loc[self.data["Img_Path"] == child_name,"Stimuli"] = label
                 
         elif len(indexes) == 1:
             ind = indexes[0]
@@ -204,13 +204,13 @@ class FileList(QWidget):
                 
             ext = os.path.splitext(name)[-1]
             if ext in ACCEPTED_TYPES:   ##Check if image
-                self.data.loc[self.data["Img_Path"] == name,"stimuli"] = label
+                self.data.loc[self.data["Img_Path"] == name,"Stimuli"] = label
                 
             else:   ##Its a folder
                 for i in range(self.tree_view.model().rowCount(ind)):
                     child_index = ind.child(i,0)    ##Every picture in folder
                     child_name = child_index.model().fileName(child_index)
-                    self.data.loc[self.data["Img_Path"] == child_name,"stimuli"] = label
+                    self.data.loc[self.data["Img_Path"] == child_name,"Stimuli"] = label
         else:
             return
         
