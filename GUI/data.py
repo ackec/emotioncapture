@@ -26,7 +26,7 @@ class ProjectData:
 
     #project_data: pd.DataFrame() = None
     
-    project_data = pd.DataFrame() #pd.read_csv("Projects/new/detected_keypoints.csv")
+    project_data = None #pd.DataFrame() #pd.read_csv("Projects/new/detected_keypoints.csv")
     ## Columns for dataframe:
     # "Mouse_Name", "Video_Name", "Img_Path", "Frame_ID", "Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y",
     # "Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y",

@@ -369,25 +369,26 @@ class ImageMetadataViewer(QLabel):
             return
         
         data = self.file_list.main.project.project_data
-        try:
-            data_row = data[data["Img_Path"] == file_name]
-            
-        except: ## No data found
-            return
         
-        current_name = data_row["Mouse_Name"].values[0]
-        self.update_label_row("Mouse", current_name)
-        
-        mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
-        if len(mouse_data) > 0:
-            self.update_label_row("Gender", mouse_data.gender)
+        if data is not None:
+            try:
+                data_row = data[data["Img_Path"] == file_name]
+                
+                current_name = data_row["Mouse_Name"].values[0]
+                self.update_label_row("Mouse", current_name)
+                
+                mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
+                if len(mouse_data) > 0:
+                    self.update_label_row("Gender", mouse_data.gender)
 
-        self.update_label_row("Filename", data_row["Img_Path"].values[0])
-        self.create_label_row("Label", data_row["stimuli"].values[0], 4)
-        
-        self.update_label_row("ProfileConfidence", round(data_row["profile_score"].values[0],3))
-        self.update_label_row("KeypointConfidence",round(data_row["keypoint_score"].values[0],3))
-        
+                self.update_label_row("Filename", data_row["Img_Path"].values[0])
+                self.create_label_row("Label", data_row["stimuli"].values[0], 4)
+                
+                self.update_label_row("ProfileConfidence", round(data_row["profile_score"].values[0],3))
+                self.update_label_row("KeypointConfidence",round(data_row["keypoint_score"].values[0],3))
+            except:
+                return
+            
     def clear_attributes(self):
         self.update_label_row("Mouse", "")
         

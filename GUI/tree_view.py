@@ -173,7 +173,7 @@ class FileList(QWidget):
             temp.triggered.connect(lambda: self.assign_label(temp.text()))
     
     def assign_label(self,label):
-        print(self.main.project.name)
+        #print(self.main.project.name)
         try:
             self.data = self.main.project.project_data
         except: ##no data found
