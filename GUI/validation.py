@@ -1,10 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen
-<<<<<<< HEAD
 from PyQt5.QtCore import Qt, QSize, QItemSelectionModel
-=======
-from PyQt5.QtCore import Qt, QSize, pyqtSignal
->>>>>>> main
 import tkinter
 from tkinter import filedialog
 import os
@@ -34,7 +30,6 @@ class ImageViewer(QLabel):
     def __init__(self):
         super().__init__()  # "Image viewer"
         # self.setText("Image viewer")
-        pixmapClicked = pyqtSignal()
 
         self.setMinimumSize(640, 320)
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
@@ -64,31 +59,32 @@ class ImageViewer(QLabel):
             return
         
         pixmap = QPixmap(image_path)
-        try:
-            painter = QPainter()
-            painter.begin(pixmap)
-            key_points = data_row[self.key_columns]
+        #try:
+        painter = QPainter()
+        painter.begin(pixmap)
+        key_points = data_row[self.key_columns]
         
-            for i in range(len(key_points)):
-                j = 2*i
-                name = self.key_columns[j]
-                x = key_points[j]
-                y = key_points[j+1]
-                
-                color = None
-                if "ear" in name:
-                    color = self.COLORS[0]
-                elif "eye" in name:
-                    color = self.COLORS[1]
-                else:
-                    color = self.COLORS[2]
-                
-                painter.setBrush(color or Qt.GlobalColor.red)
-                painter.drawEllipse(x - size / 2,y - size / 2,size,size)
-                
-            painter.end()
-        except: ## No keypoints
-            painter.end()
+        for i in range(key_points.size//2):
+            j = 2*i
+            name = self.key_columns[j]
+            
+            x = key_points.iloc[0,j]
+            y = key_points.iloc[0,j+1]
+            
+            color = None
+            if "ear" in name or "Ear" in name:
+                color = self.COLORS[0]
+            elif "eye" in name or "Eye" in name:
+                color = self.COLORS[1]
+            else:
+                color = self.COLORS[2]
+            
+            painter.setBrush(color or Qt.GlobalColor.red)
+            painter.drawEllipse(x - size / 2,y - size / 2,size,size)
+            
+        painter.end()
+        #except: ## No keypoints
+        #    painter.end()
         
         
         self.setPixmap(pixmap)

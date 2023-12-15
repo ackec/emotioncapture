@@ -31,11 +31,13 @@ class IconProvider(QFileIconProvider):
             warning.load("GUI/res/warning.png")
             
             try: ## Get dataframe
+                name = os.path.basename(fn)
                 data = self.file_list.main.project.project_data
-                warn_flag = data[data["Img_Path"] == fn]["warn_flag"]
-            except: ## No dataframe found
+                warn_flag = data[data["Img_Path"] == name]["warn_flag"]
+                warn_flag = warn_flag.iloc[-1]
+            except: ## No data found
                 warn_flag = False
-
+        
             if warn_flag:
                 painter = QPainter()
                 painter.begin(a)
@@ -59,7 +61,8 @@ class FileList(QWidget):
         #self.data = None
         if main is not None:
             self.main = main
-            
+                
+        
         self.tree_view = QTreeView()
         self.tree_view.setUniformRowHeights(False)
         #self.tree_view.setItemDelegate
@@ -100,20 +103,22 @@ class FileList(QWidget):
         self.create_label_menu()
 
     def select_item(self, index: QModelIndex):
-        self.data = self.main.project.keypoints
-        
+        try:
+            self.data = self.main.project.project_data
+        except: ##no data found
+            self.data = None        
+            
         self.current_index = index
         path = index.model().filePath(index)
         name = index.model().fileName(index)
         
-        #print(self.data.head())
         ext = os.path.splitext(name)[-1]
-        if ext in accepted_types:
+        if ext in accepted_types:   ##Check if selected item is an image (not folder))
             try:
                 data_row = self.data[self.data["Img_Path"] == name]
             except:
                 data_row = None
-                
+                        
             self.siblings = self.tree_view.model().rowCount(index.parent())
             self.image_viewer.display_image(path,data_row)
         
