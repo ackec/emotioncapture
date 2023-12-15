@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
 
         self.project = ProjectData()
         ## TODO remove this ##
-        self.project.project_data  = pd.read_csv("detected_keypoints.csv")
+        #self.project.project_data  = pd.read_csv("detected_keypoints.csv")
         #mouce = MouseData()
         #mouce.name = "mouse1"
         #self.project.mice.append(mouce)
