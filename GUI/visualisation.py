@@ -89,7 +89,8 @@ class VisualisationWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
         
-        self.file_list.currentItemChanged.connect(self.clicked_image)
+        # self.file_list.currentItemChanged.connect(self.clicked_image)
+        self.file_list.tree_view.clicked.connect(self.clicked_tree)
 
         self.main_layout = QHBoxLayout(self)
         col2_layout = QVBoxLayout()
@@ -127,7 +128,15 @@ class VisualisationWidget(QWidget):
     def change_cluster(self, plot_nr):
         self.scatter_plot.init_scatter_plot(plot_nr)
 
-    
+
+    def clicked_tree(self,index):
+        file_name = index.model().fileName(index)
+        #self.df["Img_Name"]
+        print(f"CLICK: {file_name}")
+        if self.has_init:
+            self.radar_plot.update_radar_plot_file(file_name)
+
+
     def clicked_image(self):
         item = self.file_list.currentItem()
         file_name = item.text()
