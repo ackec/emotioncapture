@@ -1,6 +1,8 @@
 import sys
+import pandas as pd
 import os
 from enum import Enum
+from inference import * #Important, must be before qt imports
 # os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = '/usr/lib/x86_64-linux-gnu/qt5/plugins'
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QStyle, QApplication,
                              QHBoxLayout, QVBoxLayout, QStackedWidget)
@@ -9,13 +11,12 @@ from PyQt5 import QtCore
 from validation import *
 from project import *
 from editor import *
-from visualisation import VisualisationWidget1, VisualisationWidget2
+from visualisation import VisualisationWidget
 from data import *
 from tree_view import *
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH
 
-from inference import *
 
 class GuiMode(Enum):
     """ Possible states of the project management. """
@@ -41,8 +42,8 @@ class MainWindow(QMainWindow):
         # Fix this because it gives a circular import
 
         self.project = ProjectData()
-
         ## TODO remove this ##
+        self.project.project_data  = pd.read_csv("detected_keypoints.csv")
         #mouce = MouseData()
         #mouce.name = "mouse1"
         #self.project.mice.append(mouce)
@@ -162,10 +163,8 @@ class MainWindow(QMainWindow):
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        #self.visualisation_widget = QWidget()
-        
-        self.visualisation_widget1 = VisualisationWidget1(self.project,self.file_list)
-        self.visualisation_widget2 = VisualisationWidget2(self.project, self.file_list)
+        self.visualisation_widget = VisualisationWidget(self.file_list)
+        # self.visualisation_widget = VisualisationWidget2(self.file_list)
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -182,45 +181,41 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget)  # index 0
-        #self.modes.addWidget(self.visualisation_widget)
-        self.modes.addWidget(self.visualisation_widget1)  # index 1
-        self.modes.addWidget(self.visualisation_widget2)  # index 2
+        self.modes.addWidget(self.visualisation_widget)  # index 1
+        # self.modes.addWidget(self.visualisation_widget)  # index 2
 
         main_layout.addWidget(self.modes, 60)
         self.central_widget.setLayout(main_layout)
 
+
     def switchwindowHDBSCAN(self):
-        if self.modes.currentIndex() == 0:
-            print("switch 1")
-            self.modes.setCurrentIndex(1)
-        elif self.modes.currentIndex() == 2:
-            print("switch 2")
-            self.modes.setCurrentIndex(1)
+        if self.project.project_data.empty:
+            print("Error, no data in dataframe")
+            return
+        if self.visualisation_widget.has_init:
+            self.visualisation_widget.change_cluster(0)
+        else:
+            self.visualisation_widget.init_visualisation(self.project, 0)
+
+        self.modes.setCurrentIndex(1)
+        print("switch to HDBSCAN")
 
     def switchwindowKmeans(self):
-        if self.modes.currentIndex() == 0:
-            print("switch 1")
-            self.modes.setCurrentIndex(2)
-        elif self.modes.currentIndex() == 1:
-            print("switch 2")
-            self.modes.setCurrentIndex(2)
-    
+        if self.project.project_data.empty:
+            print("Error, no data in dataframe")
+            return
+
+        if self.visualisation_widget.has_init:
+            self.visualisation_widget.change_cluster(1)
+        else:
+            self.visualisation_widget.init_visualisation(self.project, 1)
+        self.modes.setCurrentIndex(1)
+        print("switch to K-means")
+
     def switchwindowMain(self):
-        if self.modes.currentIndex() == 1:
-            print("switch 1")
-            self.modes.setCurrentIndex(0)
-        elif self.modes.currentIndex() == 2:
-            print("switch 2")
-            self.modes.setCurrentIndex(0)
-        
-        #if self.modes.currentIndex() == 0:
-        #    print("switch 1")
-        #    self.modes.setCurrentIndex(1)
-        #elif self.modes.currentIndex() == 1:
-        #    print("switch 2")
-        #    self.modes.setCurrentIndex(0)
-            #self.mouse.init_visualisation(self.project)
-            #self.lineinit_line_plot()
+        self.modes.setCurrentIndex(0)
+        print("switch to validation")
+
 
 
 def example_project():
