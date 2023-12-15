@@ -87,11 +87,15 @@ class ImageEditorDialog(QDialog):
             return
         
         self.data = data
-        self.data_row = self.data.loc[self.data["Img_Path"] == image_name]
-        self.image_name = image_name
-        
-        self.point_editor.set_image(image_name,image_path,self.data_row)
-        super().show()
+        try: ##Try to get data
+            self.data_row = self.data.loc[self.data["Img_Path"] == image_name]
+            self.image_name = image_name
+            
+            self.point_editor.set_image(image_name,image_path,self.data_row)
+            
+            super().show()
+        except:
+            return
 
 
 class MovablePoint(QGraphicsEllipseItem):

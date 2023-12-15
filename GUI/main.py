@@ -73,13 +73,6 @@ class MainWindow(QMainWindow):
         file_menu = menu_bar.addMenu("&File")
         edit_menu = menu_bar.addMenu("&Edit")
         visualisation_menu = menu_bar.addMenu("&Visualisation")
-
-        # Temp menu to test functions (To be removed)
-        tempMenu = menu_bar.addMenu("&Temp")
-
-        load_folder = tempMenu.addAction("Select Folder")
-        load_folder.triggered.connect(self.file_list.select_folder)
-
          
         pixmapi = QStyle.StandardPixmap.SP_FileDialogNewFolder
         icon = self.style().standardIcon(pixmapi)
@@ -90,6 +83,9 @@ class MainWindow(QMainWindow):
         newnew.triggered.connect(
             lambda: self.new_project_dialog.show()
         )
+        newnew.triggered.connect(
+            lambda: self.file_list.show_file_list()
+        )
 
                 # Create new project button
         newnew = file_menu.addAction("Open Project")
@@ -97,7 +93,10 @@ class MainWindow(QMainWindow):
         newnew.triggered.connect(
             lambda: open_directory_dialog(self.project)
         )
-
+        newnew.triggered.connect(
+            lambda: self.file_list.show_file_list()
+        )
+        
         # Create Add Mouse to project button
         newnew = file_menu.addAction("Add Mouse to Project")
         newnew.setIcon(icon)
@@ -156,17 +155,17 @@ class MainWindow(QMainWindow):
 
         #self.image_metadata_viewer.update_attributes(self.project)
 
-        self.image_control = ImageControl(self.file_list)
+        self.image_control = ImageControl(self.file_list, self.image_metadata_viewer)
 
         # Dialogs
         self.project_dialog = ProjectDialog(self)
         self.new_project_dialog = NewProject(self)
         self.new_mouse_dialog = MouseCreator(self)
         self.editor_dialog = ImageEditorDialog()
-        self.visualisation_widget = QWidget()
+        #self.visualisation_widget = QWidget()
         
-        #self.visualisation_widget1 = VisualisationWidget1(self.project,self.file_list)
-        #self.visualisation_widget2 = VisualisationWidget2(self.project, self.file_list)
+        self.visualisation_widget1 = VisualisationWidget1(self.project,self.file_list)
+        self.visualisation_widget2 = VisualisationWidget2(self.project, self.file_list)
 
         # Left side
         main_layout.addWidget(self.file_list, 40)
@@ -183,6 +182,7 @@ class MainWindow(QMainWindow):
         # Stack
         self.modes = QStackedWidget()
         self.modes.addWidget(right_side_widget)  # index 0
+        #self.modes.addWidget(self.visualisation_widget)
         self.modes.addWidget(self.visualisation_widget1)  # index 1
         self.modes.addWidget(self.visualisation_widget2)  # index 2
 

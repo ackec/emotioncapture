@@ -92,7 +92,7 @@ class MouseData():
 
 class VisualisationWidget1(QWidget):
 
-    def __init__(self, project,file_list):
+    def __init__(self, project, file_list):
         self.project = project
         super().__init__()
 
@@ -101,7 +101,8 @@ class VisualisationWidget1(QWidget):
         
         # self.file_list.clicked.connect(self.clicked_image)
         self.file_list = file_list
-        self.file_list.currentItemChanged.connect(self.clicked_image1)
+        #self.file_list.currentItemChanged.connect(self.clicked_image1)
+        self.file_list.tree_view.clicked.connect(self.clicked_tree1)
         self.main_layout = QHBoxLayout(self)
         col1_layout = QHBoxLayout()
         col2_layout = QVBoxLayout(self)
@@ -136,6 +137,12 @@ class VisualisationWidget1(QWidget):
         #self.df["Img_Name"]
         print(f"CLICK: {file_name}")
         self.radar_plot.update_radar_plot_file(file_name)
+        
+    def clicked_tree1(self,index):
+        file_name = index.model().fileName(index)
+        #self.df["Img_Name"]
+        print(f"CLICK: {file_name}")
+        self.radar_plot.update_radar_plot_file(file_name)
 
 class VisualisationWidget2(QWidget):
 
@@ -147,7 +154,8 @@ class VisualisationWidget2(QWidget):
                            QSizePolicy.Policy.Expanding)
         self.file_list = file_list
         # self.file_list.clicked.connect(self.blabla)
-        self.file_list.currentItemChanged.connect(self.clicked_image2)
+        #self.file_list.currentItemChanged.connect(self.clicked_image2)
+        self.file_list.tree_view.clicked.connect(self.clicked_tree2)
         self.main_layout = QHBoxLayout(self)
         col1_layout = QHBoxLayout()
         col2_layout = QVBoxLayout(self)
@@ -182,8 +190,14 @@ class VisualisationWidget2(QWidget):
         print(f"CLICK: {file_name}")
         self.radar_plot.update_radar_plot_file(file_name)
 
-    def blablabla(self,index):
-        pass
+    
+    def clicked_tree2(self,index):
+        file_name = index.model().fileName(index)
+        #self.df["Img_Name"]
+        print(f"CLICK: {file_name}")
+        self.radar_plot.update_radar_plot_file(file_name)
+        
+        
 class PlaceHolder(QLabel):
     """ Placeholder widget while app is being developed """
 
