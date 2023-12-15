@@ -23,3 +23,8 @@ train_images
 mmdeploy/
 mmdetection/
 output/
+*.pdf
+*.json
+models/
+Projects/
+Dataset/

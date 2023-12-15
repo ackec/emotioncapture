@@ -146,6 +146,14 @@ class MainWindow(QMainWindow):
         self.visualisation.triggered.connect(self.switchwindowMain)
 
 
+        # Update visualisation data
+        self.visualisation = visualisation_menu.addAction("Reload visualisation data")
+        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        icon = self.style().standardIcon(pixmapi)
+        self.visualisation.setIcon(icon)
+        self.visualisation.triggered.connect(self.reload_visualisation_data)
+
+
     def create_widgets(self):
         main_layout = QHBoxLayout()
 
@@ -215,6 +223,15 @@ class MainWindow(QMainWindow):
     def switchwindowMain(self):
         self.modes.setCurrentIndex(0)
         print("switch to validation")
+
+    def reload_visualisation_data(self):
+        if self.project.project_data.empty:
+            print("Error, no data in dataframe")
+            return
+        
+        self.visualisation_widget.init_visualisation(self.project, 0)
+        self.modes.setCurrentIndex(1)
+        print("Reloaded dataframe")
 
 
 
