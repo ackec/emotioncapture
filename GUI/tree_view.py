@@ -18,6 +18,7 @@ class IconProvider(QFileIconProvider):
         
     def icon(self, info: QFileInfo):
         path = info.absoluteFilePath()
+        data = self.file_list.main.project.project_data
         
         if path.endswith(ACCEPTED_TYPES):
             a = QPixmap(QSize(ICON_SIZE,ICON_SIZE))
@@ -27,19 +28,24 @@ class IconProvider(QFileIconProvider):
             warning = QPixmap()
             warning.load("GUI/res/warning.png")
             
-            try: ## Get dataframe
-                name = os.path.basename(path)
-                data = self.file_list.main.project.project_data
-                warn_flag = data[data["Img_Path"] == name]["warn_flag"]
-                warn_flag = warn_flag.iloc[-1]
-            except: ## No data found
-                warn_flag = False
-        
-            if warn_flag:
-                painter = QPainter()
-                painter.begin(a)
-                painter.drawPixmap(QPoint(),warning)
-                painter.end()
+            #try: ## Get dataframe
+            name = os.path.basename(path)
+            #print(name)
+            
+            data_row = data.loc[data["Img_Path"] == name]
+            parent_name = os.path.dirname(path)
+            data_row = data_row[data_row["Video_Name"] == parent_name]
+            
+            if len(data_row) > 0:
+                
+                warn_flag = data_row["warn_flag"].values[0]
+                            
+                #print(warn_flag)
+                if warn_flag:
+                    painter = QPainter()
+                    painter.begin(a)
+                    painter.drawPixmap(QPoint(),warning)
+                    painter.end()
         
             return QIcon(a)
         else:
@@ -74,7 +80,7 @@ class FileList(QWidget):
         
         self.tree_view.setModel(self.model)
         self.tree_view.setRootIndex(self.model.index(project_path))
-        
+        self.tree_view.setExpandsOnDoubleClick(False)
         self.tree_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         
         # Filter the files shown in the view
@@ -125,9 +131,17 @@ class FileList(QWidget):
             self.current_index = index
             try:
                 data_row = self.data[self.data["Img_Path"] == name]
+                parent_name = index.model().fileName(index.parent())
+                data_row = data_row[data_row["Video_Name"] == parent_name]
+                
+                if len(data_row)==0: ##Fix if multiple of same name in folder
+                    data_row = None
+                elif len(data_row)>1: ##Fix if multiple of same name in folder
+                    data_row = data_row[0,:]
+                    
             except:
                 data_row = None
-                        
+            
             self.siblings = self.tree_view.model().rowCount(index.parent())
             self.image_viewer.display_image(path,data_row)
         

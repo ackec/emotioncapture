@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QIcon, QPainter, QPen
-from PyQt5.QtCore import Qt, QSize, QItemSelectionModel
+from PyQt5.QtCore import Qt, QSize, QItemSelectionModel,QModelIndex
 import tkinter
 from tkinter import filedialog
 import os
@@ -58,6 +58,14 @@ class ImageViewer(QLabel):
         name = os.path.basename(self.image_path)
         data_row = data[data["Img_Path"]==name]
         
+        if len(data_row)>1:
+            parent_name = os.path.dirname(self.image_path)
+            data_row = data_row[data_row["Video_Name"] == parent_name]
+            
+            if len(data_row)==0:    ##No data was found for the image
+                return
+            elif len(data_row)>1: ##Fix if multiple of same name in folder
+                data_row = data_row[0,:]
         
         painter = QPainter()
         painter.begin(pixmap)
@@ -287,7 +295,12 @@ class ImageControl(QWidget):
             name = index.model().fileName(index)
             data = self.file_list.main.project.project_data
             data_row =  self.data.loc[self.data["Img_Path"] == name]
-            data.drop(data_row.index)
+            
+            parent_name = index.model().fileName(index.parent())
+            data_row = data_row[data_row["Video_Name"] == parent_name]
+                
+            for i in len(data_row):    
+                data.drop(data_row[i,:].index)
         except:
             pass
         
@@ -358,13 +371,13 @@ class ImageMetadataViewer(QLabel):
             ValueError("Value must be either integer or string")
 
     def update_label_row(self, description: str, value):
-        if isinstance(value, (float,np.float64, str)):
+        if isinstance(value, (float,np.float64,int, str)):
             value_widget = self.attr_to_label_map[description+"_value"]
             value_widget.setText("{}".format(value))
         else:
             ValueError("Value must be either integer or string")
 
-    def update_attributes(self, index=None):
+    def update_attributes(self, index: QModelIndex=None):
         if index is None:
             self.clear_attributes()
         file_name = index.model().fileName(index)
@@ -380,6 +393,17 @@ class ImageMetadataViewer(QLabel):
             # try:
             data_row = data[data["Img_Path"] == file_name]
             
+            parent_name = index.model().fileName(index.parent())
+            data_row = data_row[data_row["Video_Name"] == parent_name]
+            
+            if len(data_row)==0:    ##No data was found for the image
+                self.clear_attributes()
+                return
+            elif len(data_row)>1: ##Fix if multiple of same name in folder
+                data_row = data_row[0,:]
+            
+            
+                
             current_name = data_row["Mouse_Name"].values[0]
             self.update_label_row("Mouse", current_name)
             
@@ -400,11 +424,14 @@ class ImageMetadataViewer(QLabel):
             #     return
             
     def clear_attributes(self):
-        self.update_label_row("Mouse", "")
+        self.update_label_row("Gender", "")
+        self.update_label_row("GenoType", "")
+        self.update_label_row("Weight","")
+        self.update_label_row("Age", "")
         
         self.update_label_row("Filename", "")
         self.update_label_row("Label", "")
         
         self.update_label_row("ProfileConfidence", "")
-        self.update_label_row("KeypointConfidence","")
+        self.update_label_row("KeypointConfidence", "")
         
