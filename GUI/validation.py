@@ -330,12 +330,14 @@ class ImageMetadataViewer(QLabel):
         self.create_label_row("Mouse", "Anonymouse", 0)
         self.create_label_row("Gender", "NaN", 1)
         self.create_label_row("GenoType", "Something", 2)
+        self.create_label_row("Weight", 0, 3)
+        self.create_label_row("Age", 1, 4)
 
-        self.create_label_row("Filename", "placeholder.jpg", 3)
-        self.create_label_row("Label", "Baseline", 4)
+        self.create_label_row("Filename", "placeholder.jpg", 5)
+        self.create_label_row("Label", "Baseline", 6)
         
-        self.create_label_row("ProfileConfidence", 0, 5)
-        self.create_label_row("KeypointConfidence", 0, 6)
+        self.create_label_row("ProfileConfidence", 0, 7)
+        self.create_label_row("KeypointConfidence", 0, 8)
 
     def create_label_row(self, description: str, value, row: int):
         if isinstance(value, (int, str)):
@@ -371,29 +373,33 @@ class ImageMetadataViewer(QLabel):
         data = self.file_list.main.project.project_data
         
         if data is not None:
-            try:
-                data_row = data[data["Img_Path"] == file_name]
-                
-                current_name = data_row["Mouse_Name"].values[0]
-                self.update_label_row("Mouse", current_name)
-                
-                mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
-                if len(mouse_data) > 0:
-                    self.update_label_row("Gender", mouse_data.gender)
+            # try:
+            data_row = data[data["Img_Path"] == file_name]
+            
+            current_name = data_row["Mouse_Name"].values[0]
+            self.update_label_row("Mouse", current_name)
+            
+            mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
+            if len(mouse_data) > 0:
+                mouse = mouse_data[0]
+                self.update_label_row("Gender", mouse.gender)
+                self.update_label_row("GenoType", mouse.genotype)
+                self.update_label_row("Weight", mouse.weight)
+                self.update_label_row("Age", mouse.age)
 
-                self.update_label_row("Filename", data_row["Img_Path"].values[0])
-                self.create_label_row("Label", data_row["stimuli"].values[0], 4)
-                
-                self.update_label_row("ProfileConfidence", round(data_row["profile_score"].values[0],3))
-                self.update_label_row("KeypointConfidence",round(data_row["keypoint_score"].values[0],3))
-            except:
-                return
+            self.update_label_row("Filename", data_row["Img_Path"].values[0])
+            self.update_label_row("Label", data_row["Stimuli"].values[0])
+            
+            self.update_label_row("ProfileConfidence", round(data_row["profile_score"].values[0],3))
+            self.update_label_row("KeypointConfidence",round(data_row["keypoint_score"].values[0],3))
+            # except:
+            #     return
             
     def clear_attributes(self):
         self.update_label_row("Mouse", "")
         
         self.update_label_row("Filename", "")
-        self.create_label_row("Label", "")
+        self.update_label_row("Label", "")
         
         self.update_label_row("ProfileConfidence", "")
         self.update_label_row("KeypointConfidence","")

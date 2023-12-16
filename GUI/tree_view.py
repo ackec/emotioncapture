@@ -103,7 +103,7 @@ class FileList(QWidget):
     def show_file_list(self):
         project_name = self.main.project.name
         project_path = self.main.project.path
-        print("hej")
+        
         provider = IconProvider(self)
         self.model.setIconProvider(provider)
         self.title_label.setText(project_name)
@@ -119,12 +119,12 @@ class FileList(QWidget):
         except: ##no data found
             self.data = None        
             
-        self.current_index = index
         path = index.model().filePath(index)
         name = index.model().fileName(index)
         
         ext = os.path.splitext(name)[-1]
         if ext in ACCEPTED_TYPES:   ##Check if selected item is an image (not folder))
+            self.current_index = index
             try:
                 data_row = self.data[self.data["Img_Path"] == name]
             except:
@@ -172,7 +172,7 @@ class FileList(QWidget):
             temp = self.label.addAction(label_dialog.label_name)
             temp.triggered.connect(lambda: self.assign_label(temp.text()))
     
-    def assign_label(self,label):
+    def assign_label(self,label:str):
         #print(self.main.project.name)
         try:
             self.data = self.main.project.project_data
@@ -191,12 +191,17 @@ class FileList(QWidget):
                     #data_row = self.data[self.data["Img_Name"] == name]
                     #stimuli
                     self.data.loc[self.data["Img_Path"] == name,"Stimuli"] = label
+                    if ind == self.current_index:
+                        self.main.image_metadata_viewer.update_label_row("Label", label)
                     
                 else:   ##Its a folder
                     for i in range(self.tree_view.model().rowCount(ind)):
-                        child_index = ind.child(i,0)    ##Every picture in folder
+                        child_index = ind.child(i,0)    ##Every item in folder
                         child_name = child_index.model().fileName(child_index)
                         self.data.loc[self.data["Img_Path"] == child_name,"Stimuli"] = label
+                        
+                        if child_index == self.current_index:
+                            self.main.image_metadata_viewer.update_label_row("Label", label)
                 
         elif len(indexes) == 1:
             ind = indexes[0]
@@ -211,8 +216,17 @@ class FileList(QWidget):
                     child_index = ind.child(i,0)    ##Every picture in folder
                     child_name = child_index.model().fileName(child_index)
                     self.data.loc[self.data["Img_Path"] == child_name,"Stimuli"] = label
+                    
+                
+                    if child_index == self.current_index:
+                        self.main.image_metadata_viewer.update_label_row("Label", label)
+                    
+            if ind == self.current_index:
+                self.main.image_metadata_viewer.update_label_row("Label", label)
         else:
             return
+        
+        
         
         
 class LabelDialog(QDialog):
