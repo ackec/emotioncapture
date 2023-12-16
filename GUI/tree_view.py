@@ -3,7 +3,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import sys, os
+import pandas as pd
 from config import BASE_PROJECT_DIRECTORY_PATH,ACCEPTED_TYPES,ICON_SIZE
+
 
 # List of packages that are allowed to be imported
 __all__ = ["FileList"]
@@ -159,9 +161,42 @@ class FileList(QWidget):
         rec = self.label.addAction("recovery")
         rec.triggered.connect(lambda: self.assign_label(rec.text()))
         
+        self.save = self.label_menu.addAction(self.tr("Export File"))
+        self.save.triggered.connect(lambda: self.export_to_csv())
+        self.save.setVisible(False)
+        
         # self.new_label = self.label_menu.addAction(self.tr("Create new label"))
         # self.new_label.triggered.connect(self.create_label)
     
+    def export_to_csv(self):
+        #print("Export")
+        data = self.main.project.project_data   ##Get updated just in case
+        indexes = self.tree_view.selectedIndexes()
+        save_data = pd.DataFrame(columns=data.columns)#, index=df1.index)   
+        
+        if data is not None and len(indexes)>0:
+            for index in indexes:
+                name = index.model().fileName(index)
+                path = index.model().filePath(index)
+                
+                ext = os.path.splitext(name)[-1]
+                if ext in ACCEPTED_TYPES:   ## True if image
+                    image_data = data[data["Img_Path"]==name]
+                    parent_name = os.path.dirname(path)
+                    image_data = image_data[image_data["Video_Name"]==parent_name]
+                    save_data = pd.concat([save_data,image_data])
+    
+                else: ##is directory
+                    
+                    file_data_frame = data[data["Video_Name"]==name]
+                    save_data = pd.concat([save_data,file_data_frame])
+        
+            csv_filter = "csv(*.csv)"
+            name = QFileDialog.getSaveFileName(self, 'Save File',filter=csv_filter)
+            if name != "":
+                save_data.to_csv(name[0],index=False)
+                print("Save Completed")
+        
     def openMenu(self, position):
     
         indexes = self.tree_view.selectedIndexes()
@@ -175,7 +210,11 @@ class FileList(QWidget):
                 index = index.parent()
                 level += 1
         
-        if level >= 1:
+        if level == 1:
+            self.save.setVisible(True)
+            self.label_menu.exec_(self.tree_view.viewport().mapToGlobal(position))
+        if level == 2:
+            self.save.setVisible(False)
             self.label_menu.exec_(self.tree_view.viewport().mapToGlobal(position))
    
     def create_label(self):
