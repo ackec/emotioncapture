@@ -167,7 +167,7 @@ class Inferencer():
             #if len(predictions) % (10*frame_rate) == 0:
             #   yield f"Processed: {f_times[-1]}s / {video_len} s"
             #if len(predictions) % (10*frame_rate) == 0:
-            yield f"Processed: {f_times[-1]}s / {video_len} s"
+            yield f"Processed: {f_times[-1]:.1f}s / {video_len} s"
                 #print(f"Processed: {f_times[-1]}s / {video_len} s")
 
             frames = transform(images)
@@ -232,13 +232,10 @@ class Inferencer():
             self.img_paths.append(path)
             self.img_preds.append(predictions[fid])
 
-
-
             try:
                 next_frame = next(fids)
             except StopIteration:
                 break
-
 
 
 
@@ -259,11 +256,7 @@ class Inferencer():
         self.keypoint_detector = None
         self.save_directory = os.path.join(self.project.path, self.project.mice[self.project.active_mouse_index].name)
         #self.input_path =  os.path.join(self.save_directory, os.path.splitext(os.path.basename(path))[0])
-        self.output = os.path.join(self.project.path, "detected_keypoints.csv")
-
-
-
-            
+        self.output = os.path.join(self.project.path, "detected_keypoints.csv")           
         #time.sleep(3)
 
         if len(video) > 0:
@@ -296,60 +289,45 @@ class Inferencer():
                 #keypoints = np.zeros((len(self.img_paths), 11))
                 files = self.img_paths
                 profile_scores = []
-                mouse_features = []
-                warn_flags = []
-                orientations = []
                 for i, file in enumerate(self.img_paths):
-
                     yield f"Processed: {i}/{len(files)} images"
                     img = cv2.imread(file.absolute().as_posix())
                     kp, _, _, min_keypoints_score = self.keypoint_detector.forward(img)
 
-                    profile_confidence = self.img_preds[i]
-
-                    mouse_feature = points_to_features(kp[np.newaxis, :, :])
-
-                    #
-                    mouse_feature = [float(element[0]) for element in mouse_feature]
-
-                    warn_flag = check_feature_ranges(mouse_feature)
-
-                    if profile_confidence < 0.75:
-                        warn_flag = 1
-
-                    if min_keypoints_score < 0.8:
-                        warn_flag = 1
-
-                    # TODO Fix this
-                    #if kp[0, 0] > kp[0, 8]:
-                    orientations.append("left")
-                    #else:
-                    #    orientations.append("right")
-
-                    
-
-
                     keypoints_list.append(kp)
                     keypoint_scores.append(min_keypoints_score)
+                    profile_confidence = self.img_preds[i]
                     profile_scores.append(profile_confidence)
-                    mouse_features.append(mouse_feature)
-                    warn_flags.append(warn_flag)
 
+
+
+        
+                mouse_features = points_to_features(np.array(keypoints_list))
+                # mouse_feature = [float(element[0]) for element in mouse_feature]
+
+                warn_flags =  [keypoint_score < 0.8 for keypoint_score in keypoint_scores]
+                # warn_flags =  [profile_score < 0.75 for profile_score in profile_scores]
+                warn_flags = warn_flags or [profile_score < 0.75 for profile_score in profile_scores]
+
+                lower = [0.51, 0.41, 160, 131, 72, 28, 62]
+                upper = [0.79, 0.65, 200, 158, 90, 39, 75]
+                for feature, l, u in zip(mouse_features, lower, upper):
+                    warn_flags =  (feature < l) | (feature > u) | warn_flags
+
+                oriented_left = np.array(keypoints_list)[:, 0, 0] < np.array(keypoints_list)[:, 8, 0]
+                orientations = ["left" if ori==1 else "right" for ori in oriented_left]
                 yield "Saving Results..."
 
                 #time.sleep(2)
-                self.keypoint_detector.save_results(keypoints_list, files, mouse_features,
+                self.keypoint_detector.save_results(keypoints_list, files, np.array(mouse_features).T,
                                                     orientations, keypoint_scores, profile_scores,
                                                     warn_flags)
 
         if len(images) > 0:
 
             self.input_path =  os.path.join(self.save_directory, os.path.basename(os.path.dirname(images[0])))
-
-
             #yield self.save_directory+os.path.dirname(images[0])
 
-            #time.sleep(10)
             self.img_paths = []
             for img in images:
                 path = Path(img)
@@ -368,56 +346,18 @@ class Inferencer():
             keypoint_scores = []
             files = self.img_paths
             profile_scores = []
-            mouse_features = []
-            warn_flags = []
-            orientations = []
+            os.makedirs(self.input_path, exist_ok=True)
             for i, file in enumerate(self.img_paths):
-
                 yield f"Processed: {i}/{len(files)} images"
                 img = cv2.imread(file.absolute().as_posix())
                 kp, _, _, min_keypoints_score = self.keypoint_detector.forward(img)
 
-                # Assume that profile is always in profile during inference on individual images
-                profile_confidence = 1.0
-
-                mouse_feature = points_to_features(kp[np.newaxis, :, :])
-
-                    #
-                mouse_feature = [float(element[0]) for element in mouse_feature]
-
-                warn_flag = check_feature_ranges(mouse_feature)
-
-                if profile_confidence < 0.75:
-                    warn_flag = 1
-
-                if min_keypoints_score < 0.8:
-                    warn_flag = 1
-
-                    # TODO Fix this
-                #if kp[0, 0] > kp[0, 8]:
-                orientations.append("left")
-                #else:
-                #orientations.append("right")
-
-                    
-
-
                 keypoints_list.append(kp)
                 keypoint_scores.append(min_keypoints_score)
-                profile_scores.append(profile_confidence)
-                mouse_features.append(mouse_feature)
-                warn_flags.append(warn_flag)
-
-
-                os.makedirs(self.input_path, exist_ok=True)
-
-
-
+                # Assume that profile is always in profile during inference on individual images
 
                 output_file_name = os.path.basename(file.absolute().as_posix())
-
                 name, ext = os.path.splitext(output_file_name)
-
                 destination = os.path.join(self.input_path, output_file_name)
 
                 tmp = 1
@@ -426,15 +366,26 @@ class Inferencer():
                     destination = os.path.join(self.input_path, new_name)
                     tmp += 1
 
-
                 cv2.imwrite(destination, img)
 
+                profile_confidence = 1.0
+                profile_scores.append(profile_confidence)
 
+            mouse_features = points_to_features(np.array(keypoints_list))
+            # mouse_feature = [float(element[0]) for element in mouse_feature]
 
+            warn_flags =  [keypoint_score < 0.8 for keypoint_score in keypoint_scores] 
+            lower = [0.51, 0.41, 160, 131, 72, 28, 62]
+            upper = [0.79, 0.65, 200, 158, 90, 39, 75]
+            for feature, l, u in zip(mouse_features, lower, upper):
+                warn_flags = (feature < l) | (feature > u) | warn_flags
+
+            oriented_left = np.array(keypoints_list)[:, 0, 0] < np.array(keypoints_list)[:, 8, 0]
+            orientations = ["left" if ori==1 else "right" for ori in oriented_left]
             yield "Saving Results..."
 
             #time.sleep(2)
-            self.keypoint_detector.save_results(keypoints_list, files, mouse_features,
+            self.keypoint_detector.save_results(keypoints_list, files, np.array(mouse_features).T,
                                                 orientations, keypoint_scores, profile_scores,
                                                 warn_flags)
 
