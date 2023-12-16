@@ -16,20 +16,19 @@ class IconProvider(QFileIconProvider):
         super().__init__()
         self.file_list = file_list
         
-    def icon(self, type: QFileIconProvider.IconType):
-
-        fn = type.filePath()
-
-        if fn.endswith(ACCEPTED_TYPES):
+    def icon(self, info: QFileInfo):
+        path = info.absoluteFilePath()
+        
+        if path.endswith(ACCEPTED_TYPES):
             a = QPixmap(QSize(ICON_SIZE,ICON_SIZE))
-            a.load(fn)
+            a.load(path)
         
             ## Add warning triangle
             warning = QPixmap()
             warning.load("GUI/res/warning.png")
             
             try: ## Get dataframe
-                name = os.path.basename(fn)
+                name = os.path.basename(path)
                 data = self.file_list.main.project.project_data
                 warn_flag = data[data["Img_Path"] == name]["warn_flag"]
                 warn_flag = warn_flag.iloc[-1]
@@ -44,7 +43,7 @@ class IconProvider(QFileIconProvider):
         
             return QIcon(a)
         else:
-            return super().icon(type)
+            return super().icon(info)
         
 class FileList(QWidget):
 
@@ -67,7 +66,7 @@ class FileList(QWidget):
         self.tree_view.setIconSize(QSize(ICON_SIZE,ICON_SIZE))
         
         # Creating a QFileSystemModel
-        self.model = QFileSystemModel()
+        self.model = SystemModel()
         
         project_path = os.getcwd() + "/" + BASE_PROJECT_DIRECTORY_PATH # + "/" + project.name
         
@@ -111,7 +110,6 @@ class FileList(QWidget):
         self.tree_view.setRootIndex(self.model.index(project_path))
         
         self.tree_view.show()
-        pass
 
     def select_item(self, index: QModelIndex):
         try:
@@ -226,9 +224,37 @@ class FileList(QWidget):
         else:
             return
         
+class SystemModel(QFileSystemModel):
+    def __init__(self):
+        QFileSystemModel.__init__(self)
+        self.update_index = None
+        self.fixed = [] ## Not meant as permanent solution
         
         
-        
+    def data(self, index:QModelIndex,role: int = None):
+            
+        if index.isValid():
+            info = self.fileInfo(index)
+            path = info.absoluteFilePath()
+            
+            if role == Qt.DecorationRole:
+                
+                if index == self.update_index:  ## If requires update of icon
+                    self.fixed.append(self.update_index)
+                    self.update_index = None
+                    icon = QIcon(QPixmap(path))
+                    return icon
+                
+                elif index in self.fixed: ##Otherwise will be changed back to with warning
+                    icon = QIcon(QPixmap(path))
+                    return icon
+                    
+                else:
+                    return super().data(index,role)
+
+            else:
+                return super().data(index,role)
+    
 class LabelDialog(QDialog):
     def __init__(self):
         QDialog.__init__(self)

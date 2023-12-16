@@ -209,9 +209,10 @@ class ImageControl(QWidget):
 
     def update_index(self):
         current_index = self.file_list.current_index
-        row = current_index.row()
-        self.items = self.file_list.siblings
-        self.image_index.setText("{} / {}".format(row+1,self.items))
+        if current_index is not None and current_index.isValid():
+            row = current_index.row()
+            self.items = self.file_list.siblings
+            self.image_index.setText("{} / {}".format(row+1,self.items))
 
     def browse_forward(self):
         
@@ -293,15 +294,18 @@ class ImageControl(QWidget):
         
 
     def edit_picture(self):
-        indexes = self.file_list.tree_view.selectedIndexes()
-        ind = indexes[0]
-        name = ind.model().fileName(ind)
-        path = ind.model().filePath(ind)
         
+        index = self.file_list.current_index
         
-        self.file_list.main.editor_dialog.show(name,path,self.file_list.data)
-        #self.file_list.image_viewer.update_image(self.file_list.data)
-
+        if index is not None and index.isValid():
+            name = index.model().fileName(index)
+            path = index.model().filePath(index)
+            self.file_list.main.editor_dialog.show(name,path,self.file_list)
+                   
+            ##Update image viewer: Why this not do stuff   !!  
+            #data_row =  self.file_list.data.loc[self.file_list.data["Img_Path"] == name]
+            #self.file_list.image_viewer.display_image(path,data_row)
+            
 
 class ImageMetadataViewer(QLabel):
     def __init__(self, file_list):
