@@ -70,7 +70,9 @@ class KeyPointInferencer():
                 frame_id = re.search(r'\d+', img_path).group()
                 row = [self.mouse_name, self.video_name, img_path, frame_id, *result.ravel(),
                         *mouse_feature, "baseline", orientation, keypoint_score, profile_score, 0, warn_flag]
-                csv_writer.writerow(row)
+                if not np.inf in row:
+                    # TODO remove image if np.inf in row
+                    csv_writer.writerow(row)
         return 
 
     def forward(self, img):
