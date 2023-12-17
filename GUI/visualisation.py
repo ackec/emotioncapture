@@ -141,16 +141,21 @@ class VisualisationWidget(QWidget):
         #self.df["Img_Name"]
         print(f"CLICK: {file_name}")
         if self.has_init:
-            self.radar_plot.update_radar_plot_file(file_name)
+            clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
+            self.radar_plot.update_radar_plot_file(clicked_data)
+            self.scatter_plot.set_marker_to_image(clicked_data)
+            self.line_plot.set_lineplot_to_image(clicked_data)
 
 
     def clicked_image(self):
         item = self.file_list.currentItem()
         file_name = item.text()
+
         #self.df["Img_Name"]
         print(f"CLICK1: {file_name}")
         if self.has_init:
-            self.radar_plot.update_radar_plot_file(file_name)
+            clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
+            self.radar_plot.update_radar_plot_file(clicked_data)
 
 class PlaceHolder(QLabel):
     """ Placeholder widget while app is being developed """
@@ -201,10 +206,10 @@ class RadarPlot(QMainWindow):
 
         self.canvas.draw()
         #self.ax.figure.savefig(f"radarplot_{clicked_index}.pdf")
-    
-    def update_radar_plot_file(self, file_name):
-        clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
+
+    def update_radar_plot_file(self, clicked_data):
         if len(clicked_data) > 0:
+            file_name = clicked_data.squeeze()["Img_Path"]
             clicked_data = self.mousedata.df.loc[clicked_data.index[0]]
             #print(clicked_data)
             mouse_name = clicked_data["Mouse_Name"]
@@ -251,7 +256,7 @@ class RadarPlot(QMainWindow):
         self.ax.set_xticklabels(self.mousedata.columns)
         self.ax.set_yticklabels([])
 
-        legend_labels = ['stimulation +- SEM', 'Clicked sample', 'Normalized baseline']
+        legend_labels = ['Experiment +- SEM', 'Clicked sample', 'Normalized baseline']
         legend_handles = [self.ax.plot([], [], color='darkgrey', alpha=0.5)[0],
                         #   ax.plot([], [], color='white', alpha=0.7)[0],
                           self.ax.plot([], [], color='blue', linewidth=1)[0],
@@ -335,7 +340,7 @@ class ScatterPlot(QMainWindow):
 
 
         self.scatter1 = ax.scatter(*self.mousedata.umap[is_baseline].T, c=[*self.colous[is_baseline]], marker="^", label='Baseline', s=10, picker=10)
-        self.scatter2 = ax.scatter(*self.mousedata.umap[is_experiment].T, c=[*self.colous[is_experiment]], marker="x", label='Stimulation', s=10, picker=10)
+        self.scatter2 = ax.scatter(*self.mousedata.umap[is_experiment].T, c=[*self.colous[is_experiment]], marker="x", label='Experiment', s=10, picker=10)
         self.scatter3 = ax.scatter(*self.mousedata.umap[is_recovery].T, c=[*self.colous[is_recovery]], marker="o", label='Recovery', s=10, picker=10)
 
         # ax.set_xlabel("X-axis")
@@ -350,6 +355,47 @@ class ScatterPlot(QMainWindow):
         self.canvas.mpl_connect('pick_event', self.on_pick)
         self.canvas.draw()
 
+    def set_marker_to_image(self, clicked_data):
+        print(clicked_data)
+        hej=clicked_data.squeeze()
+        index = self.mousedata.df_mean[(self.mousedata.df_mean['Video_Name'] == hej["Video_Name"]) & (self.mousedata.df_mean['Stimuli'] == hej["Stimuli"])].index
+        if len(index) > 0:
+            index = index[0]
+            # self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == clicked_data["Stimuli"]].index.get_loc(index)
+            # index = clicked_data["Video_Name"]
+            self.set_marker(index)
+            self.last_clicked_index = index
+            self.canvas.draw()
+
+
+    def set_marker(self, index):
+        # if self.last_clicked_index is None:
+        #     return
+        if self.last_clicked_index is not None:
+            last_stimuli = self.mousedata.df_mean.loc[self.last_clicked_index]["Stimuli"]
+            old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == last_stimuli].index.get_loc(self.last_clicked_index)
+
+            if last_stimuli == "baseline":
+            # if self.last_clicked_index < self.stim_start:
+                self.scatter1._facecolors[old_index_in_category] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index]) 
+            elif last_stimuli == "experiment":
+                self.scatter2._facecolors[old_index_in_category] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index])
+            else:
+                self.scatter3._facecolors[old_index_in_category] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index])
+
+            
+        # category = self.mousedata.df_mean.iloc[closest_index-1]['Stimuli']
+        clicked_stimuli = self.mousedata.df_mean.iloc[index]["Stimuli"]
+        old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == clicked_stimuli].index.get_loc(index)
+
+        if clicked_stimuli == "baseline":
+            self.scatter1._facecolors[old_index_in_category] = (0, 1, 0, 1)
+        elif clicked_stimuli == "experiment":
+            self.scatter2._facecolors[old_index_in_category] = (0, 1, 0, 1)
+        else:
+            self.scatter3._facecolors[old_index_in_category] = (0, 1, 0, 1)
+        
+
     def on_pick(self, event):
         if event.mouseevent.name == 'button_press_event':
             ind = event.ind
@@ -357,30 +403,8 @@ class ScatterPlot(QMainWindow):
                 distances = np.sqrt((self.mousedata.umap[:,0] - event.mouseevent.xdata)**2 + (self.mousedata.umap[:,1] - event.mouseevent.ydata)**2)
                 closest_index = np.argmin(distances)
 
-                if self.last_clicked_index is not None:
-                    last_stimuli = self.mousedata.df_mean.loc[self.last_clicked_index]["Stimuli"]
-                    old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == last_stimuli].index.get_loc(self.last_clicked_index)
+                self.set_marker(closest_index)
 
-                    if last_stimuli == "baseline":
-                    # if self.last_clicked_index < self.stim_start:
-                        self.scatter1._facecolors[old_index_in_category] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index]) 
-                    elif last_stimuli == "experiment":
-                        self.scatter2._facecolors[old_index_in_category] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index])
-                    else:
-                        self.scatter3._facecolors[old_index_in_category] = matplotlib.colors.to_rgba(self.colous[self.last_clicked_index])
-
-                    
-                # category = self.mousedata.df_mean.iloc[closest_index-1]['Stimuli']
-                clicked_stimuli = self.mousedata.df_mean.iloc[closest_index]["Stimuli"]
-                old_index_in_category = self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == clicked_stimuli].index.get_loc(closest_index)
-
-                if clicked_stimuli == "baseline":
-                    self.scatter1._facecolors[old_index_in_category] = (0, 1, 0, 1)
-                elif clicked_stimuli == "experiment":
-                    self.scatter2._facecolors[old_index_in_category] = (0, 1, 0, 1)
-                else:
-                    self.scatter3._facecolors[old_index_in_category] = (0, 1, 0, 1)
-                
                 if closest_index == self.last_clicked_index:
                     return
 
@@ -402,7 +426,8 @@ class ScatterPlot(QMainWindow):
                         f"Mouth Position: {features['mouth_pos']:.2f},  {percental_change['mouth_pos']:.2%}\n"\
                         f"Face inclination: {features['face_incl']:.2f},  {percental_change['face_incl']:.2%}\n"\
                         f"Colour: {self.colous[self.last_clicked_index]}\n"\
-                        f"Video Name: {self.features['Video_Name'][self.last_clicked_index]} \n"\
+                        f"Video Name: {features['Video_Name']} \n"\
+                        f"Stimulation: {features['Stimuli']} \n"\
                         f"Image index: {features['Frame_ID']:.2f} \n"\
 
                 self.line_plot.mark_point(self.last_clicked_index)
@@ -425,8 +450,35 @@ class LinePlot(QMainWindow):
         self.ax = self.figure.add_subplot(111)
         self.dot = None
         self.lines = {}
+        self.is_video_plot = False
 
-        
+
+    def set_lineplot_to_image(self, clicked_data):
+        video_name = clicked_data.squeeze()["Video_Name"]
+        video_df = self.mousedata.df[self.mousedata.df["Video_Name"] == video_name]
+        mouse_name = video_df["Mouse_Name"].iloc[0]
+        self.data = video_df[self.mousedata.columns]\
+                                 .div(self.mousedata.mice_mean_baseline[self.mousedata.mice_mean_baseline["Mouse_Name"] == mouse_name][self.mousedata.columns].iloc[0])
+        self.ax.clear()
+        for col in self.data.columns:
+            line, = self.ax.plot(self.data.index, self.data[col], label=col)
+            self.lines[col] = line
+        self.is_video_plot = True
+        leg = self.ax.legend()
+        self.ax.set_ylim(0.5, 1.5)
+        leg.set_draggable(True)
+
+        if self.dot:
+            self.dot.pop(0).remove()
+        index = (video_df.reset_index()["Img_Path"] == clicked_data.squeeze()["Img_Path"]).idxmax()
+        line = self.figure.axes[0].lines[0]
+        x = line.get_xdata()[index]
+        y=1
+        self.dot = self.ax.plot(x, y, 'ro', markersize=8)
+
+        self.canvas.draw()
+
+
 
     def init_line_plot(self):
         self.data = self.mousedata.baseline_derivation[self.mousedata.columns]
@@ -439,6 +491,11 @@ class LinePlot(QMainWindow):
         self.canvas.draw()
 
     def mark_point(self, index):
+        if self.is_video_plot:
+            self.ax.clear()
+            self.init_line_plot()
+            self.is_video_plot = False
+
         if self.dot:
             self.dot.pop(0).remove()
 
