@@ -321,10 +321,11 @@ class Inferencer():
                         warn_flag = 1
 
                     # TODO Fix this
-                    #if kp[0, 0] > kp[0, 8]:
-                    orientations.append("left")
-                    #else:
-                    #    orientations.append("right")
+                    if kp[0, 0] > kp[8, 0]:
+                        orientations.append("left")
+                    else:
+                        orientations.append("right")
+
 
                     
 
@@ -377,7 +378,7 @@ class Inferencer():
                 img = cv2.imread(file.absolute().as_posix())
                 kp, _, _, min_keypoints_score = self.keypoint_detector.forward(img)
 
-                # Assume that profile is always in profile during inference on individual images
+                # Assume that image is always in profile on individual images
                 profile_confidence = 1.0
 
                 mouse_feature = points_to_features(kp[np.newaxis, :, :])
@@ -394,10 +395,10 @@ class Inferencer():
                     warn_flag = 1
 
                     # TODO Fix this
-                #if kp[0, 0] > kp[0, 8]:
-                orientations.append("left")
-                #else:
-                #orientations.append("right")
+                if kp[0, 0] > kp[8, 0]:
+                    orientations.append("left")
+                else:
+                    orientations.append("right")
 
                     
 

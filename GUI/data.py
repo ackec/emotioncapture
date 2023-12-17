@@ -7,10 +7,10 @@ __all__ = ["ProjectData", "MouseData", "KeyPoints", "MouseImageData"]
 class ProjectData:
     """ Meta data about an entire project. """
 
-    name: str = "Example_project"
+    name: str = ""
     """ Name of project. """
 
-    path: str = BASE_PROJECT_DIRECTORY_PATH + "Example_project/"
+    path: str = ""
     """ Path to project directory. """
 
     mice: list["MouseData"] = []

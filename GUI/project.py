@@ -466,7 +466,7 @@ class NewProject(QDialog):
         """
             Set window geometry
         """
-        self.setGeometry(100, 100, 200, 300)
+        self.setGeometry(400, 400, 200, 300)
         self.setMinimumSize(200, 300)
         self.setMaximumSize(200, 300)
 
@@ -607,7 +607,7 @@ class MouseCreator(QDialog):
         """
             Set window geometry
         """
-        self.setGeometry(100, 100, 400, 200)
+        self.setGeometry(400, 400, 400, 200)
         self.setMinimumSize(400, 300)
         self.setMaximumSize(200, 300)
 
@@ -625,7 +625,7 @@ class MouseCreator(QDialog):
     
     def check_validity_of_name(self, name: str):
         registered_mice = self.mainwindow.project.mice
-        if len(registered_mice) <= 1:
+        if len(registered_mice) < 1:
             return True
 
         for mouse in registered_mice:
