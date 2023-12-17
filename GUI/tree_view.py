@@ -32,7 +32,7 @@ class IconProvider(QFileIconProvider):
             name = os.path.basename(path)
             
             try: ## Get dataframe
-            
+                
                 data_row = data.loc[data["Img_Path"] == name]
                 parent_name = os.path.dirname(path)
                 parent_name = os.path.basename(os.path.normpath(parent_name))
@@ -42,9 +42,8 @@ class IconProvider(QFileIconProvider):
                 
                 if len(data_row) > 0:
                     warn_flag = data_row["warn_flag"].values[0]
-                                
-                    #print(warn_flag)
-                    if warn_flag:
+                    
+                    if warn_flag == "1" or warn_flag == "True" or warn_flag == True: #warn_flag is a string
                         painter = QPainter()
                         painter.begin(a)
                         painter.drawPixmap(QPoint(),warning)
@@ -186,7 +185,9 @@ class FileList(QWidget):
                 ext = os.path.splitext(name)[-1]
                 if ext in ACCEPTED_TYPES:   ## True if image
                     image_data = data[data["Img_Path"]==name]
+                    
                     parent_name = os.path.dirname(path)
+                    parent_name = os.path.basename(os.path.normpath(parent_name))
                     image_data = image_data[image_data["Video_Name"]==parent_name]
                     save_data = pd.concat([save_data,image_data])
     
