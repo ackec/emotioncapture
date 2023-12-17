@@ -397,6 +397,9 @@ class Processing(QWidget):
         #self.close()
 
     def start_inference(self):
+        for status in self.main.inferencer.inference(self.main.project.inference_data):
+            print(status)
+
         self.thread = WorkerThread(self.main, self.text)
 
         self.thread.finished_signal.connect(self.thread_finished)
