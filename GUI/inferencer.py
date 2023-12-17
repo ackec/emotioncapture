@@ -10,7 +10,6 @@ import re
 
 import pandas as pd
 import numpy as np
-from calc_mouse_features import points_to_features
 
 BBOX_MODEL_PATH = "models/pose/mmdeploy_models/mmdet/ort"
 KEYPOINT_MODEL_PATH = "models/pose/mmdeploy_models/mmpose/ort"

@@ -219,7 +219,7 @@ class VideoWidget(QWidget):
         if self.videopath:
             length = len(self.videopath)
             if length > 1:
-                self.input1_line_edit.setText(self.videopath[0] + " and {length} others")
+                self.input1_line_edit.setText(self.videopath[0] + f" and {length} others")
             else:
                 self.input1_line_edit.setText(self.videopath[0])
 
@@ -333,15 +333,19 @@ class NewData(DialogPlaceHolder):
 class WorkerThread(QThread):
     finished_signal = pyqtSignal()
 
-    def __init__(self, main, statustext):
+    def __init__(self, main, statustext, videostatus):
         super().__init__()
         self.main = main
         self.statustext = statustext
+        self.videostatus = videostatus
 
     def run(self):
         #print(self.main.project.inference_data)
         for status in self.main.inferencer.inference(self.main.project.inference_data):
-            self.statustext.setText(status)
+            if status.startswith("Video"):
+                self.videostatus.setText(status)
+            else:
+                self.statustext.setText(status)
         self.finished_signal.emit()
 
 
@@ -378,6 +382,16 @@ class Processing(QWidget):
         self.text.setText("Processing...")
         self.text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.text.setWordWrap(True)
+
+        self.status = QLabel()
+        self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        #font = QFont('Arial', 9)
+        self.status.setStyleSheet("color: #404040")
+        self.status.setFont(font)
+        self.status.setText("")
+        self.status.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.main_layout.addWidget(self.status)
         self.main_layout.addWidget(self.text)
 
         self.setLayout(self.main_layout)
@@ -397,7 +411,8 @@ class Processing(QWidget):
         #self.close()
 
     def start_inference(self):
-        self.thread = WorkerThread(self.main, self.text)
+
+        self.thread = WorkerThread(self.main, self.text, self.status)
 
         self.thread.finished_signal.connect(self.thread_finished)
 
@@ -466,7 +481,7 @@ class NewProject(QDialog):
         """
             Set window geometry
         """
-        self.setGeometry(100, 100, 200, 300)
+        self.setGeometry(400, 400, 200, 300)
         self.setMinimumSize(200, 300)
         self.setMaximumSize(200, 300)
 
@@ -607,7 +622,7 @@ class MouseCreator(QDialog):
         """
             Set window geometry
         """
-        self.setGeometry(100, 100, 400, 200)
+        self.setGeometry(400, 400, 400, 200)
         self.setMinimumSize(400, 300)
         self.setMaximumSize(200, 300)
 
@@ -625,7 +640,7 @@ class MouseCreator(QDialog):
     
     def check_validity_of_name(self, name: str):
         registered_mice = self.mainwindow.project.mice
-        if len(registered_mice) <= 1:
+        if len(registered_mice) < 1:
             return True
 
         for mouse in registered_mice:
@@ -661,7 +676,12 @@ def open_directory_dialog(project: ProjectData, filelist: FileList):
     dir_dialog = QFileDialog()
     
     # Set the file mode to show only directories
-    dir_dialog.setDirectory(os.getcwd())
+    path = os.getcwd()+"/"+BASE_PROJECT_DIRECTORY_PATH  ## Show projects map
+    if os.path.exists(path):    #Check if it exists
+        dir_dialog.setDirectory(path)
+    else:
+        os.mkdir(path)  #If not create it
+        dir_dialog.setDirectory(path)
     dir_dialog.setFileMode(QFileDialog.DirectoryOnly)
 
     # Show the dialog and get the selected directory

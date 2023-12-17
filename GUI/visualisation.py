@@ -142,20 +142,21 @@ class VisualisationWidget(QWidget):
         print(f"CLICK: {file_name}")
         if self.has_init:
             clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
-            self.radar_plot.update_radar_plot_file(clicked_data)
-            self.scatter_plot.set_marker_to_image(clicked_data)
-            self.line_plot.set_lineplot_to_image(clicked_data)
+            if len(clicked_data) > 0:
+                self.radar_plot.update_radar_plot_file(clicked_data)
+                self.scatter_plot.set_marker_to_image(clicked_data)
+                self.line_plot.set_lineplot_to_image(clicked_data)
 
 
-    def clicked_image(self):
-        item = self.file_list.currentItem()
-        file_name = item.text()
+    # def clicked_image(self):
+    #     item = self.file_list.currentItem()
+    #     file_name = item.text()
 
-        #self.df["Img_Name"]
-        print(f"CLICK1: {file_name}")
-        if self.has_init:
-            clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
-            self.radar_plot.update_radar_plot_file(clicked_data)
+    #     #self.df["Img_Name"]
+    #     print(f"CLICK1: {file_name}")
+    #     if self.has_init:
+    #         clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
+    #         self.radar_plot.update_radar_plot_file(clicked_data)
 
 class PlaceHolder(QLabel):
     """ Placeholder widget while app is being developed """
@@ -191,8 +192,8 @@ class RadarPlot(QMainWindow):
         self.upper = self.data.mean() + self.data.sem()
         self.lower = self.data.mean() - self.data.sem()
         self.sample = self.data.mean()
-        print(self.sample)
         self.ax = self.figure.add_subplot(111, polar=True)
+        self.ax.clear()
         self.radar_plot()
         self.canvas.draw()
 
@@ -208,35 +209,34 @@ class RadarPlot(QMainWindow):
         #self.ax.figure.savefig(f"radarplot_{clicked_index}.pdf")
 
     def update_radar_plot_file(self, clicked_data):
-        if len(clicked_data) > 0:
-            file_name = clicked_data.squeeze()["Img_Path"]
-            clicked_data = self.mousedata.df.loc[clicked_data.index[0]]
-            #print(clicked_data)
-            mouse_name = clicked_data["Mouse_Name"]
+        file_name = clicked_data.squeeze()["Img_Path"]
+        clicked_data = self.mousedata.df.loc[clicked_data.index[0]]
+        #print(clicked_data)
+        mouse_name = clicked_data["Mouse_Name"]
 
-            normalized_data = clicked_data[self.mousedata.columns] / self.mousedata.mice_mean_baseline[self.mousedata.mice_mean_baseline["Mouse_Name"] == mouse_name][self.mousedata.columns]
-            self.sample = normalized_data.loc[0]
-            # self.sample = self.mousedata.df[self.mousedata.df["Mouse_Name"] == clicked_data["Mouse_Name"]]
-            #print(self.sample)
-            self.ax.clear()
-            self.radar_plot()
-            # self.ax.set_ylim(self.sample.min()-0.2, self.sample.max()+0.2)
-            self.ax.set_ylim(0, 2)
-            #print(normalized_data)
-            info_text = f"Eye Opening: {clicked_data['eye_opening']:.2f},  {self.sample['eye_opening']:.2%} \n"\
-                f"Ear Opening: {clicked_data['ear_opening']:.2f},  {self.sample['ear_opening']:.2%}\n"\
-                f"Ear Angle: {clicked_data['ear_angle']:.2f},  {self.sample['ear_angle']:.2%}\n"\
-                f"Ear Position: {clicked_data['ear_pos_vec']:.2f},  {self.sample['ear_pos_vec']:.2%}\n"\
-                f"Snout Position: {clicked_data['snout_pos']:.2f},  {self.sample['snout_pos']:.2%}\n"\
-                f"Mouth Position: {clicked_data['mouth_pos']:.2f},  {self.sample['mouth_pos']:.2%}\n"\
-                f"Face inclination: {clicked_data['face_incl']:.2f},  {self.sample['face_incl']:.2%}\n"\
-                f"Video Name: {clicked_data['Video_Name']} \n"\
-                f"File Name: {file_name} \n"\
-                f"Stimuli: {clicked_data['Stimuli']}\n"\
+        normalized_data = clicked_data[self.mousedata.columns] / self.mousedata.mice_mean_baseline[self.mousedata.mice_mean_baseline["Mouse_Name"] == mouse_name][self.mousedata.columns]
+        self.sample = normalized_data.loc[0]
+        # self.sample = self.mousedata.df[self.mousedata.df["Mouse_Name"] == clicked_data["Mouse_Name"]]
+        #print(self.sample)
+        self.ax.clear()
+        self.radar_plot()
+        # self.ax.set_ylim(self.sample.min()-0.2, self.sample.max()+0.2)
+        self.ax.set_ylim(0, 2)
+        #print(normalized_data)
+        info_text = f"Eye Opening: {clicked_data['eye_opening']:.2f},  {self.sample['eye_opening']:.2%} \n"\
+            f"Ear Opening: {clicked_data['ear_opening']:.2f},  {self.sample['ear_opening']:.2%}\n"\
+            f"Ear Angle: {clicked_data['ear_angle']:.2f},  {self.sample['ear_angle']:.2%}\n"\
+            f"Ear Position: {clicked_data['ear_pos_vec']:.2f},  {self.sample['ear_pos_vec']:.2%}\n"\
+            f"Snout Position: {clicked_data['snout_pos']:.2f},  {self.sample['snout_pos']:.2%}\n"\
+            f"Mouth Position: {clicked_data['mouth_pos']:.2f},  {self.sample['mouth_pos']:.2%}\n"\
+            f"Face inclination: {clicked_data['face_incl']:.2f},  {self.sample['face_incl']:.2%}\n"\
+            f"Video Name: {clicked_data['Video_Name']} \n"\
+            f"File Name: {file_name} \n"\
+            f"Stimuli: {clicked_data['Stimuli']}\n"\
 
-            self.mouse_features.setText(info_text)
+        self.mouse_features.setText(info_text)
 
-            self.canvas.draw()
+        self.canvas.draw()
 
 
 
@@ -326,6 +326,8 @@ class ScatterPlot(QMainWindow):
         # clustered = (hdbscan_labels >= 0)
         #plot = 1
         ax = self.figure.add_subplot(111)
+        ax.clear()
+
         if plot_nr == 0:
             hdbscan_labels = cluster.HDBSCAN(min_samples=1, min_cluster_size=2).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
             self.colous = np.array([cmap[label] for label in hdbscan_labels])
@@ -356,9 +358,8 @@ class ScatterPlot(QMainWindow):
         self.canvas.draw()
 
     def set_marker_to_image(self, clicked_data):
-        print(clicked_data)
-        hej=clicked_data.squeeze()
-        index = self.mousedata.df_mean[(self.mousedata.df_mean['Video_Name'] == hej["Video_Name"]) & (self.mousedata.df_mean['Stimuli'] == hej["Stimuli"])].index
+        clicked=clicked_data.squeeze()
+        index = self.mousedata.df_mean[(self.mousedata.df_mean['Video_Name'] == clicked["Video_Name"]) & (self.mousedata.df_mean['Stimuli'] == clicked["Stimuli"])].index
         if len(index) > 0:
             index = index[0]
             # self.mousedata.df_mean[self.mousedata.df_mean['Stimuli'] == clicked_data["Stimuli"]].index.get_loc(index)

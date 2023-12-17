@@ -60,6 +60,7 @@ class ImageViewer(QLabel):
         
         if len(data_row)>1:
             parent_name = os.path.dirname(self.image_path)
+            parent_name = os.path.basename(os.path.normpath(parent_name))
             data_row = data_row[data_row["Video_Name"] == parent_name]
             
             if len(data_row)==0:    ##No data was found for the image
