@@ -18,7 +18,7 @@ import pandas as pd
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
-import hdbscan
+#import hdbscan
 import sklearn.cluster as cluster
 import matplotlib.colors
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ __all__ = ["MouseFeatures", "VisualisationWidget", "RadarPlot"]
 
 class MouseData():
     def __init__(self):
-        self.columns = ['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+        self.columns = ['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
 
 
     def calculate_mousedata(self, project):
@@ -223,8 +223,8 @@ class RadarPlot(QMainWindow):
             # self.ax.set_ylim(self.sample.min()-0.2, self.sample.max()+0.2)
             self.ax.set_ylim(0, 2)
             #print(normalized_data)
-            info_text = f"Eye Opening: {clicked_data['eye_oppening']:.2f},  {self.sample['eye_oppening']:.2%} \n"\
-                f"Ear Opening: {clicked_data['ear_oppening']:.2f},  {self.sample['ear_oppening']:.2%}\n"\
+            info_text = f"Eye Opening: {clicked_data['eye_opening']:.2f},  {self.sample['eye_opening']:.2%} \n"\
+                f"Ear Opening: {clicked_data['ear_opening']:.2f},  {self.sample['ear_opening']:.2%}\n"\
                 f"Ear Angle: {clicked_data['ear_angle']:.2f},  {self.sample['ear_angle']:.2%}\n"\
                 f"Ear Position: {clicked_data['ear_pos_vec']:.2f},  {self.sample['ear_pos_vec']:.2%}\n"\
                 f"Snout Position: {clicked_data['snout_pos']:.2f},  {self.sample['snout_pos']:.2%}\n"\
@@ -256,14 +256,14 @@ class RadarPlot(QMainWindow):
         self.ax.set_xticklabels(self.mousedata.columns)
         self.ax.set_yticklabels([])
 
-        legend_labels = ['Experiment +- SEM', 'Clicked sample', 'Normalized baseline']
-        legend_handles = [self.ax.plot([], [], color='darkgrey', alpha=0.5)[0],
+        #legend_labels = ['Experiment +- SEM', 'Clicked sample', 'Normalized baseline']
+        #legend_handles = [self.ax.plot([], [], color='darkgrey', alpha=0.5)[0],
                         #   ax.plot([], [], color='white', alpha=0.7)[0],
-                          self.ax.plot([], [], color='blue', linewidth=1)[0],
-                          self.ax.plot([], [], color='black', linewidth=1)[0]]
+                        #  self.ax.plot([], [], color='blue', linewidth=1)[0],
+                        #  self.ax.plot([], [], color='black', linewidth=1)[0]]
 
-        leg = self.ax.legend(legend_handles, legend_labels, loc='lower left', bbox_to_anchor=(1, 0.7))
-        leg.set_draggable(True)
+        #leg = self.ax.legend(legend_handles, legend_labels, loc='lower left', bbox_to_anchor=(1, 0.7))
+        #leg.set_draggable(True)
 
 
         self.canvas.mpl_connect('button_press_event', self.on_click)
@@ -327,7 +327,7 @@ class ScatterPlot(QMainWindow):
         #plot = 1
         ax = self.figure.add_subplot(111)
         if plot_nr == 0:
-            hdbscan_labels = hdbscan.HDBSCAN(min_samples=1, min_cluster_size=2).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
+            hdbscan_labels = cluster.HDBSCAN(min_samples=1, min_cluster_size=2).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
             self.colous = np.array([cmap[label] for label in hdbscan_labels])
         elif plot_nr == 1:
             kmeans_labels = cluster.KMeans(n_clusters=2).fit_predict(self.mousedata.umap)
@@ -418,8 +418,8 @@ class ScatterPlot(QMainWindow):
                 features = self.mousedata.df_mean.loc[self.last_clicked_index]
                 # features = self.features.iloc[self.last_clicked_index]
                 # percental_change = features / self.mousedata.baseline.mean()
-                info_text = f"Eye Opening: {features['eye_oppening']:.2f},  {percental_change['eye_oppening']:.2%} \n"\
-                        f"Ear Opening: {features['ear_oppening']:.2f},  {percental_change['ear_oppening']:.2%}\n"\
+                info_text = f"Eye Opening: {features['eye_opening']:.2f},  {percental_change['eye_opening']:.2%} \n"\
+                        f"Ear Opening: {features['ear_opening']:.2f},  {percental_change['ear_opening']:.2%}\n"\
                         f"Ear Angle: {features['ear_angle']:.2f},  {percental_change['ear_angle']:.2%}\n"\
                         f"Ear Position: {features['ear_pos_vec']:.2f},  {percental_change['ear_pos_vec']:.2%}\n"\
                         f"Snout Position: {features['snout_pos']:.2f},  {percental_change['snout_pos']:.2%}\n"\
@@ -535,6 +535,8 @@ class MouseFeatures(QLabel):
                           "Profile Score:":0.89,
                           "Key Point Score":0.97}
         temp_text = ""
+        self.setMaximumWidth(800)
+        self.setMinimumWidth(400)
         for key,value in self.info_dict.items():
             temp_text += "{} \t \t \t {} \n".format(key,value)
             

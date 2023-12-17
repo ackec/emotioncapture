@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 import umap
+import csv
 
+file_path = "Feature_extracion\output\mouse_features.csv"
 
 #mouth_pos1 
 def calc_features_cos(point_arr1, point_arr2, point_arr3):
@@ -29,6 +31,8 @@ def calc_features_sin(point_arr1, point_arr2, point_arr3):
     division[np.isnan(division)] = 0
 
     sin_arg = np.arcsin(division)
+
+    #sin_arg = np.arcsin(np.divide(cross_prod, len_prod))
     sin_ang_deg = sin_arg*180/np.pi
     return sin_ang_deg
 
@@ -41,20 +45,44 @@ def ccw(A,B,C):
 def intersect(A,B,C,D):
     return np.logical_and(ccw(A,C,D) != ccw(B,C,D), ccw(A,B,C) != ccw(A,B,D))
 
+def  create_subcsv(in_csv_file):
+    df = pd.read_csv(in_csv_file)
+    split_column = 'Video_Name'
 
-def points_to_features(points):
-    back_ear = points[:,0]
-    front_ear = points[:,1]
-    bot_ear = points[:,2]
-    top_ear = points[:,3]
-    back_eye = points[:,4]
-    front_eye = points[:,5]
-    top_eye = points[:,6] ## TODO check if bug
-    bot_eye = points[:,7]
-    top_nose = points[:,8]
-    bot_nose = points[:,9]
-    mouth = points[:,10]
+    #video_list = []
+    video_names = []
+    for video_name in df[split_column].unique():
+    # Create a new DataFrame containing only rows with the current unique value
+        subset_df = df[df[split_column] == video_name]
 
+    # Write the subset DataFrame to a new CSV file
+        subset_df.to_csv(f'Feature_extracion\subcsv/subset_{video_name}.csv', index=False)
+        video_names.append("Feature_extracion\subcsv/subset_" + str(video_name) + ".csv")
+    
+    print(video_names)
+    for i in range(0, len(video_names)):
+        points_to_features(str(video_names[i]), "Feature_extracion\output\mouse_features.csv")
+
+def add_row_to_csv(file_path, average_values):
+        with open(file_path, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(average_values)
+
+
+def points_to_features(in_csv_file, out_csv_file):
+    myFile = pd.read_csv(in_csv_file)
+
+    back_ear = np.array(myFile[["Ear_back_x", "Ear_back_y"]])
+    front_ear = np.array(myFile[["Ear_front_x", "Ear_front_y"]])
+    bot_ear = np.array(myFile[["Ear_bottom_x", "Ear_bottom_y"]])
+    top_ear = np.array(myFile[["Ear_top_x", "Ear_top_y"]])
+    back_eye = np.array(myFile[["Eye_back_x", "Eye_back_y"]])
+    front_eye = np.array(myFile[["Eye_front_x", "Eye_front_y"]])
+    top_eye = np.array(myFile[["Eye_top_x", "Eye_top_y"]])
+    bot_eye = np.array(myFile[["Eye_bottom_x", "Eye_bottom_y"]])
+    top_nose = np.array(myFile[["Nose_top_x", "Nose_top_y"]])
+    bot_nose = np.array(myFile[["Nose_bottom_x", "Nose_bottom_y"]])
+    mouth = np.array(myFile[["Mouth_x", "Mouth_y"]])
     ear_diff = (top_ear - bot_ear)/2
     middle_ear = top_ear - ear_diff
     ear_width = np.linalg.norm(top_ear - bot_ear, 2, 1)
@@ -97,53 +125,34 @@ def points_to_features(points):
     mouth_pos = np.abs(mouth_pos)
     face_incl = 90 - np.abs(face_incl)
 
-    return eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl
-
-def add_features_to_csv(in_csv_file):
-    myFile = pd.read_csv(in_csv_file)
-
-    back_ear = np.array(myFile[["Ear_back_x", "Ear_back_y"]])
-    front_ear = np.array(myFile[["Ear_front_x", "Ear_front_y"]])
-    bot_ear = np.array(myFile[["Ear_bottom_x", "Ear_bottom_y"]])
-    top_ear = np.array(myFile[["Ear_top_x", "Ear_top_y"]])
-    back_eye = np.array(myFile[["Eye_back_x", "Eye_back_y"]])
-    front_eye = np.array(myFile[["Eye_front_x", "Eye_front_y"]])
-    bot_eye = np.array(myFile[["Eye_bottom_x", "Eye_bottom_y"]])
-    top_eye = np.array(myFile[["Eye_top_x", "Eye_top_y"]])
-    top_nose = np.array(myFile[["Nose_top_x", "Nose_top_y"]])
-    bot_nose = np.array(myFile[["Nose_bottom_x", "Nose_bottom_y"]])
-    mouth = np.array(myFile[["Mouth_x", "Mouth_y"]])
-
-    columns = ["Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y","Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y", "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y", "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y"]
-    eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl = points_to_features(myFile[columns].values.reshape(-1, 11,2))
     mapping_vectors = np.array([eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl])
     average_values = np.array([np.mean(eye_oppening), np.mean(ear_oppening), np.mean(ear_angle), np.mean(ear_pos_vec), np.mean(snout_pos), np.mean(mouth_pos), np.mean(face_incl)])
-    print(average_values)
+    append_str = [str(myFile["Video_Name"][0]), str(myFile["Stimuli"][0])]
+    final_array = np.append(average_values, append_str)
+    #print(mapping_vectors.T)
+    #print([average_values.T])
+    print(str(myFile["Video_Name"][0]))
 
-    myFile["eye_oppening"] = eye_oppening
-    myFile["ear_oppening"] = ear_oppening
-    myFile["ear_angle"] = ear_angle
-    myFile["ear_pos_vec"] = ear_pos_vec
-    myFile["snout_pos"] = snout_pos
-    myFile["mouth_pos"] = mouth_pos
-    myFile["face_incl"] = face_incl
-
-
-    feature_col = ["eye_opening", "ear_opening", "ear_angle", "ear_pos_vec", "snout_pos", "mouth_pos", "face_incl"]
-    myFile = myFile.replace([np.inf, -np.inf], np.nan)
-    myFile = myFile.dropna()
+    df = [average_values.T]
+    #df.columns = ['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']
+    #print(myFile["Img_Path"])
+    
 
     # data = pd.read_csv(keypoints_csv)
-    # standard_embedding = umap.UMAP(random_state=10).fit_transform(myFile[feature_col].values)
-    # myFile["umap_x"]=standard_embedding[:,0]
-    # myFile["umap_y"]=standard_embedding[:,1]
+    #standard_embedding = umap.UMAP(random_state=10).fit_transform(average_values)
+    #df["umap_x"]=standard_embedding[:,0]
+    #df["umap_y"]=standard_embedding[:,1]
     # data.to_csv(keypoints_csv)
     # return standard_embedding
 
-    # df[["Img_Path", "Frame_ID"]] = myFile[["Img_Path", "Frame_ID"]]
+    #df[["Img_Path", "Frame_ID", "Video_Name"]] = myFile[["Img_Path", "Frame_ID", "Video_Name"]]
 
-    myFile.to_csv(in_csv_file, index=False)
+    #df.to_csv(out_csv_file, index=False)
     # do_umap_projection(out_csv_file)
+    with open(out_csv_file, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(final_array)
 
 if __name__ == "__main__":
-    add_features_to_csv('detected_keypoints.csv')
+    #points_to_features('output/all_training_data.csv', "output/mouse_features.csv")
+    create_subcsv('Feature_extracion\output\detected_keypoints.csv')
