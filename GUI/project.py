@@ -219,7 +219,7 @@ class VideoWidget(QWidget):
         if self.videopath:
             length = len(self.videopath)
             if length > 1:
-                self.input1_line_edit.setText(self.videopath[0] + " and {length} others")
+                self.input1_line_edit.setText(self.videopath[0] + f" and {length} others")
             else:
                 self.input1_line_edit.setText(self.videopath[0])
 
@@ -333,15 +333,19 @@ class NewData(DialogPlaceHolder):
 class WorkerThread(QThread):
     finished_signal = pyqtSignal()
 
-    def __init__(self, main, statustext):
+    def __init__(self, main, statustext, videostatus):
         super().__init__()
         self.main = main
         self.statustext = statustext
+        self.videostatus = videostatus
 
     def run(self):
         #print(self.main.project.inference_data)
         for status in self.main.inferencer.inference(self.main.project.inference_data):
-            self.statustext.setText(status)
+            if status.startswith("Video"):
+                self.videostatus.setText(status)
+            else:
+                self.statustext.setText(status)
         self.finished_signal.emit()
 
 
@@ -378,6 +382,16 @@ class Processing(QWidget):
         self.text.setText("Processing...")
         self.text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.text.setWordWrap(True)
+
+        self.status = QLabel()
+        self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        #font = QFont('Arial', 9)
+        self.status.setStyleSheet("color: #404040")
+        self.status.setFont(font)
+        self.status.setText("")
+        self.status.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.main_layout.addWidget(self.status)
         self.main_layout.addWidget(self.text)
 
         self.setLayout(self.main_layout)
@@ -398,7 +412,7 @@ class Processing(QWidget):
 
     def start_inference(self):
 
-        self.thread = WorkerThread(self.main, self.text)
+        self.thread = WorkerThread(self.main, self.text, self.status)
 
         self.thread.finished_signal.connect(self.thread_finished)
 
