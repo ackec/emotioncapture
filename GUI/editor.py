@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QPushButton, QDialog, QWidget, QHBoxLayout,
                              QGraphicsEllipseItem)
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH, ZOOM_RANGE, RESOURCE_PATH
-from calc_mouse_features import points_to_features
+from Feature_extracion.feature_from_labelpos import points_to_features
 from data import MouseImageData, KeyPoints
 import numpy as np
 
@@ -55,19 +55,18 @@ class ImageEditorDialog(QDialog):
     def save_points(self):
         """ Save new points to dataframe instance. """
         
-        key_points_formated = np.zeros((2,11)) ##11 == number of coordinates
+        key_points_formated = np.zeros((11,2)) ##11 == number of coordinates
         i = 0
         for names, point in self.point_editor.points.items():
             point_coord = point.get_position()
             self.file_list.data.loc[self.data_row.index,names] = point_coord
             #setattr(key_points, name, point.get_position())
             
-            key_points_formated[:,i] = point_coord
+            key_points_formated[i,:] = point_coord
             i += 1
             
-        ## what kinda formating does 'points_to_features' want ?!?!?
-        #features = points_to_features(key_points_formated[:,:,np.newaxis])
-        #self.data.loc[self.data_row.index,self.feature_names] = features
+        features = points_to_features(key_points_formated[np.newaxis,:,:])
+        self.file_list.data.loc[self.data_row.index,self.feature_names] = np.array(features).transpose()
         
         ##Remove warn flag       
         self.file_list.data.loc[self.data_row.index,"warn_flag"] = 0

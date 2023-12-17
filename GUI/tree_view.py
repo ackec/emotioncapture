@@ -29,27 +29,31 @@ class IconProvider(QFileIconProvider):
             ## Add warning triangle
             warning = QPixmap()
             warning.load("GUI/res/warning.png")
-            
-            #try: ## Get dataframe
             name = os.path.basename(path)
-            #print(name)
             
-            data_row = data.loc[data["Img_Path"] == name]
-            parent_name = os.path.dirname(path)
-            data_row = data_row[data_row["Video_Name"] == parent_name]
+            try: ## Get dataframe
             
-            if len(data_row) > 0:
+                data_row = data.loc[data["Img_Path"] == name]
+                parent_name = os.path.dirname(path)
+                parent_name = os.path.basename(os.path.normpath(parent_name))
                 
-                warn_flag = data_row["warn_flag"].values[0]
-                            
-                #print(warn_flag)
-                if warn_flag:
-                    painter = QPainter()
-                    painter.begin(a)
-                    painter.drawPixmap(QPoint(),warning)
-                    painter.end()
-        
+                data_row = data_row[data_row["Video_Name"] == parent_name]
+                warn_flag = False
+                
+                if len(data_row) > 0:
+                    warn_flag = data_row["warn_flag"].values[0]
+                                
+                    #print(warn_flag)
+                    if warn_flag:
+                        painter = QPainter()
+                        painter.begin(a)
+                        painter.drawPixmap(QPoint(),warning)
+                        painter.end()
+            except:
+                pass
+            
             return QIcon(a)
+        
         else:
             return super().icon(info)
         
