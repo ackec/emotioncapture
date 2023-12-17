@@ -397,6 +397,7 @@ class Processing(QWidget):
         #self.close()
 
     def start_inference(self):
+
         self.thread = WorkerThread(self.main, self.text)
 
         self.thread.finished_signal.connect(self.thread_finished)
