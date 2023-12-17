@@ -3,7 +3,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import sys, os
+import pandas as pd
 from config import BASE_PROJECT_DIRECTORY_PATH,ACCEPTED_TYPES,ICON_SIZE
+
 
 # List of packages that are allowed to be imported
 __all__ = ["FileList"]
@@ -16,35 +18,43 @@ class IconProvider(QFileIconProvider):
         super().__init__()
         self.file_list = file_list
         
-    def icon(self, type: QFileIconProvider.IconType):
-
-        fn = type.filePath()
-
-        if fn.endswith(ACCEPTED_TYPES):
+    def icon(self, info: QFileInfo):
+        path = info.absoluteFilePath()
+        data = self.file_list.main.project.project_data
+        
+        if path.endswith(ACCEPTED_TYPES):
             a = QPixmap(QSize(ICON_SIZE,ICON_SIZE))
-            a.load(fn)
+            a.load(path)
         
             ## Add warning triangle
             warning = QPixmap()
             warning.load("GUI/res/warning.png")
+            name = os.path.basename(path)
             
             try: ## Get dataframe
-                name = os.path.basename(fn)
-                data = self.file_list.main.project.project_data
-                warn_flag = data[data["Img_Path"] == name]["warn_flag"]
-                warn_flag = warn_flag.iloc[-1]
-            except: ## No data found
+                
+                data_row = data.loc[data["Img_Path"] == name]
+                parent_name = os.path.dirname(path)
+                parent_name = os.path.basename(os.path.normpath(parent_name))
+                
+                data_row = data_row[data_row["Video_Name"] == parent_name]
                 warn_flag = False
-        
-            if warn_flag:
-                painter = QPainter()
-                painter.begin(a)
-                painter.drawPixmap(QPoint(),warning)
-                painter.end()
-        
+                
+                if len(data_row) > 0:
+                    warn_flag = data_row["warn_flag"].values[0]
+                    
+                    if warn_flag == "1" or warn_flag == "True" or warn_flag == True: #warn_flag is a string
+                        painter = QPainter()
+                        painter.begin(a)
+                        painter.drawPixmap(QPoint(),warning)
+                        painter.end()
+            except:
+                pass
+            
             return QIcon(a)
+        
         else:
-            return super().icon(type)
+            return super().icon(info)
         
 class FileList(QWidget):
 
@@ -67,7 +77,7 @@ class FileList(QWidget):
         self.tree_view.setIconSize(QSize(ICON_SIZE,ICON_SIZE))
         
         # Creating a QFileSystemModel
-        self.model = QFileSystemModel()
+        self.model = SystemModel()
         
         project_path = os.getcwd() + "/" + BASE_PROJECT_DIRECTORY_PATH # + "/" + project.name
         
@@ -75,7 +85,7 @@ class FileList(QWidget):
         
         self.tree_view.setModel(self.model)
         self.tree_view.setRootIndex(self.model.index(project_path))
-        
+        self.tree_view.setExpandsOnDoubleClick(False)
         self.tree_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         
         # Filter the files shown in the view
@@ -103,7 +113,7 @@ class FileList(QWidget):
     def show_file_list(self):
         project_name = self.main.project.name
         project_path = self.main.project.path
-        print("hej")
+        
         provider = IconProvider(self)
         self.model.setIconProvider(provider)
         self.title_label.setText(project_name)
@@ -111,7 +121,6 @@ class FileList(QWidget):
         self.tree_view.setRootIndex(self.model.index(project_path))
         
         self.tree_view.show()
-        pass
 
     def select_item(self, index: QModelIndex):
         try:
@@ -119,17 +128,25 @@ class FileList(QWidget):
         except: ##no data found
             self.data = None        
             
-        self.current_index = index
         path = index.model().filePath(index)
         name = index.model().fileName(index)
         
         ext = os.path.splitext(name)[-1]
         if ext in ACCEPTED_TYPES:   ##Check if selected item is an image (not folder))
+            self.current_index = index
             try:
                 data_row = self.data[self.data["Img_Path"] == name]
+                parent_name = index.model().fileName(index.parent())
+                data_row = data_row[data_row["Video_Name"] == parent_name]
+                
+                if len(data_row)==0: ##Fix if multiple of same name in folder
+                    data_row = None
+                elif len(data_row)>1: ##Fix if multiple of same name in folder
+                    data_row = data_row[0,:]
+                    
             except:
                 data_row = None
-                        
+            
             self.siblings = self.tree_view.model().rowCount(index.parent())
             self.image_viewer.display_image(path,data_row)
         
@@ -147,9 +164,44 @@ class FileList(QWidget):
         rec = self.label.addAction("recovery")
         rec.triggered.connect(lambda: self.assign_label(rec.text()))
         
+        self.save = self.label_menu.addAction(self.tr("Export File"))
+        self.save.triggered.connect(lambda: self.export_to_csv())
+        self.save.setVisible(False)
+        
         # self.new_label = self.label_menu.addAction(self.tr("Create new label"))
         # self.new_label.triggered.connect(self.create_label)
     
+    def export_to_csv(self):
+        #print("Export")
+        data = self.main.project.project_data   ##Get updated just in case
+        indexes = self.tree_view.selectedIndexes()
+        save_data = pd.DataFrame(columns=data.columns)#, index=df1.index)   
+        
+        if data is not None and len(indexes)>0:
+            for index in indexes:
+                name = index.model().fileName(index)
+                path = index.model().filePath(index)
+                
+                ext = os.path.splitext(name)[-1]
+                if ext in ACCEPTED_TYPES:   ## True if image
+                    image_data = data[data["Img_Path"]==name]
+                    
+                    parent_name = os.path.dirname(path)
+                    parent_name = os.path.basename(os.path.normpath(parent_name))
+                    image_data = image_data[image_data["Video_Name"]==parent_name]
+                    save_data = pd.concat([save_data,image_data])
+    
+                else: ##is directory
+                    
+                    file_data_frame = data[data["Video_Name"]==name]
+                    save_data = pd.concat([save_data,file_data_frame])
+        
+            csv_filter = "csv(*.csv)"
+            name = QFileDialog.getSaveFileName(self, 'Save File',filter=csv_filter)
+            if name != "":
+                save_data.to_csv(name[0],index=False)
+                print("Save Completed")
+        
     def openMenu(self, position):
     
         indexes = self.tree_view.selectedIndexes()
@@ -163,7 +215,11 @@ class FileList(QWidget):
                 index = index.parent()
                 level += 1
         
-        if level >= 1:
+        if level == 1:
+            self.save.setVisible(True)
+            self.label_menu.exec_(self.tree_view.viewport().mapToGlobal(position))
+        if level == 2:
+            self.save.setVisible(False)
             self.label_menu.exec_(self.tree_view.viewport().mapToGlobal(position))
    
     def create_label(self):
@@ -172,7 +228,7 @@ class FileList(QWidget):
             temp = self.label.addAction(label_dialog.label_name)
             temp.triggered.connect(lambda: self.assign_label(temp.text()))
     
-    def assign_label(self,label):
+    def assign_label(self,label:str):
         #print(self.main.project.name)
         try:
             self.data = self.main.project.project_data
@@ -191,12 +247,17 @@ class FileList(QWidget):
                     #data_row = self.data[self.data["Img_Name"] == name]
                     #stimuli
                     self.data.loc[self.data["Img_Path"] == name,"Stimuli"] = label
+                    if ind == self.current_index:
+                        self.main.image_metadata_viewer.update_label_row("Label", label)
                     
                 else:   ##Its a folder
                     for i in range(self.tree_view.model().rowCount(ind)):
-                        child_index = ind.child(i,0)    ##Every picture in folder
+                        child_index = ind.child(i,0)    ##Every item in folder
                         child_name = child_index.model().fileName(child_index)
                         self.data.loc[self.data["Img_Path"] == child_name,"Stimuli"] = label
+                        
+                        if child_index == self.current_index:
+                            self.main.image_metadata_viewer.update_label_row("Label", label)
                 
         elif len(indexes) == 1:
             ind = indexes[0]
@@ -211,10 +272,47 @@ class FileList(QWidget):
                     child_index = ind.child(i,0)    ##Every picture in folder
                     child_name = child_index.model().fileName(child_index)
                     self.data.loc[self.data["Img_Path"] == child_name,"Stimuli"] = label
+                    
+                
+                    if child_index == self.current_index:
+                        self.main.image_metadata_viewer.update_label_row("Label", label)
+                    
+            if ind == self.current_index:
+                self.main.image_metadata_viewer.update_label_row("Label", label)
         else:
             return
         
+class SystemModel(QFileSystemModel):
+    def __init__(self):
+        QFileSystemModel.__init__(self)
+        self.update_index = None
+        self.fixed = [] ## Not meant as permanent solution
         
+        
+    def data(self, index:QModelIndex,role: int = None):
+            
+        if index.isValid():
+            info = self.fileInfo(index)
+            path = info.absoluteFilePath()
+            
+            if role == Qt.DecorationRole:
+                
+                if index == self.update_index:  ## If requires update of icon
+                    self.fixed.append(self.update_index)
+                    self.update_index = None
+                    icon = QIcon(QPixmap(path))
+                    return icon
+                
+                elif index in self.fixed: ##Otherwise will be changed back to with warning
+                    icon = QIcon(QPixmap(path))
+                    return icon
+                    
+                else:
+                    return super().data(index,role)
+
+            else:
+                return super().data(index,role)
+    
 class LabelDialog(QDialog):
     def __init__(self):
         QDialog.__init__(self)

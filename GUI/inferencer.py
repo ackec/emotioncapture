@@ -10,7 +10,6 @@ import re
 
 import pandas as pd
 import numpy as np
-from calc_mouse_features import points_to_features
 
 BBOX_MODEL_PATH = "models/pose/mmdeploy_models/mmdet/ort"
 KEYPOINT_MODEL_PATH = "models/pose/mmdeploy_models/mmpose/ort"
@@ -70,7 +69,9 @@ class KeyPointInferencer():
                 frame_id = re.search(r'\d+', img_path).group()
                 row = [self.mouse_name, self.video_name, img_path, frame_id, *result.ravel(),
                         *mouse_feature, "baseline", orientation, keypoint_score, profile_score, 0, warn_flag]
-                csv_writer.writerow(row)
+                if not np.inf in row:
+                    # TODO remove image if np.inf in row
+                    csv_writer.writerow(row)
         return 
 
     def forward(self, img):

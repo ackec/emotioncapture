@@ -8,7 +8,9 @@ from PyQt5.QtWidgets import (QPushButton, QDialog, QWidget, QHBoxLayout,
                              QGraphicsEllipseItem)
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH, ZOOM_RANGE, RESOURCE_PATH
+from Feature_extracion.feature_from_labelpos import points_to_features
 from data import MouseImageData, KeyPoints
+import numpy as np
 
 # List of packages that are allowed to be imported
 __all__ = ["ImageEditorDialog"]
@@ -36,6 +38,9 @@ class ImageEditorDialog(QDialog):
 
         self.point_editor = ImagePointEditor()
         self.main_layout.addWidget(self.point_editor)
+        
+        self.feature_names = ["eye_oppening", "ear_oppening", "ear_angle", "ear_pos_vec", 
+                            "snout_pos", "mouth_pos", "face_incl"]
 
         self.controls = OverlayControls(
             zoom_in=lambda: self._zoom(0.4),
@@ -50,10 +55,30 @@ class ImageEditorDialog(QDialog):
     def save_points(self):
         """ Save new points to dataframe instance. """
         
+        key_points_formated = np.zeros((11,2)) ##11 == number of coordinates
+        i = 0
         for names, point in self.point_editor.points.items():
-            self.data.loc[self.data_row.index,names] = point.get_position()
-            
+            point_coord = point.get_position()
+            self.file_list.data.loc[self.data_row.index,names] = point_coord
             #setattr(key_points, name, point.get_position())
+            
+            key_points_formated[i,:] = point_coord
+            i += 1
+            
+        features = points_to_features(key_points_formated[np.newaxis,:,:])
+        self.file_list.data.loc[self.data_row.index,self.feature_names] = np.array(features).transpose()
+        
+        ##Remove warn flag       
+        self.file_list.data.loc[self.data_row.index,"warn_flag"] = 0
+              
+        index = self.file_list.current_index
+        path = index.model().filePath(index)
+        new_icon = QIcon(QPixmap(path))
+        index.model().setData(index,new_icon,2)  
+        self.file_list.model.update_index = index
+        self.file_list.model.iconProvider().data = self.file_list.data
+        #self.file_list.tree_view.model().dataChanged.emit(index,index)
+        #self.file_list.tree_view.dataChanged(index,index)
         
         self.hide()
 
@@ -82,14 +107,14 @@ class ImageEditorDialog(QDialog):
         y_pos = self.height() - self.controls.height() - 32
         self.controls.move(x_pos, y_pos)
 
-    def show(self,image_name:str,image_path:str,data): #image: MouseImageData):
+    def show(self,image_name:str,image_path:str,file_list): #image: MouseImageData):
         """ Display edit window with `image`. Image data is edited in-place. """
         if image_path is None or image_name is None:
             return
         
-        self.data = data
+        self.file_list = file_list
         try: ##Try to get data
-            self.data_row = self.data.loc[self.data["Img_Path"] == image_name]
+            self.data_row = self.file_list.data.loc[self.file_list.data["Img_Path"] == image_name]
             self.image_name = image_name
             
             self.point_editor.set_image(image_name,image_path,self.data_row)

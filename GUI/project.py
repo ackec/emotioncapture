@@ -397,6 +397,7 @@ class Processing(QWidget):
         #self.close()
 
     def start_inference(self):
+
         self.thread = WorkerThread(self.main, self.text)
 
         self.thread.finished_signal.connect(self.thread_finished)
@@ -661,7 +662,12 @@ def open_directory_dialog(project: ProjectData, filelist: FileList):
     dir_dialog = QFileDialog()
     
     # Set the file mode to show only directories
-    dir_dialog.setDirectory(os.getcwd())
+    path = os.getcwd()+"/"+BASE_PROJECT_DIRECTORY_PATH  ## Show projects map
+    if os.path.exists(path):    #Check if it exists
+        dir_dialog.setDirectory(path)
+    else:
+        os.mkdir(path)  #If not create it
+        dir_dialog.setDirectory(path)
     dir_dialog.setFileMode(QFileDialog.DirectoryOnly)
 
     # Show the dialog and get the selected directory

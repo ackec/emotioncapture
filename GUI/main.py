@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
 
 
     def switchwindowHDBSCAN(self):
-        if self.project.project_data.empty:
+        if self.project.project_data is None or self.project.project_data.empty:
             print("Error, no data in dataframe")
             return
         if self.visualisation_widget.has_init:
@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
         print("switch to HDBSCAN")
 
     def switchwindowKmeans(self):
-        if self.project.project_data.empty:
+        if self.project.project_data is None or self.project.project_data.empty:
             print("Error, no data in dataframe")
             return
 
@@ -225,10 +225,11 @@ class MainWindow(QMainWindow):
         print("switch to validation")
 
     def reload_visualisation_data(self):
-        if self.project.project_data.empty:
+        if self.project.project_data is None or self.project.project_data.empty:
             print("Error, no data in dataframe")
             return
         
+        self.visualisation_widget
         self.visualisation_widget.init_visualisation(self.project, 0)
         self.modes.setCurrentIndex(1)
         print("Reloaded dataframe")
