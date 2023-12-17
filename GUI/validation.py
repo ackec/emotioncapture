@@ -129,7 +129,7 @@ class ImageViewer(QLabel):
                     color = self.COLORS[2]
                 
                 painter.setBrush(color or Qt.GlobalColor.red)
-                painter.drawEllipse(x - size / 2,y - size / 2,size,size)
+                painter.drawEllipse(round(x - size/2), round(y - size/2), size, size)
         
         painter.end()
         # except: ## No keypoints
