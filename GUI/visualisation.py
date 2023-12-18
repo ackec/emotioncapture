@@ -131,6 +131,7 @@ class VisualisationWidget(QWidget):
 
     def clicked_tree(self,index):
         file_name = index.model().fileName(index)
+        folder_name = index.model().fileName(index.parent())
         """ 
         ## Use this to check if the selected item was an image
         ext = os.path.splitext(file_name)[-1]
@@ -141,12 +142,13 @@ class VisualisationWidget(QWidget):
         #self.df["Img_Name"]
         print(f"CLICK: {file_name}")
         if self.has_init:
-            clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
+            clicked_data = self.mousedata.df[(self.mousedata.df["Video_Name"] == folder_name) & (self.mousedata.df["Img_Path"] == file_name)]
+
             if len(clicked_data) == 0:
                 return
             if len(clicked_data) == 1:
                 clicked_data = clicked_data.squeeze()
-            elif len(clicked_data) > 1:
+            elif len(clicked_data) > 1: 
                 # TODO check Video_Name instered of chooseing first image
                 clicked_data = clicked_data.iloc[0]
 
@@ -222,8 +224,8 @@ class RadarPlot(QMainWindow):
         #print(clicked_data)
         mouse_name = clicked_data["Mouse_Name"]
 
-        normalized_data = clicked_data[self.mousedata.columns] / self.mousedata.mice_mean_baseline[self.mousedata.mice_mean_baseline["Mouse_Name"] == mouse_name][self.mousedata.columns]
-        self.sample = normalized_data.loc[0]
+        self.sample = clicked_data[self.mousedata.columns] / self.mousedata.mice_mean_baseline[self.mousedata.mice_mean_baseline["Mouse_Name"] == mouse_name][self.mousedata.columns]
+        self.sample = self.sample.squeeze()
         # self.sample = self.mousedata.df[self.mousedata.df["Mouse_Name"] == clicked_data["Mouse_Name"]]
         #print(self.sample)
         self.ax.clear()
@@ -337,7 +339,7 @@ class ScatterPlot(QMainWindow):
         ax.clear()
 
         if plot_nr == 0:
-            hdbscan_labels = cluster.HDBSCAN(min_samples=1, min_cluster_size=2).fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
+            hdbscan_labels = cluster.DBSCAN().fit_predict(self.mousedata.df_mean[self.mousedata.columns].values)
             self.colous = np.array([cmap[label] for label in hdbscan_labels])
         elif plot_nr == 1:
             kmeans_labels = cluster.KMeans(n_clusters=2).fit_predict(self.mousedata.umap)
