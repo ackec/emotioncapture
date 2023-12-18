@@ -41,7 +41,7 @@ def confusion(preds: list[float], tars: list[int], thresh=0.5):
 
 def test(model: nn.Module, dataloader: DataLoader, use_cuda: bool):
     cm = np.zeros((2, 2))
-    for inputs, targets in dataloader:
+    for inputs, targets, _ in dataloader:
 
         # Move data to GPU if CUDA is available
         if use_cuda:

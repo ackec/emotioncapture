@@ -56,7 +56,7 @@ class ProfileDataset(Dataset):
         f = self.image_paths[ix]
         target = self.targets[ix]
         image = Image.open(f)
-        return self.transform(image), torch.tensor([target]).float()
+        return self.transform(image), torch.tensor([target]).float(), ix
 
 def get_balanced_sampler(subset: Subset, targets: list, p_neg: float, generator):
     """ Returns sampler which samples negative with probability of `p_neg`. """

@@ -16,7 +16,7 @@ TRAIN_DATA_PATH = './dataset/train'
 SAVE_MODEL_DIR = './trained_models'
 
 # Config
-name = "profile_detector_freeze_val"
+name = "profile_detector_mlr_val"
 p_neg = 0.9  # Percentage of images that shouldn't be profile in validation
 EPOCHS = 200
 LR = 1e-3
@@ -30,7 +30,7 @@ def train_epoch(model: nn.Module, dataloader: DataLoader, optimizer: Optimizer,
     total = 0
     nr_batches = 0
 
-    for inputs, targets in dataloader:
+    for inputs, targets, _ in dataloader:
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
 
@@ -61,7 +61,7 @@ def eval_epoch(model: nn.Module, dataloader: DataLoader, objective: _Loss,
     total = 0
     nr_batches = 0
 
-    for inputs, targets in dataloader:
+    for inputs, targets, _ in dataloader:
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     print(f"Loaded validation dataset with {len(val_dataset)} images.")
 
     # Load and initialize the network architecture
-    model = ProfileDetector(pretrained=True, freeze_backbone=True)
+    model = ProfileDetector(pretrained=True, freeze_backbone=False)
 
     if use_cuda:
         model.cuda()
