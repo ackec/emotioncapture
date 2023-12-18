@@ -142,10 +142,18 @@ class VisualisationWidget(QWidget):
         print(f"CLICK: {file_name}")
         if self.has_init:
             clicked_data = self.mousedata.df[self.mousedata.df["Img_Path"] == file_name]
-            if len(clicked_data) > 0:
-                self.radar_plot.update_radar_plot_file(clicked_data)
-                self.scatter_plot.set_marker_to_image(clicked_data)
-                self.line_plot.set_lineplot_to_image(clicked_data)
+            if len(clicked_data) == 0:
+                return
+            if len(clicked_data) == 1:
+                clicked_data = clicked_data.squeeze()
+            elif len(clicked_data) > 1:
+                # TODO check Video_Name instered of chooseing first image
+                clicked_data = clicked_data.iloc[0]
+
+            self.radar_plot.update_radar_plot_file(clicked_data)
+            self.scatter_plot.set_marker_to_image(clicked_data)
+            self.line_plot.set_lineplot_to_image(clicked_data)
+                
 
 
     # def clicked_image(self):
@@ -209,8 +217,8 @@ class RadarPlot(QMainWindow):
         #self.ax.figure.savefig(f"radarplot_{clicked_index}.pdf")
 
     def update_radar_plot_file(self, clicked_data):
-        file_name = clicked_data.squeeze()["Img_Path"]
-        clicked_data = self.mousedata.df.loc[clicked_data.index[0]]
+        file_name = clicked_data["Img_Path"]
+        clicked_data = self.mousedata.df.loc[clicked_data.name]
         #print(clicked_data)
         mouse_name = clicked_data["Mouse_Name"]
 
@@ -358,7 +366,7 @@ class ScatterPlot(QMainWindow):
         self.canvas.draw()
 
     def set_marker_to_image(self, clicked_data):
-        clicked=clicked_data.squeeze()
+        clicked=clicked_data
         index = self.mousedata.df_mean[(self.mousedata.df_mean['Video_Name'] == clicked["Video_Name"]) & (self.mousedata.df_mean['Stimuli'] == clicked["Stimuli"])].index
         if len(index) > 0:
             index = index[0]
@@ -455,7 +463,7 @@ class LinePlot(QMainWindow):
 
 
     def set_lineplot_to_image(self, clicked_data):
-        video_name = clicked_data.squeeze()["Video_Name"]
+        video_name = clicked_data["Video_Name"]
         video_df = self.mousedata.df[self.mousedata.df["Video_Name"] == video_name]
         mouse_name = video_df["Mouse_Name"].iloc[0]
         self.data = video_df[self.mousedata.columns]\
@@ -471,7 +479,7 @@ class LinePlot(QMainWindow):
 
         if self.dot:
             self.dot.pop(0).remove()
-        index = (video_df.reset_index()["Img_Path"] == clicked_data.squeeze()["Img_Path"]).idxmax()
+        index = (video_df.reset_index()["Img_Path"] == clicked_data["Img_Path"]).idxmax()
         line = self.figure.axes[0].lines[0]
         x = line.get_xdata()[index]
         y=1

@@ -401,11 +401,11 @@ class ImageMetadataViewer(QLabel):
                 self.clear_attributes()
                 return
             elif len(data_row)>1: ##Fix if multiple of same name in folder
-                data_row = data_row[0,:]
+                data_row = data_row.iloc[0]
             
             
-                
-            current_name = data_row["Mouse_Name"].values[0]
+            data_row = data_row.squeeze()
+            current_name = data_row["Mouse_Name"]
             self.update_label_row("Mouse", current_name)
             
             mouse_data = [mouse for mouse in self.file_list.main.project.mice if mouse.name == current_name]
@@ -416,11 +416,11 @@ class ImageMetadataViewer(QLabel):
                 self.update_label_row("Weight", mouse.weight)
                 self.update_label_row("Age", mouse.age)
 
-            self.update_label_row("Filename", data_row["Img_Path"].values[0])
-            self.update_label_row("Label", data_row["Stimuli"].values[0])
+            self.update_label_row("Filename", data_row["Img_Path"])
+            self.update_label_row("Label", data_row["Stimuli"])
             
-            self.update_label_row("ProfileConfidence", round(data_row["profile_score"].values[0],3))
-            self.update_label_row("KeypointConfidence",round(data_row["keypoint_score"].values[0],3))
+            self.update_label_row("ProfileConfidence", round(data_row["profile_score"], 3))
+            self.update_label_row("KeypointConfidence",round(data_row["keypoint_score"], 3))
             # except:
             #     return
             
