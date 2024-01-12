@@ -15,7 +15,7 @@ from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score
 def cluster_keypoints(keypoints_csv):
     data = pd.read_csv(keypoints_csv)
     standard_embedding = data[["umap_x", "umap_y"]].values
-    # values = data[['eye_oppening', 'ear_oppening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']].values
+    # values = data[['eye_opening', 'ear_opening', 'ear_angle', 'ear_pos_vec', 'snout_pos', 'mouth_pos', 'face_incl']].values
     hdbscan_labels = hdbscan.HDBSCAN(min_samples=10, min_cluster_size=12).fit_predict(standard_embedding)
     kmeans_labels = cluster.KMeans(n_clusters=3).fit_predict(standard_embedding)
 

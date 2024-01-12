@@ -59,10 +59,10 @@ def points_to_features(points):
     middle_ear = top_ear - ear_diff
     ear_width = np.linalg.norm(top_ear - bot_ear, 2, 1)
     ear_length = np.linalg.norm(back_ear - front_ear, 2, 1)
-    ear_oppening = np.divide(ear_width,ear_length)
+    ear_opening = np.divide(ear_width,ear_length)
     eye_width = np.linalg.norm(top_eye - bot_eye, 2, 1)
     eye_length = np.linalg.norm(back_eye - front_eye, 2, 1)
-    eye_oppening = np.divide(eye_width,eye_length)
+    eye_opening = np.divide(eye_width,eye_length)
 
 
     ear_pos_sin = np.abs(calc_features_sin(front_ear, front_eye, back_ear))
@@ -97,7 +97,7 @@ def points_to_features(points):
     mouth_pos = np.abs(mouth_pos)
     face_incl = 90 - np.abs(face_incl)
 
-    return eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl
+    return eye_opening, ear_opening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl
 
 def add_features_to_csv(in_csv_file):
     myFile = pd.read_csv(in_csv_file)
@@ -115,13 +115,13 @@ def add_features_to_csv(in_csv_file):
     mouth = np.array(myFile[["Mouth_x", "Mouth_y"]])
 
     columns = ["Ear_back_x", "Ear_back_y", "Ear_front_x", "Ear_front_y","Ear_bottom_x", "Ear_bottom_y", "Ear_top_x", "Ear_top_y", "Eye_back_x", "Eye_back_y", "Eye_front_x", "Eye_front_y", "Eye_bottom_x", "Eye_bottom_y", "Eye_top_x", "Eye_top_y", "Nose_top_x", "Nose_top_y", "Nose_bottom_x", "Nose_bottom_y", "Mouth_x", "Mouth_y"]
-    eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl = points_to_features(myFile[columns].values.reshape(-1, 11,2))
-    mapping_vectors = np.array([eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl])
-    average_values = np.array([np.mean(eye_oppening), np.mean(ear_oppening), np.mean(ear_angle), np.mean(ear_pos_vec), np.mean(snout_pos), np.mean(mouth_pos), np.mean(face_incl)])
+    eye_opening, ear_opening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl = points_to_features(myFile[columns].values.reshape(-1, 11,2))
+    mapping_vectors = np.array([eye_opening, ear_opening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl])
+    average_values = np.array([np.mean(eye_opening), np.mean(ear_opening), np.mean(ear_angle), np.mean(ear_pos_vec), np.mean(snout_pos), np.mean(mouth_pos), np.mean(face_incl)])
     print(average_values)
 
-    myFile["eye_oppening"] = eye_oppening
-    myFile["ear_oppening"] = ear_oppening
+    myFile["eye_opening"] = eye_opening
+    myFile["ear_opening"] = ear_opening
     myFile["ear_angle"] = ear_angle
     myFile["ear_pos_vec"] = ear_pos_vec
     myFile["snout_pos"] = snout_pos

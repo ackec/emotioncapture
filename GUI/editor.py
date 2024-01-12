@@ -39,7 +39,7 @@ class ImageEditorDialog(QDialog):
         self.point_editor = ImagePointEditor()
         self.main_layout.addWidget(self.point_editor)
         
-        self.feature_names = ["eye_oppening", "ear_oppening", "ear_angle", "ear_pos_vec", 
+        self.feature_names = ["eye_opening", "ear_opening", "ear_angle", "ear_pos_vec", 
                             "snout_pos", "mouth_pos", "face_incl"]
 
         self.controls = OverlayControls(

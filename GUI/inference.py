@@ -37,7 +37,7 @@ from inferencer import KeyPointInferencer
 
 from data import *
 
-PROFILE_MODEL_PATH = "./models/profile/profile_detector_freeze_best"
+PROFILE_MODEL_PATH = "./models/profile/profile_detector_freeze_final"
 BBOX_MODEL_PATH = "./models/pose/mmdeploy_models/mmdet/ort"
 KEYPOINT_MODEL_PATH = "./models/pose/mmdeploy_models/mmpose/ort"
 

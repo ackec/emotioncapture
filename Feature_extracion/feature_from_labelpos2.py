@@ -87,10 +87,10 @@ def points_to_features(in_csv_file, out_csv_file):
     middle_ear = top_ear - ear_diff
     ear_width = np.linalg.norm(top_ear - bot_ear, 2, 1)
     ear_length = np.linalg.norm(back_ear - front_ear, 2, 1)
-    ear_oppening = np.divide(ear_width,ear_length)
+    ear_opening = np.divide(ear_width,ear_length)
     eye_width = np.linalg.norm(top_eye - bot_eye, 2, 1)
     eye_length = np.linalg.norm(back_eye - front_eye, 2, 1)
-    eye_oppening = np.divide(eye_width,eye_length)
+    eye_opening = np.divide(eye_width,eye_length)
 
 
     ear_pos_sin = np.abs(calc_features_sin(front_ear, front_eye, back_ear))
@@ -125,8 +125,8 @@ def points_to_features(in_csv_file, out_csv_file):
     mouth_pos = np.abs(mouth_pos)
     face_incl = 90 - np.abs(face_incl)
 
-    mapping_vectors = np.array([eye_oppening, ear_oppening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl])
-    average_values = np.array([np.mean(eye_oppening), np.mean(ear_oppening), np.mean(ear_angle), np.mean(ear_pos_vec), np.mean(snout_pos), np.mean(mouth_pos), np.mean(face_incl)])
+    mapping_vectors = np.array([eye_opening, ear_opening, ear_angle, ear_pos_vec, snout_pos, mouth_pos, face_incl])
+    average_values = np.array([np.mean(eye_opening), np.mean(ear_opening), np.mean(ear_angle), np.mean(ear_pos_vec), np.mean(snout_pos), np.mean(mouth_pos), np.mean(face_incl)])
     append_str = [str(myFile["Video_Name"][0]), str(myFile["Stimuli"][0])]
     final_array = np.append(average_values, append_str)
     #print(mapping_vectors.T)

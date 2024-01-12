@@ -305,8 +305,8 @@ class ScatterPlot(QMainWindow):
 
 
     def features_in_range(self):
-        self.features["eye_oppening"].between(0.51,0.79)
-        self.features["ear_oppening"].between(1/0.65, 1/0.41)
+        self.features["eye_opening"].between(0.51,0.79)
+        self.features["ear_opening"].between(1/0.65, 1/0.41)
 
         pass
 
