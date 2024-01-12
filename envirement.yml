@@ -1,0 +1,17 @@
+name: emotioncapture
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - matplotlib
+  - pandas
+  - qt
+  - pytorch
+  - torchaudio
+  - torchvision
+  - umap-learn
+  - opencv
+  - av
+  - pip:
+      - mmdeploy-runtime
