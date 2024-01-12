@@ -9,7 +9,7 @@ from mmdet.evaluation import CocoMetric
 
 # dataset settings
 dataset_type = CocoDataset
-data_root = 'dataset'
+data_root = 'Dataset'
 classes = ('mouse')
 default_scope = 'mmdet'  # The default registry scope to find modules. Refer to https://mmengine.readthedocs.io/en/latest/advanced_tutorials/registry.html
 from mmengine.config import read_base
@@ -137,7 +137,7 @@ test_dataloader = val_dataloader
 
 val_evaluator = dict(
     type=CocoMetric,
-    ann_file='dataset/val_annotations.json',
+    ann_file= data_root + '/val_annotations.json',
     metric='bbox',
     format_only=False,
     backend_args=backend_args)

@@ -8,8 +8,8 @@ from model import ProfileDetector
 from train import train
 from test import test
 
-TRAIN_DATA_PATH = './dataset/train'
-TEST_DATA_PATH = './dataset/train'  # Change to real test
+TRAIN_DATA_PATH = './Dataset/train'
+TEST_DATA_PATH = './Dataset/train'  # Change to real test
 
 # Check if CUDA support is available (GPU)
 use_cuda = torch.cuda.is_available()

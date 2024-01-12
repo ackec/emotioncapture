@@ -123,7 +123,7 @@ model = dict(
 dataset_type = CocoDataset
 classes = ('mouse')
 data_mode = 'topdown'
-data_root = 'dataset'
+data_root = 'Dataset'
 
 backend_args = dict(backend='local')
 # backend_args = dict(
@@ -211,8 +211,8 @@ train_dataloader = dict(
         # data_root=data_root,
         data_mode=data_mode,
 
-        ann_file='dataset/train_annotations.json',
-        data_prefix=dict(img='dataset/annotated_images'),
+        ann_file= data_root + '/train_annotations.json',
+        data_prefix=dict(img= data_root + '/annotated_images'),
         metainfo=dict(from_file='keypoint_finder/mouse_skeleton.py'),
         pipeline=train_pipeline,
     ))
@@ -226,8 +226,8 @@ val_dataloader = dict(
         type=dataset_type,
         # data_root=data_root,
         # data_mode=data_mode,
-        ann_file='dataset/val_annotations.json',
-        data_prefix=dict(img='dataset/annotated_images'),
+        ann_file= data_root + '/val_annotations.json',
+        data_prefix=dict(img=data_root + '/annotated_images'),
         # specify the new dataset meta information config file
         metainfo=dict(from_file='keypoint_finder/mouse_skeleton.py'),
         # bbox_file=f'{data_root}person_detection_results/'
@@ -261,16 +261,16 @@ custom_hooks = [
 val_evaluator = [dict(
     type=PCKAccuracy, 
     # mode = "mpjpe",
-    # ann_file='dataset/val_annotations.json')
+    # ann_file=data_root + '/val_annotations.json')
 ), dict(
     type=EPE, 
     # mode = "mpjpe",
-    # ann_file='dataset/val_annotations.json'
+    # ann_file=data_root +'/val_annotations.json'
 
 ), dict(
     type=CocoMetric, 
     # mode = "mpjpe",
-    ann_file='dataset/val_annotations.json'
+    ann_file= data_root + '/val_annotations.json'
 )
 ]
 

@@ -13,6 +13,10 @@ dependencies:
   - umap-learn
   - opencv
   - av
+  - albumentations
+  - mmengine
+  - mmdet
   - pip
   - pip:
       - mmdeploy-runtime
+      - mmpose
