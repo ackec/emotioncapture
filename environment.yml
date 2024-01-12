@@ -2,13 +2,13 @@ name: emotioncapture
 channels:
   - conda-forge
   - defaults
+  - pytorch
 dependencies:
   - python=3.11
   - matplotlib
   - pandas
   - qt
-  - pytorch
-  - torchaudio
+  - pytorch==2.0.*
   - torchvision
   - umap-learn
   - opencv
