@@ -13,5 +13,6 @@ dependencies:
   - umap-learn
   - opencv
   - av
+  - pip
   - pip:
       - mmdeploy-runtime
