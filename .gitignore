@@ -25,6 +25,5 @@ mmdetection/
 output/
 *.pdf
 *.json
-models/
 Projects/
 Dataset/

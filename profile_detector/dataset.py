@@ -20,11 +20,11 @@ class ProfileDataset(Dataset):
 
         # Find all images paths
         self.targets, self.image_paths = [], []
-        for path in data_dir.glob(f"valid images/*.{FILE_TYPE}"):
+        for path in data_dir.glob(f"annotated_images/*.{FILE_TYPE}"):
             self.image_paths.append(path)
             self.targets.append(True)
 
-        for path in data_dir.glob(f"invalid images/*.{FILE_TYPE}"):
+        for path in data_dir.glob(f"Bad_images/*.{FILE_TYPE}"):
             self.image_paths.append(path)
             self.targets.append(False)
 
