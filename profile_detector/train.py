@@ -12,12 +12,14 @@ from torch.optim.optimizer import Optimizer
 from dataset import ProfileDataset, get_balanced_sampler
 from model import ProfileDetector
 
-TRAIN_DATA_PATH = './dataset/train'
-SAVE_MODEL_DIR = './trained_models'
+TRAIN_DATA_PATH = './Dataset'  # Path to load train data from
+SAVE_MODEL_DIR = './trained_models'  # Path to save model to
 
 # Config
 name = "profile_detector_mlr_val"
-p_neg = 0.9  # Percentage of images that shouldn't be profile in validation
+p_neg = 0.9  # % Fraction of images that shouldn't be in profile in validation
+val_split = 0.9  # Fraction of images that should be used for validation
+
 EPOCHS = 200
 LR = 1e-3
 WD = 1e-4
@@ -102,7 +104,6 @@ def train(model: nn.Module, train_data: DataLoader, val_data: DataLoader,
     ckpt_path.mkdir(exist_ok=True)
 
     for epoch in range(1, epochs+1):
-
         print('\nEpoch: %d' % epoch)
         train_loss, train_acc = train_epoch(model, train_data, optimizer,
                                             objective, use_cuda)
@@ -134,19 +135,26 @@ if __name__ == '__main__':
     use_cuda = torch.cuda.is_available()
 
     dataset = ProfileDataset(TRAIN_DATA_PATH)
+
     generator = torch.Generator().manual_seed(42)
-    train_dataset, val_dataset = random_split(dataset, [0.9, 0.1], generator)
+
+    train_dataset, val_dataset = random_split(dataset,
+                                              [1-val_split, val_split],
+                                              generator)
 
     train_loader = DataLoader(train_dataset, batch_size=128,
                               shuffle=True, generator=generator)
     print(f"Loaded train dataset with {len(train_dataset)} images.")
 
-    val_sampler = get_balanced_sampler(val_dataset, dataset.targets, p_neg, generator)
-    val_loader = DataLoader(val_dataset, batch_size=64, sampler=val_sampler, generator=generator)
+    val_sampler = get_balanced_sampler(val_dataset, dataset.targets,
+                                       p_neg, generator)
+    val_loader = DataLoader(val_dataset, batch_size=64, sampler=val_sampler,
+                            generator=generator)
     print(f"Loaded validation dataset with {len(val_dataset)} images.")
 
     # Load and initialize the network architecture
     model = ProfileDetector(pretrained=True, freeze_backbone=False)
+    # model = ProfileDetectorLarge(pretrained=True, freeze_backbone=False)
 
     if use_cuda:
         model.cuda()
@@ -161,7 +169,6 @@ if __name__ == '__main__':
         {"params": model.fc.parameters(), "lr": LR},
     ], lr=LR, weight_decay=WD)
 
-    print(f"Parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
     model, loss_log, acc_log = train(model=model,
                                      train_data=train_loader,
                                      val_data=val_loader,

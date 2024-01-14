@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from dataset import ProfileDataset
 from model import ProfileDetector
 
-TEST_DATA_PATH = './dataset/train'
+TEST_DATA_PATH = './Dataset'
 MODEL_DIR = './trained_models'
 
 

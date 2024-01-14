@@ -4,7 +4,7 @@ import json
 import random
 
 
-csv_folder = "dataset/csv_files/"
+csv_folder = "Dataset/csv_files/"
 categories = [{"id": 1, "name": "mouse", "supercategory": "animal"}]
 keypoints = [
     "Ear_back",
@@ -21,7 +21,7 @@ keypoints = [
 ]
 
 # Specify the folder containing CSV files
-output_json_file = "dataset/combined_annotations.json"
+output_json_file = "Dataset/combined_annotations.json"
 
 
 data = []
@@ -83,7 +83,7 @@ print(f"Saved combined COCO JSON annotations to {output_json_file}")
 
 
 # Load the combined JSON file
-combined_json_file = "dataset/combined_annotations.json"  # Replace with your combined JSON file
+combined_json_file = "Dataset/combined_annotations.json"  # Replace with your combined JSON file
 with open(combined_json_file, "r") as json_file:
     combined_data = json.load(json_file)
 
@@ -129,9 +129,9 @@ for annotation in combined_data["annotations"]:
         test_data["annotations"].append(annotation)
 
 # Save the three JSON files
-train_json_file = "dataset/train_annotations.json"
-val_json_file = "dataset/val_annotations.json"
-test_json_file = "dataset/test_annotations.json"
+train_json_file = "Dataset/train_annotations.json"
+val_json_file = "Dataset/val_annotations.json"
+test_json_file = "Dataset/test_annotations.json"
 
 with open(train_json_file, "w") as train_file:
     json.dump(train_data, train_file)
