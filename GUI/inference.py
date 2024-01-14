@@ -21,7 +21,7 @@ import shutil
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from profile_detector.model import ProfileDetector
 
-from Feature_extracion.feature_from_labelpos import points_to_features
+from feature_extraction.feature_from_labelpos import points_to_features
 
 #from main import MainWindow
 

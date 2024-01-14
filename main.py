@@ -3,8 +3,8 @@ import torch
 
 from profile_detector.inference import inference, ProfileDetector
 from keypoint_finder.inference_keypoint import find_keypoints
-from Feature_extracion.feature_from_labelpos import points_to_features
-from Feature_extracion.create_clusters2 import cluster_keypoints #, do_umap_projection
+from feature_extraction.feature_from_labelpos import points_to_features
+from feature_extraction.create_clusters2 import cluster_keypoints #, do_umap_projection
 
 VIDEO_PATH = 'converted_videos/002452-2022-05-23 11-21-49.mp4'
 MODEL_PATH = './trained_models/profile_detector_freeze_best'

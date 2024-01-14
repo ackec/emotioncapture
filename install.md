@@ -40,7 +40,7 @@ emotionscapture
 │   ├── annotated_images
 │   ├── Bad_images
 │   └── CSV_files
-├── Feature_extracion
+├── feature_extraction
 ├── GUI
 ├── keypoint_finder
 ├── keypoint_onnx

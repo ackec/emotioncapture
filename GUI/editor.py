@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QPushButton, QDialog, QWidget, QHBoxLayout,
                              QGraphicsEllipseItem)
 
 from config import WINDOW_HEIGHT, WINDOW_WIDTH, ZOOM_RANGE, RESOURCE_PATH
-from Feature_extracion.feature_from_labelpos import points_to_features
+from feature_extraction.feature_from_labelpos import points_to_features
 from data import MouseImageData, KeyPoints
 import numpy as np
 
