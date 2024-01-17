@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
         icon = self.style().standardIcon(pixmapi)
         save.setIcon(icon)
         save.triggered.connect(
-            lambda: self.save_project(self.project, self.file_list)
+            lambda: self.save_project()
         )
         save.setToolTip("Save project changes.")
         
@@ -151,7 +151,7 @@ class MainWindow(QMainWindow):
         main_return.setIcon(icon)
         main_return.triggered.connect(self.switchwindowMain)
         main_return.setToolTip("Return to standard interface.")
-
+        
         # Update visualisation data
         reload = visualisation_menu.addAction("Reload visualisation data")
         pixmapi = QStyle.StandardPixmap.SP_BrowserReload
@@ -164,8 +164,9 @@ class MainWindow(QMainWindow):
     
         data = self.project.project_data
         
-        csv_path = os.path.join(self.project.path, "detected_keypoints.csv")
-        data.to_csv(csv_path,index=False)
+        if data is not None:
+            csv_path = os.path.join(self.project.path, "detected_keypoints.csv")
+            data.to_csv(csv_path,index=False)
         
     
     def create_widgets(self):
