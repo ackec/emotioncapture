@@ -72,7 +72,9 @@ class MainWindow(QMainWindow):
         menu_bar = self.menuBar()
 
         file_menu = menu_bar.addMenu("&File")
+        file_menu.setToolTipsVisible(True)
         visualisation_menu = menu_bar.addMenu("&Visualisation")
+        visualisation_menu.setToolTipsVisible(True)
          
         
         # Create new project button
@@ -83,15 +85,17 @@ class MainWindow(QMainWindow):
         newnew.triggered.connect(
             lambda: self.new_project_dialog.show()
         )
+        newnew.setToolTip("Create a new blank project.")
         
         # Create open project button
-        newnew = file_menu.addAction("Open Project")
+        open = file_menu.addAction("Open Project")
         pixmapi = QStyle.StandardPixmap.SP_DirOpenIcon
         icon = self.style().standardIcon(pixmapi)
-        newnew.setIcon(icon)
-        newnew.triggered.connect(
+        open.setIcon(icon)
+        open.triggered.connect(
             lambda: open_directory_dialog(self.project, self.file_list)
         )
+        open.setToolTip("Open an existing project.")
         
         # Create save project button
         save = file_menu.addAction("Save Project")
@@ -101,54 +105,60 @@ class MainWindow(QMainWindow):
         save.triggered.connect(
             lambda: self.save_project(self.project, self.file_list)
         )
+        save.setToolTip("Save project changes.")
         
         # Create Add Mouse to project button
-        newnew = file_menu.addAction("Add Mouse to Project")
+        add = file_menu.addAction("Add Mouse to Project")
         pixmapi = QStyle.StandardPixmap.SP_FileIcon
         icon = self.style().standardIcon(pixmapi)
-        newnew.setIcon(icon)
-        newnew.triggered.connect(
+        add.setIcon(icon)
+        add.triggered.connect(
             lambda: self.new_mouse_dialog.show()
         )
+        add.setToolTip("Create and add a mouse to current project.")
 
-        # Create new project button
-        new = file_menu.addAction("New Data")
+        # Create new data button
+        newdata = file_menu.addAction("New Data")
         pixmapi = QStyle.StandardPixmap.SP_FileIcon
         icon = self.style().standardIcon(pixmapi)
-        new.setIcon(icon)
-        new.triggered.connect(
+        newdata.setIcon(icon)
+        newdata.triggered.connect(
             lambda: self.project_dialog.show(ProjectMode.NEW)
         )
+        newdata.setToolTip("Add pictures or videos to a mouse.")
 
         
         # Switch window to visualisation HDBSCAN
-        self.visualisation = visualisation_menu.addAction("Visualisation HDBSCAN")
+        hdbscan = visualisation_menu.addAction("Visualisation HDBSCAN")
         pixmapi = QStyle.StandardPixmap.SP_FileDialogInfoView
         icon = self.style().standardIcon(pixmapi)
-        self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.switchwindowHDBSCAN)
+        hdbscan.setIcon(icon)
+        hdbscan.triggered.connect(self.switchwindowHDBSCAN)
+        hdbscan.setToolTip("Visualise results using HDBSCAN clustering.")
 
         # Switch window to visualisation Kmeans
-        self.visualisation = visualisation_menu.addAction("Visualisation kmeans")
+        kmeans = visualisation_menu.addAction("Visualisation kmeans")
         pixmapi = QStyle.StandardPixmap.SP_FileDialogInfoView
         icon = self.style().standardIcon(pixmapi)
-        self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.switchwindowKmeans)
+        kmeans.setIcon(icon)
+        kmeans.triggered.connect(self.switchwindowKmeans)
+        kmeans.setToolTip("Visualise results using kmeans clustering.")
 
         # Switch window to main
-        self.visualisation = visualisation_menu.addAction("Main")
+        main_return = visualisation_menu.addAction("Main")
         pixmapi = QStyle.StandardPixmap.SP_ArrowBack
         icon = self.style().standardIcon(pixmapi)
-        self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.switchwindowMain)
-
+        main_return.setIcon(icon)
+        main_return.triggered.connect(self.switchwindowMain)
+        main_return.setToolTip("Return to standard interface.")
 
         # Update visualisation data
-        self.visualisation = visualisation_menu.addAction("Reload visualisation data")
+        reload = visualisation_menu.addAction("Reload visualisation data")
         pixmapi = QStyle.StandardPixmap.SP_BrowserReload
         icon = self.style().standardIcon(pixmapi)
-        self.visualisation.setIcon(icon)
-        self.visualisation.triggered.connect(self.reload_visualisation_data)
+        reload.setIcon(icon)
+        reload.triggered.connect(self.reload_visualisation_data)
+        reload.setToolTip("Recompute feature value incase user has changed keypoint locations.")
 
     def save_project(self):
     
