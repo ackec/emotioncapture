@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
 
         self.project = ProjectData()
         ## TODO remove this ##
-        self.project.project_data  = pd.read_csv("detected_keypoints.csv")
+        #self.project.project_data  = pd.read_csv("detected_keypoints.csv")
         #mouce = MouseData()
         #mouce.name = "mouse1"
         #self.project.mice.append(mouce)
@@ -72,34 +72,40 @@ class MainWindow(QMainWindow):
         menu_bar = self.menuBar()
 
         file_menu = menu_bar.addMenu("&File")
-        edit_menu = menu_bar.addMenu("&Edit")
         visualisation_menu = menu_bar.addMenu("&Visualisation")
          
-        pixmapi = QStyle.StandardPixmap.SP_FileDialogNewFolder
-        icon = self.style().standardIcon(pixmapi)
-
+        
         # Create new project button
         newnew = file_menu.addAction("New Project")
+        pixmapi = QStyle.StandardPixmap.SP_FileDialogNewFolder
+        icon = self.style().standardIcon(pixmapi)
         newnew.setIcon(icon)
         newnew.triggered.connect(
             lambda: self.new_project_dialog.show()
         )
-        #newnew.triggered.connect(
-        #    lambda: self.file_list.show_file_list()
-        #)
-
-                # Create new project button
+        
+        # Create open project button
         newnew = file_menu.addAction("Open Project")
+        pixmapi = QStyle.StandardPixmap.SP_DirOpenIcon
+        icon = self.style().standardIcon(pixmapi)
         newnew.setIcon(icon)
         newnew.triggered.connect(
             lambda: open_directory_dialog(self.project, self.file_list)
         )
-        #newnew.triggered.connect(
-        #    lambda: self.file_list.show_file_list()
-        #)
+        
+        # Create save project button
+        save = file_menu.addAction("Save Project")
+        pixmapi = QStyle.StandardPixmap.SP_DialogSaveButton
+        icon = self.style().standardIcon(pixmapi)
+        save.setIcon(icon)
+        save.triggered.connect(
+            lambda: self.save_project(self.project, self.file_list)
+        )
         
         # Create Add Mouse to project button
         newnew = file_menu.addAction("Add Mouse to Project")
+        pixmapi = QStyle.StandardPixmap.SP_FileIcon
+        icon = self.style().standardIcon(pixmapi)
         newnew.setIcon(icon)
         newnew.triggered.connect(
             lambda: self.new_mouse_dialog.show()
@@ -107,40 +113,31 @@ class MainWindow(QMainWindow):
 
         # Create new project button
         new = file_menu.addAction("New Data")
-        #pixmapi = QStyle.StandardPixmap.SP_FileDialogNewFolder
-        #icon = self.style().standardIcon(pixmapi)
+        pixmapi = QStyle.StandardPixmap.SP_FileIcon
+        icon = self.style().standardIcon(pixmapi)
         new.setIcon(icon)
         new.triggered.connect(
             lambda: self.project_dialog.show(ProjectMode.NEW)
         )
 
         
-
-        # Open edit view (temporary button)
-        self.edit = edit_menu.addAction("Edit")
-        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
-        icon = self.style().standardIcon(pixmapi)
-        self.edit.setIcon(icon)
-        self.edit.triggered.connect(
-            lambda: self.editor_dialog.show(self.project.images[0]))
-
         # Switch window to visualisation HDBSCAN
         self.visualisation = visualisation_menu.addAction("Visualisation HDBSCAN")
-        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        pixmapi = QStyle.StandardPixmap.SP_FileDialogInfoView
         icon = self.style().standardIcon(pixmapi)
         self.visualisation.setIcon(icon)
         self.visualisation.triggered.connect(self.switchwindowHDBSCAN)
 
         # Switch window to visualisation Kmeans
         self.visualisation = visualisation_menu.addAction("Visualisation kmeans")
-        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        pixmapi = QStyle.StandardPixmap.SP_FileDialogInfoView
         icon = self.style().standardIcon(pixmapi)
         self.visualisation.setIcon(icon)
         self.visualisation.triggered.connect(self.switchwindowKmeans)
 
         # Switch window to main
         self.visualisation = visualisation_menu.addAction("Main")
-        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        pixmapi = QStyle.StandardPixmap.SP_ArrowBack
         icon = self.style().standardIcon(pixmapi)
         self.visualisation.setIcon(icon)
         self.visualisation.triggered.connect(self.switchwindowMain)
@@ -148,12 +145,19 @@ class MainWindow(QMainWindow):
 
         # Update visualisation data
         self.visualisation = visualisation_menu.addAction("Reload visualisation data")
-        pixmapi = QStyle.StandardPixmap.SP_LineEditClearButton
+        pixmapi = QStyle.StandardPixmap.SP_BrowserReload
         icon = self.style().standardIcon(pixmapi)
         self.visualisation.setIcon(icon)
         self.visualisation.triggered.connect(self.reload_visualisation_data)
 
-
+    def save_project(self):
+    
+        data = self.project.project_data
+        
+        csv_path = os.path.join(self.project.path, "detected_keypoints.csv")
+        data.to_csv(csv_path,index=False)
+        
+    
     def create_widgets(self):
         main_layout = QHBoxLayout()
 

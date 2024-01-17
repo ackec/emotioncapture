@@ -55,16 +55,9 @@ class DialogPlaceHolder(QWidget):
 
         self.main_layout = QVBoxLayout()
 
-        # text = QLabel()
-        # text.setText(name)
-        # text.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
-        # self.main_layout.addWidget(text)
-
-        self.btn = QPushButton("Switch")
+        #self.btn = QPushButton("Switch")
+        self.btn = QPushButton("Process")
         self.btn.clicked.connect(lambda: self.parent().parent().switch(next))
-        # self.main_layout.addWidget(btn)
-
-        # self.setLayout(self.main_layout)
 
 
 class ProjectDialog(QDialog):
