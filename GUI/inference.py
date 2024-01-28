@@ -297,6 +297,7 @@ class Inferencer():
                 #keypoints = np.zeros((len(self.img_paths), 11))
                 files = self.img_paths
                 profile_scores = []
+                destinations = []
                 mouse_features = []
                 warn_flags = []
                 orientations = []
@@ -368,6 +369,8 @@ class Inferencer():
             keypoints_list = []
             keypoint_scores = []
             files = self.img_paths
+
+            destinations = []
             profile_scores = []
             mouse_features = []
             warn_flags = []
@@ -430,12 +433,21 @@ class Inferencer():
 
                 cv2.imwrite(destination, img)
 
+                destinations.append(Path(destination))
+
+                #yield destination
+
+                #time.sleep(2)
+
+
+
 
 
             yield "Saving Results..."
 
+
             #time.sleep(2)
-            self.keypoint_detector.save_results(keypoints_list, files, mouse_features,
+            self.keypoint_detector.save_results(keypoints_list, destinations, mouse_features,
                                                 orientations, keypoint_scores, profile_scores,
                                                 warn_flags)
 

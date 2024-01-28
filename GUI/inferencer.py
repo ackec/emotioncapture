@@ -11,8 +11,8 @@ import re
 import pandas as pd
 import numpy as np
 
-BBOX_MODEL_PATH = "models/pose/mmdeploy_models/mmdet/ort"
-KEYPOINT_MODEL_PATH = "models/pose/mmdeploy_models/mmpose/ort"
+BBOX_MODEL_PATH = "./models/pose/mmdeploy_models/mmdet/ort"
+KEYPOINT_MODEL_PATH = "./models/pose/mmdeploy_models/mmpose/ort"
 
 # class BaseInferencer(ABC):
 #     def __init__(self, input: str, output: str):
